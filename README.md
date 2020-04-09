@@ -65,7 +65,36 @@ property from the encoding of time in the data.
 In the absence of any recognized time value in the sensor data, the `acp_decoders` 
 `DecoderManager` will create `acp_ts` with the current system timestamp.
 
-## Database Name: postgres
+## Space
+
+Global position information for the sensor data is standardized as:
+
+* `acp_lat`: floating point WGS84 latitude (North positive)
+* `acp_lng`: floating point WGS84 longitude (East positive)
+* `acp_alt`: floating point WGS84 altitude in meters.
+
+For mobile sensors, location information is likely to included in the sensor data and this may be
+interpreted by `acp_decoders` such that these properties can be populated (if the sensor has not
+already).
+
+Alternatively, the location information for a sensor may be provided by the sensor metadata database (see
+below), via an API lookup using the sensor identifier.
+
+In-building position information may use an alternate coordinate system (for example as x,y coordinates in meters plus
+a floor number). This information will be supported in the Platform via a `acp_location` property e.g.:
+
+```
+"acp_location": { "system": "WGB", "x": "2131.33", "y": "53272.22", "z": "1"} 
+```
+In this case, the `system` property of the `acp_location` JSON object determines the expected other properties
+representing the location.
+
+The sensor metadata database will include information enabling the `acp_location/system` to be translated to
+`acp_lat`, `acp_lng` and `acp_alt`.
+
+## Sensor metadata database
+
+Name: postgres
 
 ## Tables
 ### metadata
