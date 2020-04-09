@@ -46,6 +46,25 @@ downstream like any other real-time data source.
 persistent metadata regarding the sensors which is accessible via an API for any process
 during the data flow. For example this includes the `location` of the non-moving sensors.
 
+## Time
+
+`acp_ts` is intended for the property containing the timestamp most relevant to the sensor
+data reading, containing the floating point seconds in epoch stored in a string. For example:
+```
+"acp_ts": "1586461606.465372"
+```
+
+Sensors designed within the project will include `acp_ts` in their transmitted data as the 
+definitive time of the sensor reading, along with other timestamps from the internal processes of
+the sensor.
+
+Sensors (and other sources) from 3rd parties may include their time reference in some 
+proprietary format. In this case a suitable decoder from `acp_decoders` may create the `acp_ts`
+property from the encoding of time in the data.
+
+In the absence of any recognized time value in the sensor data, the `acp_decoders` 
+`DecoderManager` will create `acp_ts` with the current system timestamp.
+
 ## Database Name: postgres
 
 ## Tables
