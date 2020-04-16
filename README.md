@@ -1,4 +1,4 @@
-# Adaptive City Program sensor metadata
+# Adaptive City Program sensor data strategy
 
 This repo is intended to pull together the multiple approaches we're taking to normalize
 the data coming in from our various sensors and sources.  This does *not* mean we assume
@@ -45,6 +45,47 @@ downstream like any other real-time data source.
 2. The `ACP sensor metadata database` (documented below) which acts as a repository for
 persistent metadata regarding the sensors which is accessible via an API for any process
 during the data flow. For example this includes the `location` of the non-moving sensors.
+
+## Identity
+
+`acp_id` is our globally-recognized string containing a sensor identifier. In many cases our 
+feedhandlers or MQTT decoders will extract the relevant string from a custom data format and
+use this to populate `acp_id`. A simple agreed property name for the sensor identifier means
+much of our system can proceed independent of the sensor type, e.g. selecting messages from
+a particular sensor. It is (strangely) common for retail sensors sending readings via MQTT to
+*not* include their sensor identity in the data message, rather embedding it somewhere within
+a proprietary MQTT topic format. In this case the ACP decoders will typically extract the sensor
+id from the topic and add a `acp_id` value to the data message.
+
+`acp_type` is the common string property which hints at the sensor type, e.g. `elsys-co2`. If
+included in the raw incoming data (i.e. from our own sensors) this allows rapid selection of
+appropriate stream processing, rather then a complex heuristic based on the message content
+or format. If missing from the original data, we aim to attach this property as early as
+practicable in the stream processing.
+
+## Events
+
+Incoming sensor data messages to the platform can be broadly categorized as *periodic* or 
+*event* based. The Adaptive City platform is designed throughout to handle events in a
+timely manner, and includes pre-defined data fields to make event-based messages easy to
+recognize.
+
+`acp_event` contains a globally-recognized string defining the event *type*, e.g. from the
+window/door sensor:
+```
+"acp_event": "openclose"
+```
+
+`acp_event_value` is a simple (optional) additional property which can be included for an
+event, e.g.
+```
+"acp_event_value": "open"
+```
+
+Note that these common properties are *in addition* to the data that the sensor will include
+in its message anyway. They are a convenience such that the recognition of significant
+events can be less complex for downstream processing which is likely to ignore or analyze the
+message in more detail.
 
 ## Time
 
