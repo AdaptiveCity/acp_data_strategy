@@ -106,12 +106,15 @@ Example Rows:
 
 |      acp_id      |                                                                  info                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| avatar-test-001  | {"acp_ts": "1585138617", "type": "smartplug", "owner": "rv355", "location": {"x": "2131.33", "y": "53272.22", "z": "1", "system": "WGB"}} |
-| aoycocr-test-001 | {"acp_ts": "1585138617", "type": "smartplug", "owner": "jb2328", "location": {"x": "2654.33", "y": "53432.22", "z": "1", "system": "WGB"}} |
-| gosund-test-001  | {"acp_ts": "1585138617", "type": "smartplug", "owner": "mrd45", "location": {"x": "2664.33", "y": "53432.22", "z": "1", "system": "WGB"}}  |
+| avatar-test-001  | {"ts":"1585138617","type":"smartplug","owner":"rv355","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2131.33","y":"53272.22","z":"1","system":"WGB"}} |
+| aoycocr-test-001 | {"ts":"1585138617","type":"smartplug","owner":"jb2328","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2654.33","y":"53432.22","z":"1","system":"WGB"}} |
+| gosund-test-001  | {"ts":"1585138617","type":"smartplug","owner":"mrd45","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2664.33","y":"53432.22","z":"1","system":"WGB"}} |
+| ijl20-sodaq-ttn  | {"ts": "1585868424", "type": "temperature", "owner": "ijl20", "source": "mqtt_ttn", "features": ["temperature"], "acp_location": {"system": "GPS", "acp_alt": "15", "acp_lat": "52.21124", "acp_lng": "0.09383"}} |
 
 In the above example the info field includes;
 + acp_ts: The Unix timestamp when the metadata was stored. Owing to the fact that the location could change later we have opted to include timestamp.
 + type: type of sensor
 + owner: the owner of the device
-+ location: The location of the sensor. This could be either inside a building in which case we use building specific system like WGB and (x,y,z). This system could be mapped to a latitude, longitude and altitude system and vice-versa.
++ source: the mqtt source which is publishing the messages from the sensor
++ features: set of features of which the sensor logs information of
++ acp_location: The location of the sensor. This could be either inside a building in which case we use building specific system like WGB and (x,y,z). This system could be mapped to a latitude, longitude and altitude system and vice-versa.
