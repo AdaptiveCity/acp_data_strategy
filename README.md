@@ -46,7 +46,27 @@ downstream like any other real-time data source.
 persistent metadata regarding the sensors which is accessible via an API for any process
 during the data flow. For example this includes the `location` of the non-moving sensors.
 
-## Identity
+## Standard data fields
+
+### Summary
+
+`acp_id`: sensor identifier, globally unique e.g. `elsys-eye-049876`.
+
+`acp_type`: sensor type, determines data format e.g. `elsys-eye`.
+
+`acp_event`: event type, for timestamped events, e.g. `openclose`.
+
+`acp_event_value`: qualifier or data reading for event, e.g. `open`.
+
+`acp_ts`: epoch timestamp most relevant to data reading or event, e.g. `"1586461606.465372"`.
+
+`acp_lat`, `acp_lng`, `acp_alt`: WGS84 location information most relevant to reading or event.
+
+`acp_location`: location using a custom coordinate system e.g. `{ "system": "WGB", "x": 12, "y":45, "f": 1 }`.
+
+`acp_confidence`: a value `0..1` indicating the reliability of the sensor reading.
+
+### Identity
 
 `acp_id` is our globally-recognized string containing a sensor identifier. In many cases our 
 feedhandlers or MQTT decoders will extract the relevant string from a custom data format and
@@ -63,7 +83,7 @@ appropriate stream processing, rather then a complex heuristic based on the mess
 or format. If missing from the original data, we aim to attach this property as early as
 practicable in the stream processing.
 
-## Events
+### Events
 
 Incoming sensor data messages to the platform can be broadly categorized as *periodic* or 
 *event* based. The Adaptive City platform is designed throughout to handle events in a
@@ -87,7 +107,7 @@ in its message anyway. They are a convenience such that the recognition of signi
 events can be less complex for downstream processing which is likely to ignore or analyze the
 message in more detail.
 
-## Time
+### Time
 
 `acp_ts` is intended for the property containing the timestamp most relevant to the sensor
 data reading, containing the floating point seconds in epoch stored in a string. For example:
@@ -106,7 +126,7 @@ property from the encoding of time in the data.
 In the absence of any recognized time value in the sensor data, the `acp_decoders` 
 `DecoderManager` will create `acp_ts` with the current system timestamp.
 
-## Space
+### Spatial coordinates
 
 Global position information for the sensor data is standardized as:
 
@@ -132,6 +152,18 @@ representing the location.
 
 The sensor metadata database will include information enabling the `acp_location/system` to be translated to
 `acp_lat`, `acp_lng` and `acp_alt`.
+
+### Confidence
+
+`acp_confidence` indicates a general probability a data reading is reliable, on a scale `0..1`. This property is 
+useful as a common generalization. For example, a sensor that is deriving traffic speed from passing vehicles 
+will assign more confidence to a value based on many vehicles than on a few. *How* the confidence value is 
+calculated will differ by sensor type and it is currently not clear how this should best be normalized.
+
+The essential point is that confidence in a sensor reading is a general issue, not particularly limited to a few
+sensor types, so it is helpful on the Adaptive City platform to abstract this into a common property. Note this is, as with
+the other standardized fields, *in addition* to the data values the sensor will send anyway allowing downstream processing
+knowledgeable about the intricacies of the particular sensor to make its own interpretation of confidence or accuracy.
 
 ## Sensor metadata database
 
