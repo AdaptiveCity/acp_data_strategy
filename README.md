@@ -128,6 +128,35 @@ In the absence of any recognized time value in the sensor data, the `acp_decoder
 
 ### Spatial coordinates
 
+We require consistent support for **three**  parellel location reference systems:
+
+1. **Latitude, longitude, altitude.** The only definitive common reference system. Necessary for outdoor sensors and 
+the coordinate system used while interacting with 'map' views of sensors or data.
+
+2. **In-building coordinates.** This will be a spatial coordinate system typically unique to a given building, typically
+used when interacting with in-building floorplan or 3D views of sensors or data. Sensors that transmit their position in the
+building (i.e. particularly sensors that move around) may use this system in their sensor data.
+
+3. **Building object hierarchy.** Often used in Building Information Models. It reasonable for a sensor (or monitored device)
+to be recorded as being in location `FE11` i.e. a room/office which relates to BIM data structured as `site`..`building`..`floor`..
+`room`..`window`. This hierarchy is often natively used when collating or browsing in-building information (e.g. the electricity 
+use in lecture theaters, William Gates Building).
+
+Effective support implies a set of **API's** which support:
+
+1. Translation between these location reference systems. This does not necessarily need to be perfectly granular, e.g. for
+some purposes a mapping of all in-building coordinates to a single lat/lng/alt will allow macro processing at a map level including
+outdoor and in-building sensors.
+
+2. Rapid access to current and historical locations of assets (i.e. sensors and other objects of interest). It should be
+feasible that a lookup of the data occurs at the rate of the incoming sensor data.
+
+3. An ability to update the sensor and asset metadata (such as location) such that 'downstream' processing recognizes the
+change with appropriate timeliness either by referring to the definitive metadata source on the arrival of each sensor data message
+or by providing a 'push' mechanism when the metadata changes.
+
+#### lat/lng/alt
+
 Global position information for the sensor data is standardized as:
 
 * `acp_lat`: floating point WGS84 latitude (North positive)
@@ -141,17 +170,35 @@ already).
 Alternatively, the location information for a sensor may be provided by the sensor metadata database (see
 below), via an API lookup using the sensor identifier.
 
+#### In-building coordinates
+
 In-building position information may use an alternate coordinate system (for example as x,y coordinates in meters plus
-a floor number). This information will be supported in the Platform via a `acp_location` property e.g.:
+a floor number). This information will be supported in the Platform via a `acp_location` property for example (this is not
+a genuine system in use):
 
 ```
-"acp_location": { "system": "WGB", "x": "2131.33", "y": "53272.22", "z": "1"} 
+"acp_location": { "system": "WGB", "x": "2131.33", "y": "53272.22", "f": "1"} 
 ```
 In this case, the `system` property of the `acp_location` JSON object determines the expected other properties
-representing the location.
+representing the location, in this case `x,y,f` where `x` and `y` are in meters relative to some arbitrary `0,0`
+and orientation, a `f` is a floor number (there is an open issue regarding vertical height, probably needing an
+additional `z` property, for our simple generic example).
 
 The sensor metadata database will include information enabling the `acp_location/system` to be translated to
 `acp_lat`, `acp_lng` and `acp_alt`.
+
+#### Object-level hierarchy
+
+We will use the data currently contained in the IfM BIM (Building Information Model) as a typical example of extant
+metadata relating to in-building assets and sensors. 
+
+The objective is to support navigating the hierarchical model *including* real-time and historical information available 
+from sensors, including sensors that may continually change information the BIM assumes is static (for example
+a robot leaner that moves around). 
+
+The BIM system itself is likely to fall short of our requirements for rapid programmatic access to the reference data 
+or the ability to update the information promptly and communicate those changes, nevertheless a system design approach is
+required that assumes some substantive building reference information remains embedded in an 'external' system.
 
 ### Confidence
 
