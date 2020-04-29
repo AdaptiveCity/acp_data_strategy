@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.12 (Ubuntu 10.12-0ubuntu0.18.04.1)
--- Dumped by pg_dump version 10.12 (Ubuntu 10.12-0ubuntu0.18.04.1)
+-- Dumped from database version 10.12 (Ubuntu 10.12-2.pgdg18.04+1)
+-- Dumped by pg_dump version 10.12 (Ubuntu 10.12-2.pgdg18.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -24,14 +24,14 @@ COMMENT ON DATABASE postgres IS 'default administrative connection database';
 
 
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
 --
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:
 --
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
@@ -40,6 +40,23 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 SET default_tablespace = '';
 
 SET default_with_oids = false;
+
+--
+-- Name: indoor_system_metadata; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.indoor_system_metadata (
+    system_name character varying(50) NOT NULL,
+    lat_origin numeric,
+    lng_origin numeric,
+    dlat numeric,
+    dlng numeric,
+    dx numeric,
+    dy numeric
+);
+
+
+ALTER TABLE public.indoor_system_metadata OWNER TO postgres;
 
 --
 -- Name: metadata; Type: TABLE; Schema: public; Owner: postgres
@@ -54,14 +71,33 @@ CREATE TABLE public.metadata (
 ALTER TABLE public.metadata OWNER TO postgres;
 
 --
+-- Data for Name: indoor_system_metadata; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.indoor_system_metadata (system_name, lat_origin, lng_origin, dlat, dlng, dx, dy) FROM stdin;
+wgb	52.2105068	0.0924383	0.000676	-0.001046	73.67	78.37
+ifm	52.209161	0.087682	0.000551	-0.000764	53.53	62.03
+\.
+
+
+--
 -- Data for Name: metadata; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.metadata (acp_id, info) FROM stdin;
-avatar-test-001	{"acp_ts": "1585138617", "type": "smartplug", "owner": "rv355", "location": {"x": "2131.33", "y": "53272.22", "z": "1", "system": "WGB"}}
-aoycocr-test-001	{"acp_ts": "1585138617", "type": "smartplug", "owner": "jb2328", "location": {"x": "2654.33", "y": "53432.22", "z": "1", "system": "WGB"}}
-gosund-test-001	{"acp_ts": "1585138617", "type": "smartplug", "owner": "mrd45", "location": {"x": "2664.33", "y": "53432.22", "z": "1", "system": "WGB"}}
+avatar-test-001	{"ts": "1585138617", "type": "smartplug", "owner": "rv355", "source": "mqtt_csn", "features": ["power"], "acp_location": {"x": "21.33", "y": "53.22", "f": "1", "z": "1", "system": "WGB"}}
+aoycocr-test-001	{"ts": "1585138617", "type": "smartplug", "owner": "jb2328", "source": "mqtt_csn", "features": ["power"], "acp_location": {"x": "26.33", "y": "53432.22",, "f": "1", "z": "1.3", "system": "WGB"}}
+gosund-test-001	{"ts": "1585138617", "type": "smartplug", "owner": "mrd45", "source": "mqtt_csn", "features": ["power"], "acp_location": {"x": "2664.33", "y": "53432.22",, "f": "1", "z": "1.2", "system": "WGB"}}
+ijl20-sodaq-ttn	{"ts": "1585868424", "type": "temperature", "owner": "ijl20", "source": "mqtt_ttn", "features": ["temperature"], "acp_location": {"system": "GPS", "acp_alt": "15", "acp_lat": "52.21124", "acp_lng": "0.09383"}}
 \.
+
+
+--
+-- Name: indoor_system_metadata indoor_system_metadata_system_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.indoor_system_metadata
+    ADD CONSTRAINT indoor_system_metadata_system_name_key UNIQUE (system_name);
 
 
 --
@@ -75,4 +111,3 @@ ALTER TABLE ONLY public.metadata
 --
 -- PostgreSQL database dump complete
 --
-
