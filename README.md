@@ -130,14 +130,14 @@ In the absence of any recognized time value in the sensor data, the `acp_decoder
 
 We require consistent support for **three**  parellel location reference systems:
 
-1. **Global** The only definitive common reference system constituting of latitude, longitude and altitude. Necessary for outdoor sensors and
+1. **Global:** The only definitive common reference system constituting of latitude, longitude and altitude. Necessary for outdoor sensors and
 the coordinate system used while interacting with 'map' views of sensors or data.
 
-2. **In-building coordinates.** This will be a spatial coordinate system typically unique to a given building, typically
+2. **In-building coordinates:** This will be a spatial coordinate system typically unique to a given building, typically
 used when interacting with in-building floorplan or 3D views of sensors or data. Sensors that transmit their position in the
 building (i.e. particularly sensors that move around) may use this system in their sensor data.
 
-3. **Building object hierarchy.** Often used in Building Information Models. It reasonable for a sensor (or monitored device)
+3. **Building object hierarchy:** Often used in Building Information Models. It reasonable for a sensor (or monitored device)
 to be recorded as being in location `FE11` i.e. a room/office which relates to BIM data structured as `site`..`building`..`floor`..
 `room`..`window`. This hierarchy is often natively used when collating or browsing in-building information (e.g. the electricity
 use in lecture theaters, William Gates Building).
