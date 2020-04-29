@@ -303,4 +303,4 @@ python acp_metadata_api.py
 `/ctog?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.\
 `/gtoc?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.\
 `/ctoo?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding object-level values.\
-`otoc?system=&room=&inbuildsystem=` - Given the room and system, returns the x, y, z and f in the in-building system specified.
+`/otoc?system=&room=&inbuildsystem=` - Given the room and system, returns the x, y, z and f in the in-building system specified.
