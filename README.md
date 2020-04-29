@@ -68,7 +68,7 @@ during the data flow. For example this includes the `location` of the non-moving
 
 ### Identity
 
-`acp_id` is our globally-recognized string containing a sensor identifier. In many cases our 
+`acp_id` is our globally-recognized string containing a sensor identifier. In many cases our
 feedhandlers or MQTT decoders will extract the relevant string from a custom data format and
 use this to populate `acp_id`. A simple agreed property name for the sensor identifier means
 much of our system can proceed independent of the sensor type, e.g. selecting messages from
@@ -85,7 +85,7 @@ practicable in the stream processing.
 
 ### Events
 
-Incoming sensor data messages to the platform can be broadly categorized as *periodic* or 
+Incoming sensor data messages to the platform can be broadly categorized as *periodic* or
 *event* based. The Adaptive City platform is designed throughout to handle events in a
 timely manner, and includes pre-defined data fields to make event-based messages easy to
 recognize.
@@ -115,22 +115,22 @@ data reading, containing the floating point seconds in epoch stored in a string.
 "acp_ts": "1586461606.465372"
 ```
 
-Sensors designed within the project will include `acp_ts` in their transmitted data as the 
+Sensors designed within the project will include `acp_ts` in their transmitted data as the
 definitive time of the sensor reading, along with other timestamps from the internal processes of
 the sensor.
 
-Sensors (and other sources) from 3rd parties may include their time reference in some 
+Sensors (and other sources) from 3rd parties may include their time reference in some
 proprietary format. In this case a suitable decoder from `acp_decoders` may create the `acp_ts`
 property from the encoding of time in the data.
 
-In the absence of any recognized time value in the sensor data, the `acp_decoders` 
+In the absence of any recognized time value in the sensor data, the `acp_decoders`
 `DecoderManager` will create `acp_ts` with the current system timestamp.
 
 ### Spatial coordinates
 
 We require consistent support for **three**  parellel location reference systems:
 
-1. **Latitude, longitude, altitude.** The only definitive common reference system. Necessary for outdoor sensors and 
+1. **Global** The only definitive common reference system constituting of latitude, longitude and altitude. Necessary for outdoor sensors and
 the coordinate system used while interacting with 'map' views of sensors or data.
 
 2. **In-building coordinates.** This will be a spatial coordinate system typically unique to a given building, typically
@@ -139,7 +139,7 @@ building (i.e. particularly sensors that move around) may use this system in the
 
 3. **Building object hierarchy.** Often used in Building Information Models. It reasonable for a sensor (or monitored device)
 to be recorded as being in location `FE11` i.e. a room/office which relates to BIM data structured as `site`..`building`..`floor`..
-`room`..`window`. This hierarchy is often natively used when collating or browsing in-building information (e.g. the electricity 
+`room`..`window`. This hierarchy is often natively used when collating or browsing in-building information (e.g. the electricity
 use in lecture theaters, William Gates Building).
 
 Effective support implies a set of **API's** which support:
@@ -155,7 +155,7 @@ feasible that a lookup of the data occurs at the rate of the incoming sensor dat
 change with appropriate timeliness either by referring to the definitive metadata source on the arrival of each sensor data message
 or by providing a 'push' mechanism when the metadata changes.
 
-#### lat/lng/alt
+#### Global
 
 Global position information for the sensor data is standardized as:
 
@@ -173,16 +173,24 @@ below), via an API lookup using the sensor identifier.
 #### In-building coordinates
 
 In-building position information may use an alternate coordinate system (for example as x,y coordinates in meters plus
-a floor number). This information will be supported in the Platform via a `acp_location` property for example (this is not
+a floor number and height from the floor reference as z). This information will be supported in the Platform via a `acp_location` property for example (this is not
 a genuine system in use):
 
 ```
-"acp_location": { "system": "WGB", "x": "2131.33", "y": "53272.22", "f": "1"} 
+"acp_location": { "system": "WGB", "x": "20.33", "y": "53.22", "f": "1", "z":"0.5"}
 ```
 In this case, the `system` property of the `acp_location` JSON object determines the expected other properties
-representing the location, in this case `x,y,f` where `x` and `y` are in meters relative to some arbitrary `0,0`
-and orientation, a `f` is a floor number (there is an open issue regarding vertical height, probably needing an
-additional `z` property, for our simple generic example).
+representing the location, in this case `x,y,f,z` where `x` and `y` are in meters relative to some arbitrary `0,0`
+and orientation, a `f` is a floor number, and `z` is the height of the sensor calculated with the floor as reference. Below we show an example of such a system for the William Gates Building (WGB).
+
+![2D](static/images/2d.png)
+
+Considering the above figure as a reference, with the origin at the lower left corner, any point in the building could be assigned an `x` and `y` value corresponding to its distance from the axis. For eg., the point P1 in the Lecture Theatre 1 would have its `x,y` set as `35.4,5.6`.
+
+![3D](static/images/3d.png)
+
+The figure above shows how the z-axis would be recorded as a combination of floor number and relative height from the floor reference. Both sensor S1 and S2 are `0.5 m` above the floor reference, so would get the coordinate assigned as `(5.3 3.2, 0, 0.5)` and `(72.7, 38.1, 1, 0.5)
+` respectively.
 
 The sensor metadata database will include information enabling the `acp_location/system` to be translated to
 `acp_lat`, `acp_lng` and `acp_alt`.
@@ -190,21 +198,51 @@ The sensor metadata database will include information enabling the `acp_location
 #### Object-level hierarchy
 
 We will use the data currently contained in the IfM BIM (Building Information Model) as a typical example of extant
-metadata relating to in-building assets and sensors. 
+metadata relating to in-building assets and sensors.
 
-The objective is to support navigating the hierarchical model *including* real-time and historical information available 
+The objective is to support navigating the hierarchical model *including* real-time and historical information available
 from sensors, including sensors that may continually change information the BIM assumes is static (for example
-a robot leaner that moves around). 
+a robot leaner that moves around).
 
-The BIM system itself is likely to fall short of our requirements for rapid programmatic access to the reference data 
+The BIM system itself is likely to fall short of our requirements for rapid programmatic access to the reference data
 or the ability to update the information promptly and communicate those changes, nevertheless a system design approach is
 required that assumes some substantive building reference information remains embedded in an 'external' system.
 
+#### Coordinate Translation
+
+##### In-building <-> Global
+
+![CtoG](static/images/ctog.png)
+
+As shown in the above figure, the translation uses the Global coordinates at the three corners of the building for translation. The (`lat`,`lng`) at the origin of the In-building coordinate system is taken as (`lat_origin`, `lng_origin`). A pair of global coordinates (`lat1`, `lng1`) and (`lat2`, `lng2`) are selected such that an inverse L could be formed.
+
+For global coordinates (lat, lng, alt), and (x, y, f, z), the translation would be;
+
+![eqn](static/images/eqn.png)
+
+Each floor number would be assigned a height in meters so the translation along the z-axis would be;
+
+```
+alt = floor height + z
+```
+
+It should be noted that for a different building, the following values would change; ![eqn](static/images/params.jpg)
+
+##### In-building <-> Object-level
+
+This translation would utilize a mapping between the two systems. Any room in the Object-level system would mapped to a polygon having each vertex corresponding to a In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the room and then moving counter-clockwise.
+
+With the available mapping, any point in the In-building system could be mapped to being in any one of these polygons and consequently to the corresponding room in the Object-level system.
+
+An example is given in figure below. The room `GN17` in the Object-level system would be mapped to the coordinates belonging to the polygon `ABCDEF`. Conversely, any point inside this polygon would be mapped to `GN17`.
+
+![ol](static/images/ol.png)
+
 ### Confidence
 
-`acp_confidence` indicates a general probability a data reading is reliable, on a scale `0..1`. This property is 
-useful as a common generalization. For example, a sensor that is deriving traffic speed from passing vehicles 
-will assign more confidence to a value based on many vehicles than on a few. *How* the confidence value is 
+`acp_confidence` indicates a general probability a data reading is reliable, on a scale `0..1`. This property is
+useful as a common generalization. For example, a sensor that is deriving traffic speed from passing vehicles
+will assign more confidence to a value based on many vehicles than on a few. *How* the confidence value is
 calculated will differ by sensor type and it is currently not clear how this should best be normalized.
 
 The essential point is that confidence in a sensor reading is a general issue, not particularly limited to a few
@@ -226,9 +264,9 @@ Example Rows:
 
 |      acp_id      |                                                                  info                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| avatar-test-001  | {"ts":"1585138617","type":"smartplug","owner":"rv355","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2131.33","y":"53272.22","z":"1","system":"WGB"}} |
-| aoycocr-test-001 | {"ts":"1585138617","type":"smartplug","owner":"jb2328","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2654.33","y":"53432.22","z":"1","system":"WGB"}} |
-| gosund-test-001  | {"ts":"1585138617","type":"smartplug","owner":"mrd45","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2664.33","y":"53432.22","z":"1","system":"WGB"}} |
+| avatar-test-001  | {"ts":"1585138617","type":"smartplug","owner":"rv355","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2131.33","y":"53272.22","f":1,"z":"1","system":"WGB"}} |
+| aoycocr-test-001 | {"ts":"1585138617","type":"smartplug","owner":"jb2328","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2654.33","y":"53432.22","f":1,"z":"1","system":"WGB"}} |
+| gosund-test-001  | {"ts":"1585138617","type":"smartplug","owner":"mrd45","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2664.33","y":"53432.22","f":0,"z":"1","system":"WGB"}} |
 | ijl20-sodaq-ttn  | {"ts": "1585868424", "type": "temperature", "owner": "ijl20", "source": "mqtt_ttn", "features": ["temperature"], "acp_location": {"system": "GPS", "acp_alt": "15", "acp_lat": "52.21124", "acp_lng": "0.09383"}} |
 
 In the above example the info field includes;
@@ -237,4 +275,32 @@ In the above example the info field includes;
 + owner: the owner of the device
 + source: the mqtt source which is publishing the messages from the sensor
 + features: set of features of which the sensor logs information of
-+ acp_location: The location of the sensor. This could be either inside a building in which case we use building specific system like WGB and (x,y,z). This system could be mapped to a latitude, longitude and altitude system and vice-versa.
++ acp_location: The location of the sensor. This could be either inside a building in which case we use building specific system like WGB and (x,y,f,z). This system could be mapped to a latitude, longitude and altitude system and vice-versa.
+
+## ACP Sensor Metadata API (Work in Progress)
+
+#### Requirements
+1. Python3
+2. flask and psycopg2. Could be installed through pip
+
+#### Installation
+Before starting the API server follow the following steps;
+1. Install postgres and restore the `postgres.bak` file in the database `postgres`.
+2. Add the necessary details in the `CONFIG.py` file.
+
+The API endpoints could be accessed by running the following command and then querying *http://localhost:5000/endpoint*
+
+```
+python acp_metadata_api.py
+```
+
+#### API References
+
+`/new` - Opens a form to add sensor information.\
+`/sources` - List all the sensor sources.\
+`/sensors?source=` - List all the sensors belonging to the given source.\
+`/features?sensor=` - List all the feature information the given sensor could provide.\
+`/ctog?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.\
+`/gtoc?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.\
+`/ctoo?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding object-level values.\
+`otoc?system=&room=&inbuildsystem=` - Given the room and system, returns the x, y, z and f in the in-building system specified.
