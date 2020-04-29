@@ -154,32 +154,6 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/ctog')
-def togps():
-    system = request.args.get('system')
-    x = float(request.args.get('x'))
-    y = float(request.args.get('y'))
-    z = float(request.args.get('z'))
-
-    lat, lng, alt = systemsDict[system].getGPS(x,y,z)
-
-    response = {'lat':lat, 'lng':lng, 'alt':alt}
-    json_response = json.dumps(response)
-    return(json_response)
-
-@app.route('/gtoc')
-def toindoor():
-    system = request.args.get('system')
-    lat = float(request.args.get('lat'))
-    lng = float(request.args.get('lng'))
-    alt = float(request.args.get('alt'))
-
-    x, y, z = systemsDict[system].getIndoor(lat, lng, alt)
-
-    response = {'x':x, 'y':y, 'z':z}
-    json_response = json.dumps(response)
-    return(json_response)
-
 
 systemsDict = initialize_indoor_systems()
 
