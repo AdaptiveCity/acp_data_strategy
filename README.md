@@ -177,11 +177,11 @@ a floor number and height from the floor reference as z). This information will 
 a genuine system in use):
 
 ```
-"acp_location": { "system": "WGB", "x": "20.33", "y": "53.22", "f": "1", "z":"0.5"}
+"acp_location": { "system": "WGB", "x": "20.33", "y": "53.22", "f": "1", "zf":"0.5"}
 ```
 In this case, the `system` property of the `acp_location` JSON object determines the expected other properties
-representing the location, in this case `x,y,f,z` where `x` and `y` are in meters relative to some arbitrary `0,0`
-and orientation, a `f` is a floor number, and `z` is the height of the sensor calculated with the floor as reference. Below we show an example of such a system for the William Gates Building (WGB).
+representing the location, in this case `x,y,f,zf` where `x` and `y` are in meters relative to some arbitrary `0,0`
+and orientation, a `f` is a floor number, and `zf` is the height of the sensor calculated with the floor as reference. Below we show an example of such a system for the William Gates Building (WGB).
 
 ![2D](static/images/2d.png)
 
@@ -208,6 +208,23 @@ The BIM system itself is likely to fall short of our requirements for rapid prog
 or the ability to update the information promptly and communicate those changes, nevertheless a system design approach is
 required that assumes some substantive building reference information remains embedded in an 'external' system.
 
+In the BIM system, we consider each object is treated as a crate owing to the analogy of hierarchy with each smaller crate put into a bigger one. For eg, WGB would be a crate with the floors being smaller crates put into the WGB crate. The rooms on each floor would be separate crates put into crates corresponding to the floor crates. An example representation is shown below;
+
+| crate_id 	| parent_crate_id 	|                                  location                                 	|                        boundary                        	| crate_type 	|
+|:--------:	|:---------------:	|:-------------------------------------------------------------------------:	|:------------------------------------------------------:	|:----------:	|
+|    WGB   	|        -        	| {"system":"GPS", "acp_lat"52.2108765, "acp_lng":0.0912775, "acp_alt":0.0} 	|         {"system":"WGB",[0,0,0,78,73,78,73,0]}         	| "building" 	|
+|    GF    	|       WGB       	|             {"system":"WGB", "x":36.5, "y":39, "f":0, "zf":0}             	|         {"system":"WGB",[0,0,0,78,73,78,73,0]}         	|   "floor"  	|
+|   GN15   	|        GF       	|              {"system":"WGB", "x":38, "y":70, "f":0, "zf":0}              	| {"system":"WGB",[35,68,35,73,40,73,40,73,38,70,38,68]} 	|   "room"   	|
+|  sensor1 	|       GN15      	|             {"system":"WGB", "x":38, "y":70, "f":0, "zf":0.59}            	|                            -                           	|  "sensor"  	|
+
+In the above example, each column is defined as follows;
+
+`crate_id` - An identifier for the particular object.\
+`parent_crate_id` - The crate which holds the object with the given crate_id. Assuming a building as the outermost crate, WGB has no parent.\
+`location` - A unique location identifier for the object. When inside a building, the location would the corresponding In-building system.\
+`boundary` - This field stores the coordinates of the vertices of the polygon forming the object. Any object would be mapped to a polygon having each vertex corresponding to an In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the object and then moving counter-clockwise. This would be blank for a sensor.\
+`crate_type` - The type of that particular object.
+
 #### Coordinate Translation
 
 ##### In-building <-> Global
@@ -216,21 +233,34 @@ required that assumes some substantive building reference information remains em
 
 As shown in the above figure, the translation uses the Global coordinates at the three corners of the building for translation. The (`lat`,`lng`) at the origin of the In-building coordinate system is taken as (`lat_origin`, `lng_origin`). A pair of global coordinates (`lat1`, `lng1`) and (`lat2`, `lng2`) are selected such that an inverse L could be formed.
 
-For global coordinates (lat, lng, alt), and (x, y, f, z), the translation would be;
+For the translation on the XY-plane, we would be requiring vertical and horizontal shifts which could be calculated as;
 
-![eqn](static/images/eqn.png)
+vertical shift (vs) = &Delta;y/&Delta;lat\
+horizontal shift (hs) = &Delta;x/(cos(lat)\*&Delta;lng)
 
-Each floor number would be assigned a height in meters so the translation along the z-axis would be;
+###### Global -> In-building
+Thus, given global coordinates (lat, lng) the translation to In-building coordinates (x,y) would be calculated as;
 
-```
-alt = floor height + z
-```
+x = (lng - lng_origin)\*hs\
+y = (lat - lat_origin)\*vs
 
-It should be noted that for a different building, the following values would change; ![eqn](static/images/params.jpg)
+###### In-building -> Global
+Alternatively, given (x,y), the translation to (lat, lng) would be calculated as;
+
+lat = lat_origin + (y\*&Delta;lat)/&Delta;y\
+lng = lng_origin + (x\*cos(lat)\*&Delta;lng)/&Delta;x
+
+###### Translation along z-axis
+
+Each floor number would be assigned a height in meters with respect to the system being followed and stored in a table. So the translation along the z-axis would be;
+
+alt = floor height + zf
+
+It should be noted that for a different building, the values of (lat_origin, lng_origin, &Delta;lat, &Delta;lng, &Delta;x, &Delta;y) would change.
 
 ##### In-building <-> Object-level
 
-This translation would utilize a mapping between the two systems. Any room in the Object-level system would mapped to a polygon having each vertex corresponding to a In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the room and then moving counter-clockwise.
+This translation would utilize a mapping between the two systems described by the `boundary` field in the BIM. Any room in the Object-level system would mapped to a polygon having each vertex corresponding to a In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the room and then moving counter-clockwise.
 
 With the available mapping, any point in the In-building system could be mapped to being in any one of these polygons and consequently to the corresponding room in the Object-level system.
 
