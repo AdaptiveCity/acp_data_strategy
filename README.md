@@ -235,32 +235,43 @@ As shown in the above figure, the translation uses the Global coordinates at the
 
 For the translation on the XY-plane, we would be requiring vertical and horizontal shifts which could be calculated as;
 
-vertical shift (vs) = &Delta;y/&Delta;lat\
-horizontal shift (hs) = &Delta;x/(cos(lat)\*&Delta;lng)
+<blockquote>
+vertical shift (vs) = &Delta;y/&Delta;lat
+
+horizontal shift (hs) = &Delta;x/(cos(lat)*&Delta;lng)
+</blockquote>
 
 ###### Global -> In-building
 Thus, given global coordinates (lat, lng) the translation to In-building coordinates (x,y) would be calculated as;
 
-x = (lng - lng_origin)\*hs\
-y = (lat - lat_origin)\*vs
+<blockquote>
+x = (lng - lng_origin)*hs
+
+y = (lat - lat_origin)*vs
+</blockquote>
 
 ###### In-building -> Global
 Alternatively, given (x,y), the translation to (lat, lng) would be calculated as;
 
-lat = lat_origin + (y\*&Delta;lat)/&Delta;y\
-lng = lng_origin + (x\*cos(lat)\*&Delta;lng)/&Delta;x
+<blockquote>
+lat = lat_origin + (y*&Delta;lat)/&Delta;y
+
+lng = lng_origin + (x*cos(lat)*&Delta;lng)/&Delta;x
+</blockquote>
 
 ###### Translation along z-axis
 
 Each floor number would be assigned a height in meters with respect to the system being followed and stored in a table. So the translation along the z-axis would be;
 
+<blockquote>
 alt = floor height + zf
+</blockquote>
 
 It should be noted that for a different building, the values of (lat_origin, lng_origin, &Delta;lat, &Delta;lng, &Delta;x, &Delta;y) would change.
 
 ##### In-building <-> Object-level
 
-This translation would utilize a mapping between the two systems described by the `boundary` field in the BIM. Any room in the Object-level system would mapped to a polygon having each vertex corresponding to a In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the room and then moving counter-clockwise.
+This translation would utilize a mapping between the two systems described by the `boundary` field in the BIM. Any object in the Object-level system would mapped to a polygon having each vertex corresponding to an In-building coordinate.
 
 With the available mapping, any point in the In-building system could be mapped to being in any one of these polygons and consequently to the corresponding room in the Object-level system.
 
