@@ -70,6 +70,24 @@ margin: 0 auto;
 background-color: #2980B9;
 }
 
+.logoutbtn {
+border: 2px solid transparent;
+background: #ffffff;
+color: black;
+font-size: 16px;
+font-weight: bold;
+line-height: 25px;
+padding: 10px 0;
+text-decoration: none;
+text-shadow: none;
+border-radius: 3px;
+box-shadow: none;
+transition: 0.25s;
+display: block;
+width: 100px;
+margin: 0 auto;
+}
+
 .login-link {
 font-size: 12px;
 color: #444;
