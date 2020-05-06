@@ -1,0 +1,12 @@
+<link rel="stylesheet" href="/static/style/style.css?v=1.0.0" type="text/css">
+{% block body %}{% endblock %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+    <p onclick="this.parentElement.style.display='none';" style="color:white; font-weight:bold; text-align:center">{{message}}</p>
+      <!-- <li>{{ message }}</li> -->
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block body %}
+<form action="/addsensor" method="POST">
+<div class="login">
+  <div class="login-screen">
+    <div class="app-title">
+      <h1>Add/Update Sensor</h1>
+    </div>
+    <div class="login-form">
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="acp_id" name="acp_id">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Unique name for the sensor.
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="Sensor Type" name="type">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Type of the sensor.
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="Sensor Source" name="source">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Source of the sensor.
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="Owner" name="owner">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Owner of the sensor.
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="Features" name="features">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Feature data this sensor provides. List all features separated by commas. Eg: feature1, feature2, ....
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="acp_location" name="acp_location">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Location of the sensor. Should be following either of the Global, In-building, or Object-level Hierarchy format.
+            <br><br> Global: {"system":"GPS", "acp_lat":52.2108765, "acp_lng":0.0912775, "acp_alt":0.0}
+            <br><br> In-building: {"system":"WGB", "x":36.5, "y":39, "f":0, "zf":0}
+            <br><br> OLH: {"system":"OLH", "crate_id":"FF", "parent_crate_id":"WGB", "crate_type":"floor"}
+          </span>
+        </div>
+      </div>
+      <input type="submit" value="Submit" class="btn btn-primary btn-large btn-block">
+    </div>
+  </div>
+</div>
+</form>
+{% endblock %}

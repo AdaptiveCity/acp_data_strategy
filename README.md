@@ -212,17 +212,16 @@ In the BIM system, we consider each object is treated as a crate owing to the an
 
 | crate_id 	| parent_crate_id 	|                                  location                                 	|                        boundary                        	| crate_type 	|
 |:--------:	|:---------------:	|:-------------------------------------------------------------------------:	|:------------------------------------------------------:	|:----------:	|
-|    WGB   	|        -        	| {"system":"GPS", "acp_lat"52.2108765, "acp_lng":0.0912775, "acp_alt":0.0} 	|         {"system":"WGB",[0,0,0,78,73,78,73,0]}         	| "building" 	|
+|    WGB   	|        -        	| {"system":"GPS", "acp_lat":52.2108765, "acp_lng":0.0912775, "acp_alt":0.0} 	|         {"system":"WGB",[0,0,0,78,73,78,73,0]}         	| "building" 	|
 |    GF    	|       WGB       	|             {"system":"WGB", "x":36.5, "y":39, "f":0, "zf":0}             	|         {"system":"WGB",[0,0,0,78,73,78,73,0]}         	|   "floor"  	|
 |   GN15   	|        GF       	|              {"system":"WGB", "x":38, "y":70, "f":0, "zf":0}              	| {"system":"WGB",[35,68,35,73,40,73,40,73,38,70,38,68]} 	|   "room"   	|
-|  sensor1 	|       GN15      	|             {"system":"WGB", "x":38, "y":70, "f":0, "zf":0.59}            	|                            -                           	|  "sensor"  	|
 
 In the above example, each column is defined as follows;
 
 `crate_id` - An identifier for the particular object.\
 `parent_crate_id` - The crate which holds the object with the given crate_id. Assuming a building as the outermost crate, WGB has no parent.\
 `location` - A unique location identifier for the object. When inside a building, the location would the corresponding In-building system.\
-`boundary` - This field stores the coordinates of the vertices of the polygon forming the object. Any object would be mapped to a polygon having each vertex corresponding to an In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the object and then moving counter-clockwise. This would be blank for a sensor.\
+`boundary` - This field stores the coordinates of the vertices of the polygon forming the object. Any object would be mapped to a polygon having each vertex corresponding to an In-building coordinate. The standard being to start from the vertex on the leftmost lower corner of the object and then moving counter-clockwise. \
 `crate_type` - The type of that particular object.
 
 #### Coordinate Translation
@@ -335,9 +334,18 @@ The API endpoints could be accessed by running the following command and then qu
 python acp_metadata_api.py
 ```
 
+#### Add/Update Sensor Information
+You need to visit *http://localhost:5000/admin* to add/update any sensor. Add any admin username and password in the `CONFIG.py` file for local testing. Currently the login is through a single user which will be extended to multiple users on deployment.
+
+Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. The location field has validation and need to be of specific format to be accepted.
+
+TODO:
+1. Database update
+2. Multiple user login
+
 #### API References
 
-`/new` - Opens a form to add sensor information.\
+`/admin` - Opens a form to add sensor information.\
 `/sources` - List all the sensor sources.\
 `/sensors?source=` - List all the sensors belonging to the given source.\
 `/features?sensor=` - List all the feature information the given sensor could provide.\
