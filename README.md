@@ -340,8 +340,7 @@ You need to visit *http://localhost:5000/admin* to add/update any sensor. Add an
 Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. The location field has validation and need to be of specific format to be accepted.
 
 TODO:
-1. Database update
-2. Multiple user login
+1. Multiple user login
 
 #### API References
 

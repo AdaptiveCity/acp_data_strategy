@@ -115,7 +115,34 @@ def validateLocationInput(acp_location):
 
 def updateMetadata(acp_id, type, source, owner, features, acp_location):
     acplocValidation = validateLocationInput(acp_location)
-    return acplocValidation
+    if not acplocValidation:
+        return False
+
+    ftrList = features.split(',')
+    ts = datetime.timestamp(datetime.now())
+    data = {"ts":ts,"type":type, "source":source, "owner":owner, "features":features, "acp_location":json.loads(acp_location)}
+
+    flag = False
+    con = psycopg2.connect(database=PGDATABASE,
+                            user=PGUSER,
+                            password=PGPASSWORD,
+                            host=PGHOST,
+                            port=PGPORT)
+    cur = con.cursor()
+
+    query = "INSERT INTO " + TABLE_MD + " (acp_id, info) VALUES ('" + acp_id + "','" + json.dumps(data) + "')"
+    try:
+        cur.execute(query)
+        flag = True
+    except:
+        if DEBUG:
+            print(cur.query)
+            print(sys.exc_info())
+
+    con.commit()
+    con.close()
+    
+    return flag
 
 
 class inbuildingCoord:
@@ -176,12 +203,12 @@ def logout():
 def addsensor():
     status = False
     try:
-        acp_id = request.form['acp_id']
-        type = request.form['type']
-        source = request.form['source']
-        owner = request.form['owner']
-        features = request.form['features']
-        acp_location = request.form['acp_location']
+        acp_id = (request.form['acp_id']).strip()
+        type = (request.form['type']).strip()
+        source = (request.form['source']).strip()
+        owner = (request.form['owner']).strip()
+        features = (request.form['features']).strip()
+        acp_location = (request.form['acp_location']).strip()
         status = updateMetadata(acp_id, type, source, owner, features, acp_location)
     except KeyError:
         status = False
