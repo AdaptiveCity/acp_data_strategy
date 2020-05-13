@@ -218,7 +218,7 @@ def addsensor():
         flash('Error while adding. Please check the inputs.')
     return admin()
 
-@app.route('/sources')
+@app.route('/api/sources')
 def sources():
     sourceList = getSources()
     response = {}
@@ -226,7 +226,7 @@ def sources():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/sensors')
+@app.route('/api/sensors')
 def sensors():
     if DEBUG:
         print('Requested')
@@ -240,7 +240,7 @@ def sensors():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/features')
+@app.route('/api/features')
 def features():
 
     sensor = request.args.get('sensor')
@@ -252,7 +252,7 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/ctog')
+@app.route('/api/ctog')
 def togps():
     system = request.args.get('system')
     x = float(request.args.get('x'))
@@ -266,7 +266,7 @@ def togps():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/gtoc')
+@app.route('/api/gtoc')
 def toindoor():
     system = request.args.get('system')
     lat = float(request.args.get('lat'))
