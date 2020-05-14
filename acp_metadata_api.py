@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, jsonify, redirect, flash, session, abort
+from flask_cors import CORS, cross_origin
 from os import listdir, path, urandom
 import json
 from collections import defaultdict
@@ -9,6 +10,8 @@ import psycopg2
 from CONFIG import *
 
 app = Flask(__name__)
+cors = CORS(app)
+
 DEBUG = True
 TABLE_ISM = 'indoor_system_metadata'
 TABLE_MD = 'metadata'
@@ -79,7 +82,7 @@ def getFeatures(sensor):
     query = ''
     slist = []
 
-    query = "SELECT info->'features from "+TABLE_MD+ " WHERE acp_id='"+sensor+"'"
+    query = "SELECT info->'features' from "+TABLE_MD+ " WHERE acp_id='"+sensor+"'"
 
     con = psycopg2.connect(database=PGDATABASE,
                             user=PGUSER,
@@ -91,7 +94,7 @@ def getFeatures(sensor):
     cur.execute(query)
     rows = cur.fetchall()
 
-    return rows[0][0]
+    return rows[0][0].split(',')
 
 def validateLocationInput(acp_location):
     validation = False
@@ -222,7 +225,9 @@ def addsensor():
 def sources():
     sourceList = getSources()
     response = {}
-    response['sensors'] = sourceList
+    response['data'] = []
+    for source in sourceList:
+        response['data'].append({'source':source})
     json_response = json.dumps(response)
     return(json_response)
 
@@ -230,13 +235,15 @@ def sources():
 def sensors():
     if DEBUG:
         print('Requested')
-
+    print(request)
     source = request.args.get('source')
 
     sensorList = getSensors(source)
 
     response = {}
-    response['sensors'] = sensorList
+    response['data'] = []
+    for sensor in sensorList:
+        response['data'].append({'sensor':sensor})
     json_response = json.dumps(response)
     return(json_response)
 
@@ -248,7 +255,9 @@ def features():
     featureList = getFeatures(sensor)
 
     response = {}
-    response['features'] = featureList
+    response['data'] = []
+    for feature in featureList:
+        response['data'].append({'feature':feature.strip()})
     json_response = json.dumps(response)
     return(json_response)
 
