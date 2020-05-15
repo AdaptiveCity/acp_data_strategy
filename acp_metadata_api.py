@@ -78,10 +78,6 @@ def getSensors(source):
     return slist
 
 def getFeatures(sensor):
-
-    query = ''
-    slist = []
-
     query = "SELECT info->'features' from "+TABLE_MD+ " WHERE acp_id='"+sensor+"'"
 
     con = psycopg2.connect(database=PGDATABASE,
@@ -120,8 +116,7 @@ def updateMetadata(acp_id, type, source, owner, features, acp_location):
     acplocValidation = validateLocationInput(acp_location)
     if not acplocValidation:
         return False
-
-    ftrList = features.split(',')
+    
     ts = datetime.timestamp(datetime.now())
     data = {"ts":ts,"type":type, "source":source, "owner":owner, "features":features, "acp_location":json.loads(acp_location)}
 
