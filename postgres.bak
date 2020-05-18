@@ -35,6 +35,31 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: bim; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bim (
+    crate_id character varying NOT NULL,
+    parent_crate_id character varying NOT NULL,
+    crate_type character varying NOT NULL
+);
+
+
+ALTER TABLE public.bim OWNER TO postgres;
+
+--
+-- Name: crate_boundary; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.crate_boundary (
+    crate_id character varying NOT NULL,
+    boundary integer[] NOT NULL
+);
+
+
+ALTER TABLE public.crate_boundary OWNER TO postgres;
+
+--
 -- Name: indoor_system_metadata; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -62,6 +87,36 @@ CREATE TABLE public.metadata (
 
 
 ALTER TABLE public.metadata OWNER TO postgres;
+
+--
+-- Data for Name: bim; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.bim (crate_id, parent_crate_id, crate_type) FROM stdin;
+WGB	West Cambridge	building
+GF	WGB	floor
+FF	WGB	floor
+GN15	GF	room
+FN07	FF	room
+FN05	FF	room
+FN15	FF	room
+\.
+
+
+--
+-- Data for Name: crate_boundary; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.crate_boundary (crate_id, boundary) FROM stdin;
+WGB	{0,0,0,78,73,78,73,0}
+GF	{0,0,0,78,73,78,73,0}
+FF	{0,0,0,78,73,78,73,0}
+GN15	{35,68,35,73,40,73,40,73,38,70,38,68}
+FN05	{40,68,40,73,48,73,48,68}
+FN07	{56,68,56,73,64,73,64,68}
+FN15	{35,68,35,73,40,73,40,73,38,70,38,68}
+\.
+
 
 --
 -- Data for Name: indoor_system_metadata; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -95,6 +150,22 @@ aoycocr-test-001	{"ts": "1585138617", "type": "smartplug", "owner": "jb2328", "s
 gosund-test-001	{"ts": "1585138617", "type": "smartplug", "owner": "mrd45", "source": "mqtt_csn", "features": "power", "acp_location": {"f": 1, "x": "42.33", "y": "23.22", "zf": "1.6", "system": "WGB"}}
 ijl20-sodaq-ttn	{"ts": "1585868424", "type": "temperature", "owner": "ijl20", "source": "mqtt_ttn", "features": "temperature", "acp_location": {"system": "GPS", "acp_alt": "15", "acp_lat": "52.21124", "acp_lng": "0.09383"}}
 \.
+
+
+--
+-- Name: bim bim_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bim
+    ADD CONSTRAINT bim_pkey PRIMARY KEY (crate_id);
+
+
+--
+-- Name: crate_boundary crate_boundary_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.crate_boundary
+    ADD CONSTRAINT crate_boundary_pkey PRIMARY KEY (crate_id);
 
 
 --

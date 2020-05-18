@@ -7,6 +7,9 @@ import sys
 from datetime import datetime
 from math import cos, radians
 import psycopg2
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+import psycopg2
 from CONFIG import *
 
 app = Flask(__name__)
@@ -15,6 +18,8 @@ cors = CORS(app)
 DEBUG = True
 TABLE_ISM = 'indoor_system_metadata'
 TABLE_MD = 'metadata'
+TABLE_BIM = 'bim'
+TABLE_CRATE_BOUNDARY = 'crate_boundary'
 
 def initialize_indoor_systems():
     sdict = {}
@@ -142,6 +147,43 @@ def updateMetadata(acp_id, type, source, owner, features, acp_location):
     
     return flag
 
+def get_all_crates(floor_id):
+    query = "SELECT * FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id IN (SELECT crate_id from "+TABLE_BIM+" WHERE parent_crate_id='"+floor_id+"')"
+
+    con = psycopg2.connect(database=PGDATABASE,
+                            user=PGUSER,
+                            password=PGPASSWORD,
+                            host=PGHOST,
+                            port=PGPORT)
+
+    cur = con.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    crate_dict = defaultdict(list)
+
+    for row in rows:
+        crate_dict[row[0]] = row[1]
+
+    return crate_dict
+
+def get_crate(crates, x, y):
+    point = Point(float(x), float(y))
+    for key in crates.keys():
+        boundary = crates[key]
+        if point.x < boundary[0]:
+            continue
+        else:
+            plist = []
+            i = 0
+            while i < len(boundary) - 1:
+                plist.append((boundary[i],boundary[i+1]))
+                i+=2
+            polygon = Polygon(plist)
+            print(polygon)
+            if polygon.contains(point):
+                return key
+    return ''
 
 class inbuildingCoord:
     def __init__(self, system, lat_o, lng_o, dlat, dlng, dx, dy):
@@ -262,7 +304,7 @@ def togps():
     x = float(request.args.get('x'))
     y = float(request.args.get('y'))
     f = float(request.args.get('f'))
-    z = float(request.args.get('z'))
+    z = float(request.args.get('zf'))
 
     lat, lng, alt = systemsDict[system].getGPS(x,y,f,z)
 
@@ -283,8 +325,32 @@ def toindoor():
     json_response = json.dumps(response)
     return(json_response)
 
+@app.route('/api/ctoo')
+def toolh():
+    system = request.args.get('system')
+    x = float(request.args.get('x'))
+    y = float(request.args.get('y'))
+    f = float(request.args.get('f'))
+
+    floor_id = floors[system][int(f)]
+
+    crates = get_all_crates(floor_id)
+    crate_id = get_crate(crates, x, y)
+    
+    response = {}
+
+    if crate_id == '':
+        response = {'crate_id':floors[system][int(f)], 'parent_crate_id':system, 'crate_type':'floor'}
+    else:
+        response = {'crate_id':crate_id, 'parent_crate_id':floors[system][int(f)], 'crate_type':'room'}
+                
+    json_response = json.dumps(response)
+    return(json_response)
 
 systemsDict = initialize_indoor_systems()
+
+## Temporary variable, will be replaced later
+floors = {'WGB':['GF','FF','SF'], 'IMF':['GFF','FFF','SFF']}
 
 app.secret_key = urandom(12)
 app.run(port=5000,debug=DEBUG)

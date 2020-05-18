@@ -1,7 +1,7 @@
 PGHOST='127.0.0.1'
 PGDATABASE='postgres'
 PGUSER='postgres'
-PGPASSWORD=''
+PGPASSWORD='935284!Post'
 PGPORT='5432'
 ADMIN='admin'
 ADMIN_PASSWORD='password'
