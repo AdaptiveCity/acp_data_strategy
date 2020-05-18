@@ -179,7 +179,6 @@ def get_crate(crates, x, y):
                 plist.append((boundary[i],boundary[i+1]))
                 i+=2
             polygon = Polygon(plist)
-            print(polygon)
             if polygon.contains(point):
                 return key
     return ''
