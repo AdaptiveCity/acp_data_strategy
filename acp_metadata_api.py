@@ -9,7 +9,6 @@ from math import cos, radians
 import psycopg2
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-import psycopg2
 from CONFIG import *
 
 app = Flask(__name__)

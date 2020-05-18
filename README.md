@@ -321,11 +321,11 @@ In the above example the info field includes;
 
 #### Requirements
 1. Python3
-2. flask and psycopg2. Could be installed through pip
+2. flask, psycopg2, flask_cors, shapely. Could be installed through pip
 
 #### Installation
 Before starting the API server follow the following steps;
-1. Install postgres and restore the `postgres.bak` file in the database `postgres`.
+1. Install postgres and restore the `postgres.bak` file in the database `postgres`. The backup has been updated with new data and tables.
 2. Add the necessary details in the `CONFIG.py` file.
 
 The API endpoints could be accessed by running the following command and then querying *http://localhost:5000/endpoint*
