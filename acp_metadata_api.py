@@ -2,265 +2,28 @@ from flask import Flask, request, render_template, jsonify, redirect, flash, ses
 from flask_cors import CORS, cross_origin
 from os import listdir, path, urandom
 import json
-from collections import defaultdict
-import sys
-from datetime import datetime
-from math import cos, radians
-import psycopg2
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-from CONFIG import *
+from CONFIG import TABLE_ISM, ADMIN, ADMIN_PASSWORD
+from dbconn import dbread
+from translation import *
+from read_metadata import *
+from write_metadata import updateMetadata
+from InBuildingCoordinates import InBuildingCoordinates
 
 app = Flask(__name__)
 cors = CORS(app)
 
 DEBUG = True
-TABLE_ISM = 'indoor_system_metadata'
-TABLE_MD = 'metadata'
-TABLE_BIM = 'bim'
-TABLE_CRATE_BOUNDARY = 'crate_boundary'
 
 def initialize_indoor_systems():
     sdict = {}
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-    cur = con.cursor()
-    cur.execute("SELECT * from "+TABLE_ISM)
-    rows = cur.fetchall()
 
+    query = "SELECT * from "+TABLE_ISM
+    rows = dbread(query)
     for row in rows:
-        iC = inbuildingCoord(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        iC = InBuildingCoordinates(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
         sdict[row[0]] = iC
 
     return sdict
-
-def getSources():
-
-    query = "SELECT distinct info->'source' from "+TABLE_MD
-    slist = []
-
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-
-    cur = con.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    for row in rows:
-        slist.append(row[0])
-
-    return slist
-
-def getSensors(source):
-
-    query = ''
-    slist = []
-
-    if source == "":
-        query = "SELECT acp_id from "+TABLE_MD
-    else:
-        query = "SELECT acp_id from "+TABLE_MD+ " WHERE info->>'source'='"+source+"'"
-
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-
-    cur = con.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    for row in rows:
-        slist.append(row[0])
-    return slist
-
-def getFeatures(sensor):
-    query = "SELECT info->'features' from "+TABLE_MD+ " WHERE acp_id='"+sensor+"'"
-
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-
-    cur = con.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    return rows[0][0].split(',')
-
-def validateLocationInput(acp_location):
-    validation = False
-    try:
-        jData = json.loads(acp_location)
-        if jData['system'] == 'GPS':
-            if isinstance(jData['acp_lat'], (float, int)) and isinstance(jData['acp_lng'], (float, int)) and isinstance(jData['acp_alt'], (float, int)):
-                validation = True
-        elif jData['system'] == 'WGB':
-            if isinstance(jData['x'], (float, int)) and isinstance(jData['y'], (float, int)) and isinstance(jData['f'], (float, int)) and isinstance(jData['zf'], (float, int)):
-                validation = True
-        elif jData['system'] == "OLH":
-            if 'crate_id' in jData and 'parent_crate_id' in jData and 'crate_type' in jData:
-                validation = True
-    except:
-        if DEBUG:
-            print(sys.exc_info())
-
-    return validation
-
-
-def updateMetadata(acp_id, type, source, owner, features, acp_location):
-    acplocValidation = validateLocationInput(acp_location)
-    if not acplocValidation:
-        return False
-    
-    ts = datetime.timestamp(datetime.now())
-    data = {"ts":ts,"type":type, "source":source, "owner":owner, "features":features, "acp_location":json.loads(acp_location)}
-
-    flag = False
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-    cur = con.cursor()
-
-    query = "INSERT INTO " + TABLE_MD + " (acp_id, info) VALUES ('" + acp_id + "','" + json.dumps(data) + "')"
-    try:
-        cur.execute(query)
-        flag = True
-    except:
-        if DEBUG:
-            print(cur.query)
-            print(sys.exc_info())
-
-    con.commit()
-    con.close()
-    
-    return flag
-
-def get_all_crates(floor_id):
-    query = "SELECT * FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id IN (SELECT crate_id from "+TABLE_BIM+" WHERE parent_crate_id='"+floor_id+"')"
-
-    con = psycopg2.connect(database=PGDATABASE,
-                            user=PGUSER,
-                            password=PGPASSWORD,
-                            host=PGHOST,
-                            port=PGPORT)
-
-    cur = con.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    crate_dict = defaultdict(list)
-
-    for row in rows:
-        crate_dict[row[0]] = row[1]
-
-    return crate_dict
-
-def get_crate(crates, x, y):
-    point = Point(float(x), float(y))
-    for key in crates.keys():
-        boundary = crates[key]
-        if point.x < boundary[0]:
-            continue
-        else:
-            plist = []
-            i = 0
-            while i < len(boundary) - 1:
-                plist.append((boundary[i],boundary[i+1]))
-                i+=2
-            polygon = Polygon(plist)
-            if polygon.contains(point):
-                return key
-    return ''
-
-def getXY(crate_id):
-    query = "SELECT boundary FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id = '"+crate_id+"'"
-
-    con = psycopg2.connect(database=PGDATABASE,
-                        user=PGUSER,
-                        password=PGPASSWORD,
-                        host=PGHOST,
-                        port=PGPORT)
-
-    cur = con.cursor()
-
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    boundary = rows[0][0]
-    plist = []
-    i = 0
-    while i < len(boundary) - 1:
-        plist.append((boundary[i],boundary[i+1]))
-        i+=2
-    polygon = Polygon(plist)
-    cPoint = polygon.centroid
-
-    return round(cPoint.x,2), round(cPoint.y,2)
-
-def getCrateFloor(system, crate_id):
-    if crate_id == system:
-        return ''
-
-    elif crate_id in floors[system]:
-        return floors[system].index(crate_id)
-    
-    query = "SELECT parent_crate_id FROM "+TABLE_BIM+" WHERE crate_id = '"+crate_id+"'"
-
-    con = psycopg2.connect(database=PGDATABASE,
-                        user=PGUSER,
-                        password=PGPASSWORD,
-                        host=PGHOST,
-                        port=PGPORT)
-
-    cur = con.cursor()
-
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    return floors[system].index(rows[0][0])
-
-class inbuildingCoord:
-    def __init__(self, system, lat_o, lng_o, dlat, dlng, dx, dy):
-        self.system = system
-        self.lat_o = float(lat_o)
-        self.lng_o = float(lng_o)
-        self.dlat = float(dlat)
-        self.dlng = float(dlng)
-        self.dx = float(dx)
-        self.dy = float(dy)
-
-    def getGPS(self, x, y, f, z):
-
-        lat = self.lat_o + (y*self.dlat)/self.dy
-        lng = self.lng_o + (x*cos(radians(lat))*self.dlng)/self.dx
-
-        return lat, lng, f+z
-
-    def getIndoor(self, lat, lng, alt):
-
-        vs = self.dy/self.dlat
-        hs = self.dx/(cos(radians(lat))*self.dlng)
-
-        x = (lng - self.lng_o) * hs
-        y = (lat - self.lat_o) * vs
-        f, z = 0, 0
-        if alt != 0:
-            f = int(alt/10)
-            z = round(((alt*alt)%alt)/alt,2)
-
-        return x, y, f, z
-
 
 @app.route('/admin')
 def admin():
@@ -289,12 +52,12 @@ def addsensor():
     status = False
     try:
         acp_id = (request.form['acp_id']).strip()
-        type = (request.form['type']).strip()
+        stype = (request.form['type']).strip()
         source = (request.form['source']).strip()
         owner = (request.form['owner']).strip()
         features = (request.form['features']).strip()
         acp_location = (request.form['acp_location']).strip()
-        status = updateMetadata(acp_id, type, source, owner, features, acp_location)
+        status = updateMetadata(acp_id, stype, source, owner, features, acp_location)
     except KeyError:
         status = False
     if status:
@@ -406,9 +169,6 @@ def otoindoor():
 
 
 systemsDict = initialize_indoor_systems()
-
-## Temporary variable, will be replaced later
-floors = {'WGB':['GF','FF','SF'], 'IMF':['GFF','FFF','SFF']}
 
 app.secret_key = urandom(12)
 app.run(port=5000,debug=DEBUG)
