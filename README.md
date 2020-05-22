@@ -348,7 +348,7 @@ TODO:
 + `/api/sources` - List all the sensor sources.
 + `/api/sensors?source=` - List all the sensors belonging to the given source.
 + `/api/features?sensor=` - List all the feature information the given sensor could provide.
-+ `/api/ctog?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
-+ `/api/gtoc?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.
-+ `/api/ctoo?system=&x=&y=&f=` - Given x, y, f and z of a given system, returns the corresponding object-level values.
-+ `/api/otoc?system=&room=&inbuildsystem=` - Given the room and system, returns the x, y, z and f in the in-building system specified.
++ `/api/itog?system=&x=&y=&f=&z=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
++ `/api/gtoi?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.
++ `/api/itoo?system=&x=&y=&f=` - Given x, y, f and z of a given system, returns the corresponding object-level values.
++ `/api/otoi?system=&crate_id=` - Given the crate_id and system, returns the x, y, z and f in the in-building system specified.

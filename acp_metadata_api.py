@@ -183,6 +183,53 @@ def get_crate(crates, x, y):
                 return key
     return ''
 
+def getXY(crate_id):
+    query = "SELECT boundary FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id = '"+crate_id+"'"
+
+    con = psycopg2.connect(database=PGDATABASE,
+                        user=PGUSER,
+                        password=PGPASSWORD,
+                        host=PGHOST,
+                        port=PGPORT)
+
+    cur = con.cursor()
+
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    boundary = rows[0][0]
+    plist = []
+    i = 0
+    while i < len(boundary) - 1:
+        plist.append((boundary[i],boundary[i+1]))
+        i+=2
+    polygon = Polygon(plist)
+    cPoint = polygon.centroid
+
+    return round(cPoint.x,2), round(cPoint.y,2)
+
+def getCrateFloor(system, crate_id):
+    if crate_id == system:
+        return ''
+
+    elif crate_id in floors[system]:
+        return floors[system].index(crate_id)
+    
+    query = "SELECT parent_crate_id FROM "+TABLE_BIM+" WHERE crate_id = '"+crate_id+"'"
+
+    con = psycopg2.connect(database=PGDATABASE,
+                        user=PGUSER,
+                        password=PGPASSWORD,
+                        host=PGHOST,
+                        port=PGPORT)
+
+    cur = con.cursor()
+
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    return floors[system].index(rows[0][0])
+
 class inbuildingCoord:
     def __init__(self, system, lat_o, lng_o, dlat, dlng, dx, dy):
         self.system = system
@@ -296,8 +343,8 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/ctog')
-def togps():
+@app.route('/api/itog')
+def itogps():
     system = request.args.get('system')
     x = float(request.args.get('x'))
     y = float(request.args.get('y'))
@@ -310,8 +357,8 @@ def togps():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/gtoc')
-def toindoor():
+@app.route('/api/gtoi')
+def gtoindoor():
     system = request.args.get('system')
     lat = float(request.args.get('lat'))
     lng = float(request.args.get('lng'))
@@ -319,12 +366,12 @@ def toindoor():
 
     x, y, f, z = systemsDict[system].getIndoor(lat, lng, alt)
 
-    response = {'x':x, 'y':y, 'f':f, 'z':z}
+    response = {'x':x, 'y':y, 'f':f, 'zf':z}
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/ctoo')
-def toolh():
+@app.route('/api/itoo')
+def itoolh():
     system = request.args.get('system')
     x = float(request.args.get('x'))
     y = float(request.args.get('y'))
@@ -344,6 +391,19 @@ def toolh():
                 
     json_response = json.dumps(response)
     return(json_response)
+
+@app.route('/api/otoi')
+def otoindoor():
+    system = request.args.get('system')
+    crate_id = request.args.get('crate_id')
+    x, y = getXY(crate_id)
+    f = getCrateFloor(system, crate_id)
+
+    response = {'system':system, 'x':x, 'y':y, 'f':f, 'z':0}
+
+    json_response = json.dumps(response)
+    return(json_response)
+
 
 systemsDict = initialize_indoor_systems()
 
