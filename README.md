@@ -348,6 +348,7 @@ TODO:
 + `/api/sources` - List all the sensor sources.
 + `/api/sensors?source=` - List all the sensors belonging to the given source.
 + `/api/features?sensor=` - List all the feature information the given sensor could provide.
++ `/api/sensorincrate?crate_id=` - Lists all the sensors in the specified crate. Recurssively checks the child crates too.
 + `/api/itog?system=&x=&y=&f=&zf=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
 + `/api/gtoi?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.
 + `/api/itoo?system=&x=&y=&f=` - Given x, y, f and z of a given system, returns the corresponding object-level values.

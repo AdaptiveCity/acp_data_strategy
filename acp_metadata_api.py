@@ -106,6 +106,19 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
+@app.route('/api/sensorincrate')
+def sensorincrate():
+
+    crate_id = request.args.get('crate_id')
+
+    sensorList = getSensorsInCrate(crate_id)
+    response = {}
+    response['data'] = []
+    for sensor in sensorList:
+        response['data'].append({'sensor':sensor})
+    json_response = json.dumps(response)
+    return(json_response)
+
 @app.route('/api/itog')
 def itogps():
     system = request.args.get('system')
