@@ -45,3 +45,15 @@ In the above example the bim_info field includes;
 + description - Crate description.
 + acp_boundary - This attribute stores the coordinates of the vertices of the polygon forming the object. Any object would be mapped to a polygon having each vertex corresponding to the In-building coordinate of the building this crate belongs to. The standard being to start from the vertex on the leftmost lower corner of the object and then moving counter-clockwise. Format is of the form {x1, y1, x2, y2, ...}.
 + parent_crate_id - The crate in BIM in which this crate is included.
+
+### indoor_system_metadata
+This table stores the constants required for the translation In-building <-> Global. It has two columns;
++ system_name (VARCHAR) - The indoor system being used.
++ info (jsonb) - Stores all the constants that the translation would require.
+
+Example rows:
+
+|      system_name      |                                                                  info                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| wgb  | {"dx": 73.67,"dy": 78.37,"dlat": 0.000676,"dlng": -0.001046,"lat_origin": 52.2105068,"lng_origin": 0.0924383} |
+| ifm | {"dx": 53.53,"dy": 62.03,"dlat": 0.000551,"dlng": -0.000764,"lat_origin": 52.209161,"lng_origin": 0.087682} |
