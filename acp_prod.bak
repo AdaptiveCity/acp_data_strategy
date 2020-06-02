@@ -32,8 +32,6 @@ COMMENT ON EXTENSION adminpack IS 'administrative functions for PostgreSQL';
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
-
 --
 -- Name: bim; Type: TABLE; Schema: public; Owner: acp_prod
 --
