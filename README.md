@@ -290,51 +290,56 @@ sensor types, so it is helpful on the Adaptive City platform to abstract this in
 the other standardized fields, *in addition* to the data values the sensor will send anyway allowing downstream processing
 knowledgeable about the intricacies of the particular sensor to make its own interpretation of confidence or accuracy.
 
-## Sensor metadata database
-
-Name: postgres
-
-## Tables
-### metadata
-This table stores the metadata information of all the sensors being deployed. It has two columns as of now;
-+ acp_id (VARCHAR): This is the unique id given to each of the deployed sennsors.
-+ info (jsonb): This currently stores all the information of the sensor. As different category of sensors could have specific metadata information unique to itself, we opted for a jsonb type.
-
-Example Rows:
-
-|      acp_id      |                                                                  info                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| avatar-test-001  | {"ts":"1585138617","type":"smartplug","owner":"rv355","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2131.33","y":"53272.22","f":1,"z":"1","system":"WGB"}} |
-| aoycocr-test-001 | {"ts":"1585138617","type":"smartplug","owner":"jb2328","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2654.33","y":"53432.22","f":1,"z":"1","system":"WGB"}} |
-| gosund-test-001  | {"ts":"1585138617","type":"smartplug","owner":"mrd45","source":"mqtt_csn","features":["power"],"acp_location":{"x":"2664.33","y":"53432.22","f":0,"z":"1","system":"WGB"}} |
-| ijl20-sodaq-ttn  | {"ts": "1585868424", "type": "temperature", "owner": "ijl20", "source": "mqtt_ttn", "features": ["temperature"], "acp_location": {"system": "GPS", "acp_alt": "15", "acp_lat": "52.21124", "acp_lng": "0.09383"}} |
-
-In the above example the info field includes;
-+ acp_ts: The Unix timestamp when the metadata was stored. Owing to the fact that the location could change later we have opted to include timestamp.
-+ type: type of sensor
-+ owner: the owner of the device
-+ source: the mqtt source which is publishing the messages from the sensor
-+ features: set of features of which the sensor logs information of
-+ acp_location: The location of the sensor. This could be either inside a building in which case we use building specific system like WGB and (x,y,f,z). This system could be mapped to a latitude, longitude and altitude system and vice-versa.
-
 ## ACP Sensor Metadata API (Work in Progress)
 
-#### Requirements
+### Requirements
 1. Python3
 2. flask, psycopg2, flask_cors, shapely. Could be installed through pip
 
-#### Installation
+### Installation
 Before starting the API server follow the following steps;
-1. Install postgres and restore the `postgres.bak` file in the database `postgres`. The backup has been updated with new data and tables.
-2. Add the necessary details in the `CONFIG.py` file.
+#### Install Postgres and Setup Database
+
+Install postgres
+
+```
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+```
+
+Create the role `acp_prod` by executing
+```
+sudo -u postgres createuser --interactive
+```
+and complete the form to create new role `acp_prod`
+
+Create the database `acp_prod` by executing
+```
+sudo -u postgres createdb acp_prod
+```
+
+Postgres by default opens the database `acp_prod` if you are logged in as the user `acp_prod`. Switch to the `acp_prod` account and follow the following;
+
+```
+git clone https://github.com/AdaptiveCity/acp_data_strategy.git
+cd acp_data_strategy
+```
+
+Now restore the dump file into the newly created database;
+
+```
+psql -U acp_prod -d acp_prod -1 -f acp_prod.bak
+```
+
+Update the `CONFIG.py` file with the necessary details. Then execute the python code to start the API server;
+
+```
+python3 acp_metadata_api.py
+```
 
 The API endpoints could be accessed by running the following command and then querying *http://localhost:5000/endpoint*
 
-```
-python acp_metadata_api.py
-```
-
-#### Add/Update Sensor Information
+### Add/Update Sensor Information
 You need to visit *http://localhost:5000/admin* to add/update any sensor. Add any admin username and password in the `CONFIG.py` file for local testing. Currently the login is through a single user which will be extended to multiple users on deployment.
 
 Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. The location field has validation and need to be of specific format to be accepted.
@@ -342,13 +347,13 @@ Fill in the necessary details when the form loads. Each input field has a toolti
 TODO:
 1. Multiple user login
 
-#### API References
+### API References
 
 + `/admin` - Opens a form to add sensor information.
 + `/api/sources` - List all the sensor sources.
 + `/api/sensors?source=` - List all the sensors belonging to the given source.
 + `/api/features?sensor=` - List all the feature information the given sensor could provide.
-+ `/api/sensorincrate?crate_id=` - Lists all the sensors in the specified crate. Recurssively checks the child crates too.
++ `/api/sensorsincrate?crate_id=` - Lists all the sensors in the specified crate. Recurssively checks the child crates too.
 + `/api/itog?system=&x=&y=&f=&zf=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
 + `/api/gtoi?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.
 + `/api/itoo?system=&x=&y=&f=` - Given x, y, f and z of a given system, returns the corresponding object-level values.
