@@ -35,7 +35,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: bim; Type: TABLE; Schema: public; Owner: postgres
+-- Name: bim; Type: TABLE; Schema: public; Owner: acp_prod
 --
 
 CREATE TABLE public.bim (
@@ -44,10 +44,10 @@ CREATE TABLE public.bim (
 );
 
 
-ALTER TABLE public.bim OWNER TO postgres;
+ALTER TABLE public.bim OWNER TO acp_prod;
 
 --
--- Name: indoor_system_metadata; Type: TABLE; Schema: public; Owner: postgres
+-- Name: indoor_system_metadata; Type: TABLE; Schema: public; Owner: acp_prod
 --
 
 CREATE TABLE public.indoor_system_metadata (
@@ -56,10 +56,10 @@ CREATE TABLE public.indoor_system_metadata (
 );
 
 
-ALTER TABLE public.indoor_system_metadata OWNER TO postgres;
+ALTER TABLE public.indoor_system_metadata OWNER TO acp_prod;
 
 --
--- Name: sensors; Type: TABLE; Schema: public; Owner: postgres
+-- Name: sensors; Type: TABLE; Schema: public; Owner: acp_prod
 --
 
 CREATE TABLE public.sensors (
@@ -68,10 +68,10 @@ CREATE TABLE public.sensors (
 );
 
 
-ALTER TABLE public.sensors OWNER TO postgres;
+ALTER TABLE public.sensors OWNER TO acp_prod;
 
 --
--- Data for Name: bim; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: bim; Type: TABLE DATA; Schema: public; Owner: acp_prod
 --
 
 COPY public.bim (crate_id, bim_info) FROM stdin;
@@ -86,7 +86,7 @@ WGB	{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type":
 
 
 --
--- Data for Name: indoor_system_metadata; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: indoor_system_metadata; Type: TABLE DATA; Schema: public; Owner: acp_prod
 --
 
 COPY public.indoor_system_metadata (system_name, info) FROM stdin;
@@ -96,7 +96,7 @@ ifm	{"dx": 53.53, "dy": 62.03, "dlat": 0.000551, "dlng": -0.000764, "lat_origin"
 
 
 --
--- Data for Name: sensors; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: sensors; Type: TABLE DATA; Schema: public; Owner: acp_prod
 --
 
 COPY public.sensors (acp_id, sensor_info) FROM stdin;
@@ -119,7 +119,7 @@ ijl20-sodaq-ttn	{"ts": "1585868424", "type": "temperature", "owner": "ijl20", "s
 
 
 --
--- Name: bim bim_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bim bim_pkey; Type: CONSTRAINT; Schema: public; Owner: acp_prod
 --
 
 ALTER TABLE ONLY public.bim
@@ -127,7 +127,7 @@ ALTER TABLE ONLY public.bim
 
 
 --
--- Name: indoor_system_metadata indoor_system_metadata_system_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: indoor_system_metadata indoor_system_metadata_system_name_key; Type: CONSTRAINT; Schema: public; Owner: acp_prod
 --
 
 ALTER TABLE ONLY public.indoor_system_metadata
@@ -135,7 +135,7 @@ ALTER TABLE ONLY public.indoor_system_metadata
 
 
 --
--- Name: sensors metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sensors metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: acp_prod
 --
 
 ALTER TABLE ONLY public.sensors
