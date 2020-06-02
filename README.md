@@ -331,6 +331,8 @@ Now restore the dump file into the newly created database;
 psql -U acp_prod -d acp_prod -1 -f acp_prod.bak
 ```
 
+If you want dummy data run the insert queries in the `dummy_data_queries.txt`.
+
 Update the `CONFIG.py` file with the necessary details. Then execute the python code to start the API server;
 
 ```
