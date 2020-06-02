@@ -3,18 +3,24 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from dbconn import *
 from collections import defaultdict
+import re
 
 ## Temporary variable, will be replaced later
 floors = {'WGB':['GF','FF','SF'], 'IMF':['GFF','FFF','SFF']}
 
 def get_all_crates(floor_id):
-    query = "SELECT * FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id IN (SELECT crate_id from "+TABLE_BIM+" WHERE parent_crate_id='"+floor_id+"')"
+    query = "SELECT * FROM "+TABLE_BIM+" WHERE crate_id IN (SELECT crate_id from "+TABLE_BIM+" WHERE bim_info->>'parent_crate_id'='"+floor_id+"')"
 
     rows = dbread(query)
     crate_dict = defaultdict(list)
-
+    
     for row in rows:
-        crate_dict[row[0]] = row[1]
+        boundary = []
+        bList = re.split('{|,|}',row[1]['acp_boundary'])
+        for b in bList:
+            if b != '':
+                boundary.append(float(b))
+        crate_dict[row[0]] = boundary
 
     return crate_dict
 
@@ -36,10 +42,16 @@ def get_crate(crates, x, y):
     return ''
 
 def getXY(crate_id):
-    query = "SELECT boundary FROM "+TABLE_CRATE_BOUNDARY+" WHERE crate_id = '"+crate_id+"'"
+    query = "SELECT bim_info->'acp_boundary' FROM "+TABLE_BIM+" WHERE crate_id = '"+crate_id+"'"
 
     rows = dbread(query)
-    boundary = rows[0][0]
+
+    boundary = []
+    bList = re.split('{|,|}',rows[0][0])
+    for b in bList:
+        if b != '':
+            boundary.append(float(b))
+    
     plist = []
     i = 0
     while i < len(boundary) - 1:
@@ -57,6 +69,6 @@ def getCrateFloor(system, crate_id):
     elif crate_id in floors[system]:
         return floors[system].index(crate_id)
     
-    query = "SELECT parent_crate_id FROM "+TABLE_BIM+" WHERE crate_id = '"+crate_id+"'"
+    query = "SELECT bim_info->'parent_crate_id' FROM "+TABLE_BIM+" WHERE crate_id = '"+crate_id+"'"
     rows = dbread(query)
     return floors[system].index(rows[0][0])

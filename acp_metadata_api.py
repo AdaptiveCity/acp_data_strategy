@@ -20,7 +20,7 @@ def initialize_indoor_systems():
     query = "SELECT * from "+TABLE_ISM
     rows = dbread(query)
     for row in rows:
-        iC = InBuildingCoordinates(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        iC = InBuildingCoordinates(row[0], row[1]['lat_origin'], row[1]['lng_origin'], row[1]['dlat'], row[1]['dlng'], row[1]['dx'], row[1]['dy'])
         sdict[row[0]] = iC
 
     return sdict
@@ -106,7 +106,7 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/sensorincrate')
+@app.route('/api/sensorsincrate')
 def sensorincrate():
 
     crate_id = request.args.get('crate_id')

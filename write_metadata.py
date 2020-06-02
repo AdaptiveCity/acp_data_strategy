@@ -36,7 +36,7 @@ def updateMetadata(acp_id, type, source, owner, features, acp_location):
 
     flag = False
 
-    query = "INSERT INTO " + TABLE_MD + " (acp_id, info) VALUES ('" + acp_id + "','" + json.dumps(data) + "')"
+    query = "INSERT INTO " + TABLE_MD + " (acp_id, sensor_info) VALUES ('" + acp_id + "','" + json.dumps(data) + "')"
     try:
         dbwrite(query)
         flag = True
