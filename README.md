@@ -346,12 +346,11 @@ An admin can add/update any sensor or bim. Add any admin username and password i
 
 Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. The location field has validation and need to be of specific format to be accepted.
 
-In order to add/update sensor visit *http://localhost:5000/sensors/admin* and for bim add/update visit *http://localhost:5000/bim/admin*
+In order to add/update sensor visit *http://localhost:5001/sensors/admin* and for bim add/update visit *http://localhost:5000/bim/admin*
 
 TODO:
 1. Multiple user login
 2. BIM add/update support
-3. Add new json element support
 
 ### API References
 Two class of API are available. One for BIM and the other for sensors.
