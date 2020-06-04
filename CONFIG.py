@@ -2,7 +2,7 @@
 PGHOST='127.0.0.1'
 PGDATABASE='acp_prod'
 PGUSER='postgres'
-PGPASSWORD=''
+PGPASSWORD='935284!Post'
 PGPORT='5432'
 
 # Databases

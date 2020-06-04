@@ -29,15 +29,15 @@ def initialize_indoor_systems():
 @app.route('/sensors/admin')
 def admin():
     if not session.get('logged_in'):
-        return render_template('login.html')
+        return render_template('sensor_login.html')
     else:
-        return render_template('admin.html')
+        return render_template('sensors.html')
 
 @app.route('/sensors/login', methods=['POST'])
 def do_admin_login():
     if request.form['password'] == ADMIN_PASSWORD and request.form['username'] == ADMIN:
         session['logged_in'] = True
-        return render_template('admin.html')
+        return render_template('sensors.html')
     else:
         flash('wrong password!')
         return admin()
@@ -58,7 +58,8 @@ def addsensor():
         owner = (request.form['owner']).strip()
         features = (request.form['features']).strip()
         acp_location = (request.form['acp_location']).strip()
-        status = updateMetadata(acp_id, stype, source, owner, features, acp_location)
+        new_elements = (request.form['new_element']).strip()
+        status = updateMetadata(acp_id, stype, source, owner, features, acp_location, new_elements)
     except KeyError:
         status = False
     if status:

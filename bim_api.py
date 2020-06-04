@@ -30,13 +30,13 @@ def admin():
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
-        return render_template('admin.html')
+        return render_template('bim.html')
 
 @app.route('/bim/login', methods=['POST'])
 def do_admin_login():
     if request.form['password'] == ADMIN_PASSWORD and request.form['username'] == ADMIN:
         session['logged_in'] = True
-        return render_template('admin.html')
+        return render_template('bim.html')
     else:
         flash('wrong password!')
         return admin()

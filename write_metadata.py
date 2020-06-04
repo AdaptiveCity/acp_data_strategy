@@ -25,14 +25,33 @@ def validateLocationInput(acp_location):
 
     return validation
 
+def validateNewElement(new_elements):
+    
+    elementData = new_elements.split(';')
+    
+    newElementDict = {}
+    for element in elementData:
+        try:
+            eData = element.split(':')
+            # print(eData)
+            newElementDict.update({eData[0]:eData[1]})
+        except:
+            if DEBUG:
+                print(sys.exc_info())
+            return False
+    return True, newElementDict
 
-def updateMetadata(acp_id, type, source, owner, features, acp_location):
+
+def updateMetadata(acp_id, stype, source, owner, features, acp_location, new_elements):
     acplocValidation = validateLocationInput(acp_location)
-    if not acplocValidation:
+    newElementValidation, newElementDict = validateNewElement(new_elements)
+    print(acplocValidation,newElementValidation,newElementDict)
+    if not acplocValidation or not newElementValidation:
         return False
     
     ts = datetime.timestamp(datetime.now())
-    data = {"ts":ts,"type":type, "source":source, "owner":owner, "features":features, "acp_location":json.loads(acp_location)}
+    data = {"ts":ts,"type":stype, "source":source, "owner":owner, "features":features, "acp_location":json.loads(acp_location)}
+    data.update(newElementDict)
 
     flag = False
 
