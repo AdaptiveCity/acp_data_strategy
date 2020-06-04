@@ -1,10 +1,11 @@
 INSERT INTO bim (crate_id, bim_info) VALUES 
-('FF',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "floor", "description": "Sensor Description", "acp_boundary": "{0,0,0,78,73,78,73,0}", "parent_crate_id": "WGB"}'),
-('FN07',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{56,68,56,73,64,73,64,68}", "parent_crate_id": "FF"}'),
-('GN15',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}", "parent_crate_id": "GF"}'),
-('FN05',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{40,68,40,73,48,73,48,68}", "parent_crate_id": "FF"}'),
-('FN15',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}", "parent_crate_id": "FF"}'),
-('WGB',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "building", "description": "Sensor Description", "acp_boundary": "{0,0,0,78,73,78,73,0}", "parent_crate_id": "West Cambridge"}');
+('GF',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "floor", "description": "Sensor Description", "acp_boundary": "{0,0,0,78,73,78,73,0}", "acp_location": {"f": 0, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "WGB"}'),
+('FF',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "floor", "description": "Sensor Description", "acp_boundary": "{0,0,0,78,73,78,73,0}", "acp_location": {"f": 1, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "WGB"}'),
+('FN07',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{56,68,56,73,64,73,64,68}", "acp_location": {"f": 1, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "FF"}'),
+('GN15',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}", "acp_location": {"f": 0, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "GF"}'),
+('FN05',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{40,68,40,73,48,73,48,68}", "acp_location": {"f": 1, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "FF"}'),
+('FN15',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "room", "description": "Sensor Description", "acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}", "acp_location": {"f": 1, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "FF"}'),
+('WGB',	'{"acp_ts": 1589469825.165538, "long-name": "Sensor Long Name", "crate_type": "building", "description": "Sensor Description", "acp_boundary": "{0,0,0,78,73,78,73,0}", "acp_location": {"f": 0, "x": "32.33", "y": "53.22", "zf": "1.6", "system": "WGB"}, "parent_crate_id": "West Cambridge"}');
 
 INSERT INTO indoor_system_metadata (system_name, info) VALUES 
 ('wgb',	'{"dx": 73.67, "dy": 78.37, "dlat": 0.000676, "dlng": -0.001046, "lat_origin": 52.2105068, "lng_origin": 0.0924383}'),
