@@ -351,12 +351,13 @@ In order to add/update sensor visit *http://localhost:5000/sensors/admin* and fo
 TODO:
 1. Multiple user login
 2. BIM add/update support
+3. Add new json element support
 
 ### API References
 Two class of API are available. One for BIM and the other for sensors.
 
 #### BIM APIs
-+ `'/api/bim/get/<crate_id>/` - Get all the details of the specified crate_id
++ `/api/bim/get/<crate_id>/` - Get all the details of the specified crate_id
 + `/api/bim/get/<crate_id>/<children>/` - Get details of the given crate_id and the child crates down to level children. If children is "all", then provides details of all the children crates.
 + `/api/bim/get_floor_number/<system>/<floor_number>` - Get all the crates on a given floor in the specified system.
 + `/api/bim/itog?system=&x=&y=&f=&zf=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
