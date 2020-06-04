@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, jsonify, redirect, flash, ses
 from flask_cors import CORS, cross_origin
 from os import listdir, path, urandom
 import json
+import requests as rq
 from CONFIG import TABLE_ISM, ADMIN, ADMIN_PASSWORD
 from dbconn import dbread
 from translation import *
@@ -25,14 +26,14 @@ def initialize_indoor_systems():
 
     return sdict
 
-@app.route('/admin')
+@app.route('/sensors/admin')
 def admin():
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
         return render_template('admin.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/sensors/login', methods=['POST'])
 def do_admin_login():
     if request.form['password'] == ADMIN_PASSWORD and request.form['username'] == ADMIN:
         session['logged_in'] = True
@@ -41,13 +42,13 @@ def do_admin_login():
         flash('wrong password!')
         return admin()
 
-@app.route("/logout")
+@app.route("/sensors/logout")
 def logout():
     session['logged_in'] = False
     return admin()
 
 
-@app.route('/addsensor', methods=['POST'])
+@app.route('/sensors/addsensor', methods=['POST'])
 def addsensor():
     status = False
     try:
@@ -66,7 +67,7 @@ def addsensor():
         flash('Error while adding. Please check the inputs.')
     return admin()
 
-@app.route('/api/sources')
+@app.route('/api/sensors/sources')
 def sources():
     sourceList = getSources()
     response = {}
@@ -106,7 +107,7 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/sensorsincrate')
+@app.route('/api/sensors/sensorsincrate')
 def sensorincrate():
 
     crate_id = request.args.get('crate_id')
@@ -119,69 +120,44 @@ def sensorincrate():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/itog')
-def itogps():
-    system = request.args.get('system')
-    x = float(request.args.get('x'))
-    y = float(request.args.get('y'))
-    f = float(request.args.get('f'))
-    z = float(request.args.get('zf'))
+@app.route('/api/sensors/get/<acp_id>')
+def get_sensor_metadata_route(acp_id):
 
-    lat, lng, alt = systemsDict[system].getGPS(x,y,f,z)
-
-    response = {'lat':lat, 'lng':lng, 'alt':alt}
-    json_response = json.dumps(response)
-    return(json_response)
-
-@app.route('/api/gtoi')
-def gtoindoor():
-    system = request.args.get('system')
-    lat = float(request.args.get('lat'))
-    lng = float(request.args.get('lng'))
-    alt = float(request.args.get('alt'))
-
-    x, y, f, z = systemsDict[system].getIndoor(lat, lng, alt)
-
-    response = {'x':x, 'y':y, 'f':f, 'zf':z}
-    json_response = json.dumps(response)
-    return(json_response)
-
-@app.route('/api/itoo')
-def itoolh():
-    system = request.args.get('system')
-    x = float(request.args.get('x'))
-    y = float(request.args.get('y'))
-    f = float(request.args.get('f'))
-
-    floor_id = floors[system][int(f)]
-
-    crates = get_all_crates(floor_id)
-    crate_id = get_crate(crates, x, y)
-    
+    data = getSensorDetails(acp_id)
     response = {}
+    response['data'] = data
 
-    if crate_id == '':
-        response = {'crate_id':floors[system][int(f)], 'parent_crate_id':system, 'crate_type':'floor'}
-    else:
-        response = {'crate_id':crate_id, 'parent_crate_id':floors[system][int(f)], 'crate_type':'room'}
-                
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/otoi')
-def otoindoor():
-    system = request.args.get('system')
-    crate_id = request.args.get('crate_id')
-    x, y = getXY(crate_id)
-    f = getCrateFloor(system, crate_id)
-
-    response = {'system':system, 'x':x, 'y':y, 'f':f, 'z':0}
-
+@app.route('/api/sensors/get/bim/<crate_id>')
+def get_sensors_loc_route(crate_id):
+    sensorList = getSensorsInCrate(crate_id)
+    response = {}
+    response['data'] = []
+    for sensor in sensorList:
+        response['data'].append({'sensor':sensor})
     json_response = json.dumps(response)
+    return(json_response)
+
+@app.route('/api/sensors/get_count/<crate_id>', defaults={'children': 0})
+@app.route('/api/sensors/get_count/<crate_id>/<children>')
+def get_sensors_count_route(crate_id, children):
+    url = ""
+    if children == 'all':
+        url = "http://localhost:5000/api/bim/get/"+crate_id+"/all/"
+    else:
+        url = "http://localhost:5000/api/bim/get/"+crate_id+"/"+str(children)+"/"
+
+    response = rq.get(url)
+
+    count = getSensorCount(response.json())
+
+    json_response = json.dumps(count)
     return(json_response)
 
 
 systemsDict = initialize_indoor_systems()
 
 app.secret_key = urandom(12)
-app.run(port=5000,debug=DEBUG)
+app.run(port=5001,debug=DEBUG)
