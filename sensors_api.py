@@ -107,19 +107,6 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
-@app.route('/api/sensors/sensorsincrate')
-def sensorincrate():
-
-    crate_id = request.args.get('crate_id')
-
-    sensorList = getSensorsInCrate(crate_id)
-    response = {}
-    response['data'] = []
-    for sensor in sensorList:
-        response['data'].append({'sensor':sensor})
-    json_response = json.dumps(response)
-    return(json_response)
-
 @app.route('/api/sensors/get/<acp_id>')
 def get_sensor_metadata_route(acp_id):
 

@@ -33,9 +33,9 @@ Example Rows:
 
 |      crate_id      |                                                                  bim_info                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| WGB  | {"acp_ts": 1589469825.165538, "long-name": "William Gates Building","crate_type": "building","description": "Crate Description","acp_boundary": "{0,0,0,78,73,78,73,0}","parent_crate_id": "West Cambridge"} |
-| FF | {{"acp_ts": 1589469825.165538,"long-name": "First Floor","crate_type": "floor","description": "First floor of WGB","acp_boundary": "{0,0,0,78,73,78,73,0}","parent_crate_id": "WGB"} |
-| FN15 | {"acp_ts": 1589469825.165538,"long-name": "FN15","crate_type": "room","description": "FN15 on FF","acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}","parent_crate_id": "FF"} |
+| WGB  | {"acp_ts": 1589469825.165538, "long-name": "William Gates Building","crate_type": "building","description": "Crate Description","acp_boundary": "{0,0,0,78,73,78,73,0}","parent_crate_id": "West Cambridge","acp_location":"{"f": 0,"x": 22.06,"y": 34.67,"z": 0,"system": "WGB"}"} |
+| FF | {{"acp_ts": 1589469825.165538,"long-name": "First Floor","crate_type": "floor","description": "First floor of WGB","acp_boundary": "{0,0,0,78,73,78,73,0}","parent_crate_id": "WGB","acp_location":"{"f": 1,"x": 22.06,"y": 34.67,"z": 0,"system": "WGB"}"} |
+| FN15 | {"acp_ts": 1589469825.165538,"long-name": "FN15","crate_type": "room","description": "FN15 on FF","acp_boundary": "{35,68,35,73,40,73,40,73,38,70,38,68}","parent_crate_id": "FF","acp_location":"{"f": 1,"x": 22.06,"y": 34.67,"z": 0,"system": "WGB"}"} |
 
 In the above example the bim_info field includes;
 
@@ -45,6 +45,7 @@ In the above example the bim_info field includes;
 + description - Crate description.
 + acp_boundary - This attribute stores the coordinates of the vertices of the polygon forming the object. Any object would be mapped to a polygon having each vertex corresponding to the In-building coordinate of the building this crate belongs to. The standard being to start from the vertex on the leftmost lower corner of the object and then moving counter-clockwise. Format is of the form {x1, y1, x2, y2, ...}.
 + parent_crate_id - The crate in BIM in which this crate is included.
++ acp_location - Location coordinates of the crate in the local in-building coordinate system.
 
 ### indoor_system_metadata
 This table stores the constants required for the translation In-building <-> Global. It has two columns;
