@@ -350,7 +350,6 @@ In order to add/update sensor visit *http://localhost:5001/sensors/admin* and fo
 
 TODO:
 1. Multiple user login
-2. BIM add/update support
 
 ### API References
 Two class of API are available. One for BIM and the other for sensors.

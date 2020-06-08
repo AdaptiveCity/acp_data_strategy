@@ -6,7 +6,7 @@ from CONFIG import TABLE_ISM, ADMIN, ADMIN_PASSWORD
 from dbconn import dbread
 from translation import *
 from read_metadata import *
-from write_metadata import updateMetadata
+from write_metadata import updateBimMetadata
 from InBuildingCoordinates import InBuildingCoordinates
 
 app = Flask(__name__)
@@ -14,6 +14,7 @@ cors = CORS(app)
 
 DEBUG = True
 
+# Initializes all the inbuilding coordinate systems
 def initialize_indoor_systems():
     sdict = {}
 
@@ -25,13 +26,15 @@ def initialize_indoor_systems():
 
     return sdict
 
+# Endpoint to provide access for updating sensor information in the database
 @app.route('/bim/admin')
 def admin():
     if not session.get('logged_in'):
-        return render_template('login.html')
+        return render_template('bim_login.html')
     else:
         return render_template('bim.html')
 
+# Login
 @app.route('/bim/login', methods=['POST'])
 def do_admin_login():
     if request.form['password'] == ADMIN_PASSWORD and request.form['username'] == ADMIN:
@@ -41,30 +44,37 @@ def do_admin_login():
         flash('wrong password!')
         return admin()
 
+# Logout
 @app.route("/bim/logout")
 def logout():
     session['logged_in'] = False
     return admin()
 
-@app.route('/bim/addbim', methods=['POST'])
-def addsensor():
+# Add/Update bim information
+@app.route('/bim/addcrate', methods=['POST'])
+def addbim():
     status = False
     try:
-        acp_id = (request.form['acp_id']).strip()
-        stype = (request.form['type']).strip()
-        source = (request.form['source']).strip()
-        owner = (request.form['owner']).strip()
-        features = (request.form['features']).strip()
+        crate_id = (request.form['crate_id']).strip()
+        parent_crate_id = (request.form['parent_crate_id']).strip()
+        long_name = (request.form['long_name']).strip()
+        ctype = (request.form['crate_type']).strip()
+        description = (request.form['description']).strip()
+        acp_boundary = (request.form['acp_boundary']).strip()
         acp_location = (request.form['acp_location']).strip()
-        status = updateMetadata(acp_id, stype, source, owner, features, acp_location)
+        new_elements = (request.form['new_element']).strip()
+        status = updateBimMetadata(crate_id, parent_crate_id, long_name, ctype, description, acp_boundary, acp_location, new_elements)
     except KeyError:
         status = False
     if status:
-        flash('Sensor Added')
+        flash('Crate Added')
     else:
         flash('Error while adding. Please check the inputs.')
     return admin()
 
+# Return all the details of the specified crate_id. If children is specified,
+# then return details of the given crate_id and the child crates down to level
+# children. If children is "all", then provides details of all the children crates.
 @app.route('/api/bim/get/<crate_id>/', defaults={'children': 0})
 @app.route('/api/bim/get/<crate_id>/<children>/')
 def get_bim_tree_route(crate_id,children):
@@ -81,6 +91,7 @@ def get_bim_tree_route(crate_id,children):
     json_response = json.dumps(response)
     return(json_response)
 
+# Get all the crates on a given floor in the specified system.
 @app.route('/api/bim/get_floor_number/<system>/<floor_number>')
 def get_floor_by_floor_number(system,floor_number):
     crateList = getCratesOnFloor(system, floor_number)
@@ -92,6 +103,7 @@ def get_floor_by_floor_number(system,floor_number):
     json_response = json.dumps(response)
     return(json_response)
 
+# Translate from inbuilding coordinate system to global coordinate system
 @app.route('/api/bim/itog')
 def itogps():
     system = request.args.get('system')
@@ -106,6 +118,7 @@ def itogps():
     json_response = json.dumps(response)
     return(json_response)
 
+# Translate from global coordinate system to inbuilding coordinate system
 @app.route('/api/bim/gtoi')
 def gtoindoor():
     system = request.args.get('system')
@@ -119,6 +132,7 @@ def gtoindoor():
     json_response = json.dumps(response)
     return(json_response)
 
+# Translate from inbuilding coordinate system to object level hierarchy system
 @app.route('/api/bim/itoo')
 def itoolh():
     system = request.args.get('system')
@@ -141,6 +155,7 @@ def itoolh():
     json_response = json.dumps(response)
     return(json_response)
 
+# Translate from object level hierarchy to inbuilding coordinates
 @app.route('/api/bim/otoi')
 def otoindoor():
     system = request.args.get('system')

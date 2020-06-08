@@ -3,7 +3,7 @@
 <div style="position:static; margin:-50 1500 0 0">
   <a href="/logout"><button type="button" name="Logout" class="logoutbtn">Logout</button></a>
 </div>
-<form action="/addsensor" method="POST">
+<form action="/bim/addcrate" method="POST">
 <div class="login">
   <div class="login-screen">
     <div class="app-title">
@@ -12,46 +12,55 @@
     <div class="login-form">
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="acp_id" name="acp_id">
+          <input type="text" class="login-field" value="" placeholder="crate_id" name="crate_id">
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Unique name for the sensor.
+            Unique name for the crate.
           </span>
         </div>
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Sensor Type" name="type">
+          <input type="text" class="login-field" value="" placeholder="Parent crate_id" name="parent_crate_id">
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Type of the sensor.
+            The crate which holds this crate. Should be already present in the database.
           </span>
         </div>
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Sensor Source" name="source">
+          <input type="text" class="login-field" value="" placeholder="Long name" name="long_name">
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Source of the sensor.
+            Long name of the crate.
           </span>
         </div>
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Owner" name="owner">
+          <input type="text" class="login-field" value="" placeholder="Crate Type" name="crate_type">
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Owner of the sensor.
+            Type of crate.
           </span>
         </div>
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Features" name="features">
+          <input type="text" class="login-field" value="" placeholder="Description" name="description">
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Feature data this sensor provides. List all features separated by commas. Eg: feature1, feature2, ....
+            Description for the crate.
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="Boundary" name="acp_boundary">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Set of coordinates defining the polygon which forms the crate. Should be of the form x1,y1,x2,y2,....
           </span>
         </div>
       </div>
@@ -64,6 +73,16 @@
             <br><br> Global: {"system":"GPS", "acp_lat":52.2108765, "acp_lng":0.0912775, "acp_alt":0.0}
             <br><br> In-building: {"system":"WGB", "x":36.5, "y":39, "f":0, "zf":0}
             <br><br> OLH: {"system":"OLH", "crate_id":"FF", "parent_crate_id":"WGB", "crate_type":"floor"}
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="tooltip">
+          <input type="text" class="login-field" value="" placeholder="new_element" name="new_element">
+          <label class="login-field-icon fui-user" for="login-name"></label>
+          <span class="tooltiptext">
+            Enter any new element you want to add for the crate. The input should be strictly in this format;<br>
+            element_name:element_value; element_name:element_value; ....
           </span>
         </div>
       </div>

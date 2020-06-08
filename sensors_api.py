@@ -7,7 +7,7 @@ from CONFIG import TABLE_ISM, ADMIN, ADMIN_PASSWORD
 from dbconn import dbread
 from translation import *
 from read_metadata import *
-from write_metadata import updateMetadata
+from write_metadata import updateSensorMetadata
 from InBuildingCoordinates import InBuildingCoordinates
 
 app = Flask(__name__)
@@ -15,6 +15,7 @@ cors = CORS(app)
 
 DEBUG = True
 
+# Initializes all the inbuilding coordinate systems
 def initialize_indoor_systems():
     sdict = {}
 
@@ -26,6 +27,7 @@ def initialize_indoor_systems():
 
     return sdict
 
+# Endpoint to provide access for updating sensor information in the database
 @app.route('/sensors/admin')
 def admin():
     if not session.get('logged_in'):
@@ -33,6 +35,7 @@ def admin():
     else:
         return render_template('sensors.html')
 
+# Login
 @app.route('/sensors/login', methods=['POST'])
 def do_admin_login():
     if request.form['password'] == ADMIN_PASSWORD and request.form['username'] == ADMIN:
@@ -42,12 +45,13 @@ def do_admin_login():
         flash('wrong password!')
         return admin()
 
+# Logout
 @app.route("/sensors/logout")
 def logout():
     session['logged_in'] = False
     return admin()
 
-
+# Add/Update sensor based on user input.
 @app.route('/sensors/addsensor', methods=['POST'])
 def addsensor():
     status = False
@@ -59,7 +63,7 @@ def addsensor():
         features = (request.form['features']).strip()
         acp_location = (request.form['acp_location']).strip()
         new_elements = (request.form['new_element']).strip()
-        status = updateMetadata(acp_id, stype, source, owner, features, acp_location, new_elements)
+        status = updateSensorMetadata(acp_id, stype, source, owner, features, acp_location, new_elements)
     except KeyError:
         status = False
     if status:
@@ -68,6 +72,7 @@ def addsensor():
         flash('Error while adding. Please check the inputs.')
     return admin()
 
+# Return all available sources in ACP
 @app.route('/api/sensors/sources')
 def sources():
     sourceList = getSources()
@@ -78,6 +83,7 @@ def sources():
     json_response = json.dumps(response)
     return(json_response)
 
+# Return all sensors for a given source. If source is null then return all sensors.
 @app.route('/api/sensors')
 def sensors():
     if DEBUG:
@@ -94,6 +100,7 @@ def sensors():
     json_response = json.dumps(response)
     return(json_response)
 
+# Return all data attributes for a given sensor
 @app.route('/api/features')
 def features():
 
@@ -108,16 +115,17 @@ def features():
     json_response = json.dumps(response)
     return(json_response)
 
+# Return all details for a given sensor
 @app.route('/api/sensors/get/<acp_id>')
 def get_sensor_metadata_route(acp_id):
-
-    data = getSensorDetails(acp_id)
+ 
     response = {}
-    response['data'] = data
+    response['data'] = getSensorDetails(acp_id)
 
     json_response = json.dumps(response)
     return(json_response)
 
+# Return all the sensors in a given crate in the bim module
 @app.route('/api/sensors/get/bim/<crate_id>')
 def get_sensors_loc_route(crate_id):
     sensorList = getSensorsInCrate(crate_id)
@@ -128,6 +136,9 @@ def get_sensors_loc_route(crate_id):
     json_response = json.dumps(response)
     return(json_response)
 
+# Return a count of all the sensors in the given crate_id. If children is 
+# specified then count recurrsively to children level. If children is "all", 
+# then provides details of sensors in all the children crates.
 @app.route('/api/sensors/get_count/<crate_id>', defaults={'children': 0})
 @app.route('/api/sensors/get_count/<crate_id>/<children>')
 def get_sensors_count_route(crate_id, children):

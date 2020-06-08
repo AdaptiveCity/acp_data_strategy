@@ -3,21 +3,24 @@ from dbconn import *
 import json
 from math import inf
 
+# Returns all the data sources available for ACP
 def getSources():
 
     query = "SELECT distinct sensor_info->'source' from "+TABLE_MD
-    slist = []
+    sourcelist = []
 
     rows = dbread(query)
     for row in rows:
-        slist.append(row[0])
+        sourcelist.append(row[0])
 
-    return slist
+    return sourcelist
 
+# Returns all sensor names (acp_id) corresponding to a data source. 
+# If no source is specified then all sensors are returned.
 def getSensors(source):
 
     query = ''
-    slist = []
+    sensorlist = []
 
     if source == "":
         query = "SELECT acp_id from "+TABLE_MD
@@ -26,60 +29,68 @@ def getSensors(source):
 
     rows = dbread(query)
     for row in rows:
-        slist.append(row[0])
-    return slist
+        sensorlist.append(row[0])
+    return sensorlist
 
+# Returns all the data attributes the given sensor supports.
 def getFeatures(sensor):
     query = "SELECT sensor_info->'features' from "+TABLE_MD+ " WHERE acp_id='"+sensor+"'"
 
     rows = dbread(query)
     return rows[0][0].split(',')
 
+# Recurrsively finds all the rooms in a given crate.
 def getRoomsInCrate(crate_id):
     query = "SELECT * from "+TABLE_BIM+" WHERE bim_info->>'parent_crate_id'='"+crate_id+"'"
-    rList = []
+    roomList = []
     
     rows = dbread(query)
     for row in rows:
         if row[1]['crate_type'] == 'room':            
-            rList.append(row[0])
+            roomList.append(row[0])
         else:
-            rList.extend(getRoomsInCrate(row[0]))
-    return rList
+            roomList.extend(getRoomsInCrate(row[0]))
+    return roomList
 
+# Finds all the sensors in a crate and its child crates
 def getSensorsInCrate(crate_id):
     roomList = getRoomsInCrate(crate_id)
-    sList = []
+    sensorList = []
+
     if len(roomList) == 0:
-        listStr = "'"+crate_id+"'"
+        listString = "'"+crate_id+"'"
     else:
-        listStr = ""
+        listString = ""
 
         for r in roomList:
-            listStr = listStr+"'"+r+"',"
-        listStr = listStr[:-1]
-    query = "SELECT acp_id from "+TABLE_MD+" WHERE sensor_info->>'parent_crate_id' in ("+listStr+")"
+            listString = listString+"'"+r+"',"
+        listString = listString[:-1]
+
+    query = "SELECT acp_id from "+TABLE_MD+" WHERE sensor_info->>'parent_crate_id' in ("+listString+")"
 
     rows = dbread(query)
 
     for row in rows:
-        sList.append(row[0])
+        sensorList.append(row[0])
 
-    return sList
+    return sensorList
 
+# Returns the child crates upto level 'children' of a given crate
 def getChildCrates(crate_id, children=inf):
     if children == 0:
         return []
     query = "SELECT * from "+TABLE_BIM+" WHERE bim_info->>'parent_crate_id'='"+crate_id+"'"
-    rList = []
+    roomList = []
     
     rows = dbread(query)
     for row in rows:
-        rList.append(row[0])
+        roomList.append(row[0])
         if row[1]['crate_type'] != 'room':
-            rList.extend(getChildCrates(row[0], children-1))
-    return rList
+            roomList.extend(getChildCrates(row[0], children-1))
+    return roomList
 
+# Returns all info available for a crate and of its children crates upto
+# level 'children'.
 def getCrateDetails(crate_id, children=inf):
     cList = [crate_id]
     rsList = []
@@ -98,17 +109,19 @@ def getCrateDetails(crate_id, children=inf):
         rsList.append(row[1])
     return rsList
 
+# Returns all the crates on a floor in a given system
 def getCratesOnFloor(system, floor_number):
-    cList = []
+    crateList = []
 
     query = "SELECT crate_id FROM "+TABLE_BIM+" WHERE bim_info->'acp_location'->'f' = '"+str(floor_number)+"' and  bim_info->'acp_location'->'system' = '\""+system+"\"'"
+
     print(query)
     rows = dbread(query)
     for row in rows:
-        cList.append(row[0])
-    return cList
+        crateList.append(row[0])
+    return crateList
     
-
+# Returns details of a given sensor
 def getSensorDetails(acp_id):
     query = "SELECT * FROM "+TABLE_MD+" WHERE acp_id = '"+acp_id+"'"
     rows = dbread(query)
@@ -117,17 +130,18 @@ def getSensorDetails(acp_id):
 
     return rows[0][1]
 
+# Returns the total number of sensors inside a list of crates
 def getSensorCount(response):
-    cList = []
+    crateList = []
     for r in response['data']:
-        cList.append(r['crate']['crate_id'])
+        crateList.append(r['crate']['crate_id'])
 
-    listStr = ''
-    for c in cList:
-        listStr = listStr+"'"+c+"',"
-    listStr = listStr[:-1]
+    listString = ''
+    for c in crateList:
+        listString = listString+"'"+c+"',"
+    listString = listString[:-1]
     
-    query = "SELECT acp_id from "+TABLE_MD+" WHERE sensor_info->>'parent_crate_id' in ("+listStr+")"
+    query = "SELECT acp_id from "+TABLE_MD+" WHERE sensor_info->>'parent_crate_id' in ("+listString+")"
     
     rows = dbread(query)
 
