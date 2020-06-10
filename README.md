@@ -333,11 +333,7 @@ psql -U acp_prod -d acp_prod -1 -f acp_prod.bak
 
 If you want dummy data run the insert queries in the `dummy_data_queries.txt`.
 
-Update the `CONFIG.py` file with the necessary details. Then execute the python code to start the API server;
-
-```
-python3 acp_metadata_api.py
-```
+Update the `CONFIG.py` file with the necessary details. Then execute the `run.sh` file to start the `bim` and `sensors` api.
 
 The API endpoints could be accessed by running the following command and then querying *http://localhost:5000/endpoint*
 
