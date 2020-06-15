@@ -159,4 +159,4 @@ def get_sensors_count_route(crate_id, children):
 systemsDict = initialize_indoor_systems()
 
 app.secret_key = urandom(12)
-app.run(port=5001,debug=DEBUG)
+app.run(port=5010,debug=DEBUG)

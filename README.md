@@ -335,17 +335,7 @@ If you want dummy data run the insert queries in the `dummy_data_queries.txt`.
 
 Update the `CONFIG.py` file with the necessary details. Then execute the `run.sh` file to start the `bim` and `sensors` api.
 
-The API endpoints could be accessed by running the following command and then querying *http://localhost:5000/endpoint*
-
-### Add/Update Information
-An admin can add/update any sensor or bim. Add any admin username and password in the `CONFIG.py` file for local testing. Currently the login is through a single user which will be extended to multiple users on deployment.
-
-Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. The location field has validation and need to be of specific format to be accepted.
-
-In order to add/update sensor visit *http://localhost:5001/sensors/admin* and for bim add/update visit *http://localhost:5000/bim/admin*
-
-TODO:
-1. Multiple user login
+The API endpoints could be accessed by querying *http://localhost:&lt;port&gt;/&lt;endpoint&gt;*
 
 ### API References
 Two class of API are available. One for BIM and the other for sensors.
@@ -360,10 +350,20 @@ Two class of API are available. One for BIM and the other for sensors.
 + `/api/bim/otoi?system=&crate_id=` - Given the crate_id and system, returns the x, y, z and f in the in-building system specified.
 
 #### Sensors APIs
-+ `/api/sensor/sources` - List all the sensor sources.
-+ `/api/sensors?source=` - List all the sensors belonging to the given source.
-+ `/api/sensor/features?sensor=` - List all the feature information the given sensor could provide.
 + `/api/sensors/get/<acp_id>` - Give the details of the sensors with the provided acp_id.
 + `/api/sensors/get/bim/<crate_id>` - List all the sensors in the specified crate_id.
 + `/api/sensors/get_count/<crate_id>` - Provide a count of all the sensors in the given crate_id (Non-recursive).
 + `/api/sensors/get_count/<crate_id>/<children>` - Provide a count of all the sensors in the given crate_id down to the specified children level. If children is "all", then count sensors in all children crates.
++ `/api/sensor/sources` - List all the sensor sources.
++ `/api/sensors?source=` - List all the sensors belonging to the given source.
++ `/api/sensor/features?sensor=` - List all the feature information the given sensor could provide.
+
+### Add/Update Information
+An admin can add/update any sensor or bim. Add any admin username and password in the `CONFIG.py` file for local testing. Currently the login is through a single user which will be extended to multiple users on deployment.
+
+Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. Some fields have validation and need to be of specific format to be accepted.
+
+In order to add/update sensor visit *http://localhost:5010/sensors/admin* and for bim add/update visit *http://localhost:5011/bim/admin*
+
+TODO:
+1. Multiple user login

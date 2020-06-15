@@ -48,7 +48,7 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Features" name="features">
+          <textarea class="login-field" value="" placeholder="Features" name="features"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Feature data this sensor provides. List all features separated by commas. Eg: feature1, feature2, ....
@@ -57,7 +57,7 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="acp_location" name="acp_location">
+          <textarea class="login-field" value="" placeholder="acp_location" name="acp_location"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Location of the sensor. Should be following either of the Global, In-building, or Object-level Hierarchy format.
@@ -69,11 +69,13 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="new_element" name="new_element">
+          <textarea class="login-field" value="" placeholder="new_element" name="new_element"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
-            Enter any new element you want to add for the sensor. The input should be strictly in this format;<br>
-            element_name:element_value; element_name:element_value; ....
+            Enter any new element you want to add for the crate. The input should be strictly in this format;<br>
+            element_name=element_value; element_name=element_value; ....<br>
+            If element_value is a json object then the format should be;<br>
+            element_name=element_value;element_name={'element_name':'element_value','element_name'=number, 'element_name'={'element_name':'element_value','element_name':'element_value'}}
           </span>
         </div>
       </div>

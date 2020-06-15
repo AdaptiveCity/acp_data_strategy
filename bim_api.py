@@ -172,4 +172,4 @@ def otoindoor():
 systemsDict = initialize_indoor_systems()
 
 app.secret_key = urandom(12)
-app.run(port=5000,debug=DEBUG)
+app.run(port=5011,debug=DEBUG)

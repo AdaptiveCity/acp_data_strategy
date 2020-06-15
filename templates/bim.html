@@ -48,7 +48,7 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Description" name="description">
+          <textarea class="login-field" value="" placeholder="Description" name="description"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Description for the crate.
@@ -57,7 +57,7 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="Boundary" name="acp_boundary">
+          <textarea class="login-field" value="" placeholder="Boundary" name="acp_boundary"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Set of coordinates defining the polygon which forms the crate. Should be of the form x1,y1,x2,y2,....
@@ -66,7 +66,7 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="acp_location" name="acp_location">
+          <textarea class="login-field" value="" placeholder="acp_location" name="acp_location"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Location of the sensor. Should be following either of the Global, In-building, or Object-level Hierarchy format.
@@ -78,11 +78,13 @@
       </div>
       <div class="control-group">
         <div class="tooltip">
-          <input type="text" class="login-field" value="" placeholder="new_element" name="new_element">
+          <textarea class="login-field" value="" placeholder="new_element" name="new_element"></textarea>
           <label class="login-field-icon fui-user" for="login-name"></label>
           <span class="tooltiptext">
             Enter any new element you want to add for the crate. The input should be strictly in this format;<br>
-            element_name:element_value; element_name:element_value; ....
+            element_name=element_value; element_name=element_value; ....<br>
+            If element_value is a json object then the format should be;<br>
+            element_name=element_value;element_name={'element_name':'element_value','element_name'=number, 'element_name'={'element_name':'element_value','element_name':'element_value'}}
           </span>
         </div>
       </div>

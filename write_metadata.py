@@ -3,6 +3,7 @@ from dbconn import *
 import sys
 from datetime import datetime
 import json
+from ast import literal_eval
 
 DEBUG = True
 
@@ -38,9 +39,13 @@ def validateNewElement(new_elements):
     newElementDict = {}
     for element in elementData:
         try:
-            eData = element.split(':')
+            eData = element.split('=')
             # print(eData)
-            newElementDict.update({eData[0]:eData[1]})
+            key = eData[0]
+            value = eData[1]
+            if value[0] == '{':
+                value = literal_eval(value)
+            newElementDict.update({key:value})
         except:
             if DEBUG:
                 print(sys.exc_info())
