@@ -1,0 +1,21 @@
+{
+  "API_BIM": "http://localhost/api/bim/",
+  "API_SENSORS": "http://localhost/api/sensors/",
+  "API_READINGS": "http://localhost/api/readings/",
+  "API_SPACE": "http://localhost/api/space/",
+
+  "space_host": "localhost",
+  "space_port": 5000,
+
+  "bim_file_name": "data/BIM.json",
+  "bim_host": "localhost",
+  "bim_port": 5010,
+
+  "sensors_file_name": "data/sensors.json",
+  "sensors_host": "localhost",
+  "sensors_port": 5011,
+
+  "readings_base_path": "/media/acp/",
+  "readings_host": "localhost",
+  "readings_port": 5012
+}

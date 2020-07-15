@@ -1,0 +1,122 @@
+{
+    "elsys-ems-049361": {
+        "acp_location": {
+            "x": 330,
+            "y": 20,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FN05",
+            "system": "WGB"
+        }
+    },
+    "elsys-co2-041ba9": {
+        "acp_location": {
+            "x": 370,
+            "y": 10,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FN07",
+            "system": "WGB"
+        }
+    },
+    "elsys-co2-0461e7": {
+        "acp_location": {
+            "x": 370,
+            "y": 30,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FN07",
+            "system": "WGB"
+        }
+    },
+    "elsys-eye-044501": {
+        "acp_location": {
+            "x": 460,
+            "y": 10,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FN07",
+            "system": "WGB"
+        }
+    },
+    "elsys-eye-044504": {
+        "acp_location": {
+            "x": 460,
+            "y": 30,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FN07",
+            "system": "WGB"
+        }
+    },
+    "elsys-co2-0461e3": {
+        "acp_location": {
+            "x": 250,
+            "y": 330,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FC04",
+            "system": "WGB"
+        }
+    },
+    "elsys-co2-0461e6": {
+        "acp_location": {
+            "x": 114,
+            "y": 570,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FW26",
+            "system": "WGB"
+        }
+    },
+    "elsys-ems-048f2b": {
+        "acp_location": {
+            "x": 550,
+            "y": 235,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FE11",
+            "system": "WGB"
+        }
+    },
+    "ijl20-co2-0366b0": {
+        "acp_location": {
+            "x": 575,
+            "y": 240,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FE11",
+            "system": "WGB"
+        }
+    },
+    "ijl20-sodaq-ttn": {
+        "acp_location": {
+            "x": 560,
+            "y": 245,
+            "zf": 1,
+            "f": 1,
+            "crate_id": "FE11",
+            "system": "WGB"
+        }
+    },
+    "EMS001": {
+        "acp_location": {
+            "x": 135,
+            "y": 91,
+            "zf": 0.55,
+            "f": 0,
+            "crate_id": "GW02",
+            "system": "WGB"
+        }
+    },
+    "EMS002": {
+        "acp_location": {
+            "x": 89,
+            "y": 318,
+            "zf": 0.0,
+            "f": 0,
+            "crate_id": "GW20GF",
+            "system": "WGB"
+        }
+    }
+}
