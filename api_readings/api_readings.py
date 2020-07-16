@@ -23,9 +23,19 @@ CORS(app)
 #############################################
 
 @app.route('/get/<acp_id>/')
-def get_sensor_readings_for_route(acp_id):
+def get_route(acp_id):
     global data_api
-    return data_api.get_sensor_readings_for(acp_id)
+    return data_api.get(acp_id)
+
+@app.route('/latestdata/')
+def latest_data_route():
+    global data_api
+    return data_api.latest_data(request.args)
+
+@app.route('/historicaldata/')
+def history_data_route():
+    global data_api
+    return data_api.history_data(request.args)
 
 #@app.route('/get/bim/<crate_id>')
 #def get_sensor_readings_in_route(crate_id):#
@@ -55,4 +65,3 @@ if __name__ == '__main__':
     app.run( host=settings["readings_host"],
              port=settings["readings_port"],
              debug=DEBUG)
-

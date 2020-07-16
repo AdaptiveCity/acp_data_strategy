@@ -16,6 +16,6 @@
   "sensors_port": 5011,
 
   "readings_base_path": "/media/acp/",
-  "readings_host": "localhost",
+  "readings_host": "0.0.0.0",
   "readings_port": 5012
 }
