@@ -1,3 +1,4 @@
+"use strict"
 
 from os import listdir, path
 import json
@@ -12,7 +13,7 @@ from classes.utils import Utils
 
 import requests
 
-DEBUG = False
+DEBUG = True
 
 ###################################################################
 #
@@ -50,8 +51,13 @@ class DataAPI(object):
         feature = args.get('feature')
 
         selecteddate = Utils.getDateToday()
-        fname = Path(self.basePath).resolve().joinpath(source,'sensors',sensor,date_to_sensorpath(selecteddate),sensor+'_'+selecteddate+'.txt')
-
+        fname = ( Path(self.basePath)
+                    .resolve()
+                    .joinpath(source,
+                              'sensors',
+                              sensor,
+                              date_to_sensorpath(selecteddate),sensor+'_'+selecteddate+'.txt')
+                ) # brackets to allow line breaks
         latestData = open(fname).readlines()[-1]
         jsonData = json.loads(latestData)
 
@@ -63,36 +69,37 @@ class DataAPI(object):
             response = {feature:jsonData['payload_fields'][feature]}
 
         json_response = json.dumps(response)
-        return(json_response)
+        return json_response
 
     def history_data(self, args):
         if DEBUG:
-            print('Requested')
+            print('history_data() Requested')
 
-        sensor = "ijl20-sodaq-ttn"
-        feature = "temperature"
-        workingDir = ''
-        rdict = defaultdict(float)
-        print(request)
         try:
             selecteddate = args.get('date')
             source = args.get('source')
             sensor = args.get('sensor')
             feature = args.get('feature')
-            workingDir = Path(self.basePath).resolve().joinpath(source,'data_bin',self.date_to_path(selecteddate))
-            if not path.exists(workingDir):
-                sensor = "ijl20-sodaq-ttn"
-                feature = "temperature"
-                selecteddate = Utils.getDateToday()
-                workingDir = Path(self.basePath).resolve().joinpath('mqtt_ttn','data_bin',self.date_to_path(selecteddate))
         except:
+            print("history_data() args error")
             if DEBUG:
                 print(sys.exc_info())
                 print(args)
-            sensor = "ijl20-sodaq-ttn"
-            feature = "temperature"
-            selecteddate = Utils.getDateToday()
-            workingDir = Path(self.basePath).resolve().joinpath('mqtt_ttn','data_bin',self.date_to_path(selecteddate))
+            return '{ "data": [] }'
+
+        workingDir = ''
+        rdict = defaultdict(float)
+        print(request)
+        workingDir = ( Path(self.basePath)
+                        .resolve()
+                        .joinpath(source,'data_bin',self.date_to_path(selecteddate))
+                     )
+        if not path.exists(workingDir):
+            print("history_data() bad data path "+workingDir)
+            if DEBUG:
+                print(args)
+            return '{ "data": [] }'
+
         response = {}
         response['data'] = []
 
@@ -100,7 +107,7 @@ class DataAPI(object):
             fpath = Path(workingDir).resolve().joinpath(f)
             with open(fpath) as json_file:
                 data = json.load(json_file)
-                if data['dev_id'] == sensor:
+                if data['acp_id'] == sensor:
                     try:
                         rdict[float(f.split('_')[0])] = data['payload_fields'][feature]
                     except KeyError:
