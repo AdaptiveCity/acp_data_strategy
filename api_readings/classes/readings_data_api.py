@@ -115,6 +115,7 @@ class DataAPI(object):
 
         for k in sorted(rdict.keys()):
             response['data'].append({'ts':str(k), 'val':rdict[k]})
+
         response['date'] = selecteddate
         response['sensor'] = sensor
         response['feature'] = feature
