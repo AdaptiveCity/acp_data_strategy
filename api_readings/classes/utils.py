@@ -21,8 +21,8 @@ class Utils:
     @staticmethod
     def getDateToday():
         dt = datetime.now()
-        #return dt.strftime("%Y-%m-%d")
-        return '2020-04-20'
+        return dt.strftime("%Y-%m-%d")
+        #return '2020-04-20'
 
     @staticmethod
     def getTimestampDate():

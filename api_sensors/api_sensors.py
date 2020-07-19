@@ -85,4 +85,3 @@ if __name__ == '__main__':
     app.run( host=settings["sensors_host"],
              port=settings["sensors_port"],
              debug=DEBUG)
-

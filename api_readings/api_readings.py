@@ -27,10 +27,10 @@ def get_route(acp_id):
     global data_api
     return data_api.get(acp_id)
 
-@app.route('/latestdata/')
-def latest_data_route():
+@app.route('/get_day/<acp_id>/')
+def get_day_route():
     global data_api
-    return data_api.latest_data(request.args)
+    return data_api.get_day(acp_id, request.args)
 
 @app.route('/historicaldata/')
 def history_data_route():

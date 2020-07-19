@@ -12,6 +12,7 @@
   "bim_port": 5010,
 
   "sensors_file_name": "data/sensors.json",
+  "sensor_types_file_name": "data/sensor_types.json",
   "sensors_host": "localhost",
   "sensors_port": 5011,
 

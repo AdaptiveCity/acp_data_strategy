@@ -21,25 +21,33 @@ DEBUG = False
 
 SENSORS=None
 
+SENSOR_TYPES=None
+
 class DataAPI(object):
 
     def __init__(self, settings):
-        global SENSORS
+        global SENSORS, SENSOR_TYPES
         print("Initializing SENSORS DataAPI")
         self.settings = settings
-        SENSORS=self.load_sensors()
+        SENSORS = self.load_sensors()
+        SENSOR_TYPES = self.load_sensor_types()
         print("{} loaded".format(settings["sensors_file_name"]))
         self.load_coordinate_systems()
 
     #NEW API FUNCTION
     def get_sensor_metadata(self, acp_id):
         print("get_sensor_metadata {}".format(acp_id))
-        global SENSORS
+        global SENSORS, SENSOR_TYPES
         try:
-            retrieved=SENSORS[acp_id]
+            sensor_details = SENSORS[acp_id]
+            if "acp_type_id" in sensor_details:
+                acp_type_id = sensor_details["acp_type_id"]
+                if acp_type_id in SENSOR_TYPES:
+                    sensor_details["acp_type_info"] = SENSOR_TYPES[acp_type_id]
         except:
-            return 'no such sensor found'
-        return retrieved
+            print("get_sensor_metadata() no sensor id {}".format(acp_id))
+            return {}
+        return sensor_details
 
     def get_floor_number(self, coordinate_system, floor_number):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
@@ -101,6 +109,7 @@ class DataAPI(object):
     #
     ###########################################################################
 
+    # This loads the sensor metadata into memory - we could use a database live instead.
     def load_sensors(self):
         file_name=self.settings["sensors_file_name"]
 
@@ -118,6 +127,19 @@ class DataAPI(object):
             #sensors=json.loads(data_api.sensor_data())
             #print(sensors)
         return sensors
+
+    def load_sensor_types(self):
+        file_name = self.settings["sensor_types_file_name"]
+
+        #Checks if sensors.json exits so we don't have to create it
+        if(path.isfile(file_name)):
+            #load sensors.json and create dict
+            with open(file_name,'r') as json_file:
+                sensor_types = json.load(json_file)
+                print(file_name," loaded successfully in load_sensor_types()")
+        else:
+            print("sensors.json failed to load in load_sensor_types()")
+        return sensor_types
 
     # Update a list of objects with "acp_location_xyz" and "acp_boundary_xyz" properties
     #DEBUG this routine is common to api_bim and api_sensors so should be in acp_coordinates

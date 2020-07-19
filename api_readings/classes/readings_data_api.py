@@ -40,24 +40,40 @@ class DataAPI(object):
     def get(self, acp_id):
         try:
             print("get " + acp_id)
-            retrieved=self.get_recent_readings(acp_id)
+            reading = self.get_latest_reading(acp_id)
         except:
-            return 'no such sensor found'
-        return retrieved
+            print('get() sensor {} not found'.format(acp_id))
+            print(sys.exc_info())
+            return "{}"
+        response = { "acp_reading": reading }
+        json_response = json.dumps(response)
+        return json_response
 
-    def latest_data(self, args):
-        source = args.get('source')
-        sensor = args.get('sensor')
-        feature = args.get('feature')
+    def get_day(self, acp_id, args):
+        #DEBUG source, feature, date will come from args or sensor data
+        source = 'mqtt_acp'
 
-        selecteddate = Utils.getDateToday()
+        selected_date = Utils.getDateToday()
+
         fname = ( Path(self.basePath)
                     .resolve()
                     .joinpath(source,
                               'sensors',
-                              sensor,
-                              date_to_sensorpath(selecteddate),sensor+'_'+selecteddate+'.txt')
+                              acp_id,
+                              date_to_sensorpath(selecteddate),acp_id+'_'+selected_date+'.txt')
                 ) # brackets to allow line breaks
+
+        readings = []
+
+        with open(fname, 'r') as readings_file:
+            readings_data = readings_file.read()
+
+        for reading in readings_data: # iterate lines in .txt file
+            readings += json.loads(reading)
+
+        # parse file
+        readings = json.loads(readings_data)
+
         latestData = open(fname).readlines()[-1]
         jsonData = json.loads(latestData)
 
@@ -160,3 +176,25 @@ class DataAPI(object):
             print("no such sensor found, next")
 
         return response
+
+    def get_latest_reading(self, acp_id):
+        #DEBUG source, feature, date will come from args or sensor data
+        source = 'mqtt_acp'
+
+        today = Utils.getDateToday()
+
+        fname = ( Path(self.basePath)
+                    .resolve()
+                    .joinpath(source,
+                              'sensors',
+                              acp_id,
+                              self.date_to_sensorpath(today),acp_id+'_'+today+'.txt')
+                ) # brackets to allow line breaks
+
+        print("get_latest_reading() file {}".format(fname))
+
+        reading_str = open(fname).readlines()[-1]
+
+        reading = json.loads(reading_str)
+
+        return reading
