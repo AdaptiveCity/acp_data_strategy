@@ -22,6 +22,10 @@ do
   fi
 done
 
+echo
+echo "Issuing run.sh command for all API processes:"
 ./run.sh
 
+echo
+echo "Showing status.sh for all API processes:"
 ./status.sh

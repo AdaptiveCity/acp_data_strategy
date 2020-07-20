@@ -25,7 +25,7 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    return data_api.get(acp_id)
+    return data_api.get(acp_id, request.args)
 
 @app.route('/get_day/<acp_id>/')
 def get_day_route():

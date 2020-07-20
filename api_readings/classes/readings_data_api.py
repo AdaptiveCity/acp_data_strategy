@@ -6,7 +6,7 @@ from collections import defaultdict
 import sys
 from datetime import datetime
 import time
-from flask import request
+from flask import request, make_response
 from pathlib import Path
 
 from classes.utils import Utils
@@ -37,17 +37,26 @@ class DataAPI(object):
 
     #NEW API FUNCTION
     #returns sensor reading for X sensors
-    def get(self, acp_id):
+    def get(self, acp_id, args):
+        response_obj = {}
         try:
-            print("get " + acp_id)
+            args_str = ""
+            for key in args:
+                args_str += key+"="+args.get(key)+" "
+            print("get {}/{}".format(acp_id,args_str) )
             reading = self.get_latest_reading(acp_id)
+            response_obj["reading"] = reading
+            if "metadata" in args and args["metadata"] == "true":
+                sensor_metadata = self.get_sensor_metadata(acp_id)
+                response_obj["sensor_metadata"] = sensor_metadata
         except:
             print('get() sensor {} not found'.format(acp_id))
             print(sys.exc_info())
-            return "{}"
-        response = { "acp_reading": reading }
-        json_response = json.dumps(response)
-        return json_response
+            return '{ "error": "readings_data_api get Exception" }'
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
     def get_day(self, acp_id, args):
         #DEBUG source, feature, date will come from args or sensor data
@@ -198,3 +207,24 @@ class DataAPI(object):
         reading = json.loads(reading_str)
 
         return reading
+
+    #################################################
+    # Get data from the Sensors API
+    #################################################
+
+    def get_sensor_metadata(self, acp_id):
+        sensors_api_url = self.settings["API_SENSORS"]+'get/'+acp_id+"/"
+        #fetch data from Sensors api
+        try:
+            response = requests.get(sensors_api_url)
+            response.raise_for_status()
+            # access JSON content
+            sensor_metadata = response.json()
+        except HTTPError as http_err:
+            print(f'get_sensor_metadata HTTP GET error occurred: {http_err}')
+            return { "error": "readings_data_api: get_sensor_metadata() HTTP error." }
+        except Exception as err:
+            print(f'space_api.py Other GET error occurred: {err}')
+            return { "error": "readings_data_api: Exception in get_sensor_metadata()."}
+
+        return sensor_metadata
