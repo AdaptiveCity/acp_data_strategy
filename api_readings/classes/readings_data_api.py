@@ -40,14 +40,23 @@ class DataAPI(object):
     def get(self, acp_id, args):
         response_obj = {}
         try:
-            args_str = ""
-            for key in args:
-                args_str += key+"="+args.get(key)+" "
-            print("get {}/{}".format(acp_id,args_str) )
-            reading = self.get_latest_reading(acp_id)
-            response_obj["reading"] = reading
+            if DEBUG:
+                args_str = ""
+                for key in args:
+                    args_str += key+"="+args.get(key)+" "
+                print("get {}/{}".format(acp_id,args_str) )
+            # Lookup the sensor metadata, this will include the
+            # filepath to the readings, and also may be returned
+            # in the response.
+            sensor_metadata = self.get_sensor_metadata(acp_id)
+
+            today = Utils.getDateToday()
+
+            records = self.get_day_records(acp_id, today, sensor_metadata)
+
+            response_obj["reading"] = json.loads(records[-1])
+
             if "metadata" in args and args["metadata"] == "true":
-                sensor_metadata = self.get_sensor_metadata(acp_id)
                 response_obj["sensor_metadata"] = sensor_metadata
         except:
             print('get() sensor {} not found'.format(acp_id))
@@ -59,42 +68,42 @@ class DataAPI(object):
         return response
 
     def get_day(self, acp_id, args):
-        #DEBUG source, feature, date will come from args or sensor data
-        source = 'mqtt_acp'
+        response_obj = {}
+        try:
+            if DEBUG:
+                args_str = ""
+                for key in args:
+                    args_str += key+"="+args.get(key)+" "
+                print("get_day() {}/{}".format(acp_id,args_str) )
+            # Lookup the sensor metadata, this will include the
+            # filepath to the readings, and also may be returned
+            # in the response.
+            sensor_metadata = self.get_sensor_metadata(acp_id)
 
-        selected_date = Utils.getDateToday()
+            if "date" in args:
+                selected_date = args.get("date")
+            else:
+                selected_date = Utils.getDateToday()
 
-        fname = ( Path(self.basePath)
-                    .resolve()
-                    .joinpath(source,
-                              'sensors',
-                              acp_id,
-                              date_to_sensorpath(selecteddate),acp_id+'_'+selected_date+'.txt')
-                ) # brackets to allow line breaks
+            records = self.get_day_records(acp_id, selected_date, sensor_metadata)
 
-        readings = []
+            readings = []
 
-        with open(fname, 'r') as readings_file:
-            readings_data = readings_file.read()
+            for line in records:
+                readings.append(json.loads(line))
 
-        for reading in readings_data: # iterate lines in .txt file
-            readings += json.loads(reading)
+            response_obj = { "readings": readings }
 
-        # parse file
-        readings = json.loads(readings_data)
-
-        latestData = open(fname).readlines()[-1]
-        jsonData = json.loads(latestData)
-
-        response = {}
-
-        if feature == '' or feature == None:
-            response = {'features':jsonData['payload_fields']}
-        else:
-            response = {feature:jsonData['payload_fields'][feature]}
-
-        json_response = json.dumps(response)
-        return json_response
+            if "metadata" in args and args["metadata"] == "true":
+                response_obj["sensor_metadata"] = sensor_metadata
+        except:
+            print('get() sensor {} not found'.format(acp_id))
+            print(sys.exc_info())
+            return '{ "error": "readings_data_api get_day() Exception" }'
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
     def history_data(self, args):
         if DEBUG:
@@ -186,27 +195,26 @@ class DataAPI(object):
 
         return response
 
-    def get_latest_reading(self, acp_id):
-        #DEBUG source, feature, date will come from args or sensor data
-        source = 'mqtt_acp'
+    # Get a day's-worth of sensor readings for required sensor
+    # readings_day will be "YYYY-MM-DD"
+    # sensor_metadata is required to work out where the data is stored
+    def get_day_records(self, acp_id, readings_day, sensor_metadata):
 
-        today = Utils.getDateToday()
+        YYYY = readings_day[0:4]
+        MM   = readings_day[5:7]
+        DD   = readings_day[8:10]
 
-        fname = ( Path(self.basePath)
-                    .resolve()
-                    .joinpath(source,
-                              'sensors',
-                              acp_id,
-                              self.date_to_sensorpath(today),acp_id+'_'+today+'.txt')
-                ) # brackets to allow line breaks
+        day_file = sensor_metadata["acp_type_info"]["day_file"]
 
-        print("get_latest_reading() file {}".format(fname))
+        readings_file_name = ( day_file.replace("<acp_id>",acp_id)
+                                       .replace("<YYYY>",YYYY)
+                                       .replace("<MM>",MM)
+                                       .replace("<DD>",DD)
+        )
 
-        reading_str = open(fname).readlines()[-1]
+        print("get_day_records() readings_file_name {}".format(readings_file_name))
 
-        reading = json.loads(reading_str)
-
-        return reading
+        return open(readings_file_name, "r").readlines()
 
     #################################################
     # Get data from the Sensors API

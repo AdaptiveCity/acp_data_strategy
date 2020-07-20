@@ -22,13 +22,25 @@ CORS(app)
 #api/readings for most recent sensor readings
 #############################################
 
+# /get/<acp_id>/?<args>
+# The canonical "get" API call: /get/<acp_id>/[?metadata=true]
+# Returns { "reading": <the latest sensor reading>,
+#           "sensor_metadata": <sensors API data for this sensor> (optional)
+#         }
+# where:
+#   /<acp_id>/ is the sensor identifier
+#   ?metadata=true requests the sensor metadata to be included in the response
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
     return data_api.get(acp_id, request.args)
 
+# /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+# Returns a day's-worth of readings for the required sensor.
+# Defaults to 'today', or optional date can be given.
+# Sensor metadata can also be returned as for /get/.
 @app.route('/get_day/<acp_id>/')
-def get_day_route():
+def get_day_route(acp_id):
     global data_api
     return data_api.get_day(acp_id, request.args)
 
