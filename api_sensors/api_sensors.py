@@ -23,10 +23,13 @@ CORS(app)
 #api/sensors for sensor oriented metedata
 #########################################
 
+# /get/<acp_id>/[?metadata=true] :
+# The canonical "get" api call, returns the sensor metadata for sensor with id "<acp_id>".
+# Given optional "?metadata=true", the API will also return the sensor *type* metadata.
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    return data_api.get_sensor_metadata(acp_id)
+    return data_api.get(acp_id)
 
 @app.route('/get_bim/<crate_id>/')
 def get_bim_route(crate_id):
@@ -61,6 +64,13 @@ def get_floor_number_route(coordinate_system, floor_number):
 def get_gps_route():
     global data_api
     return data_api.get_gps()
+
+#
+@app.route('/get_type/<acp_type_id>/')
+def get_type_route(acp_type_id):
+    global data_api
+    return data_api.get_type(acp_type_id)
+
 
 ####################################################################
 #

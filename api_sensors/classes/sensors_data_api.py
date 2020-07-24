@@ -34,9 +34,9 @@ class DataAPI(object):
         print("{} loaded".format(settings["sensors_file_name"]))
         self.load_coordinate_systems()
 
-    #NEW API FUNCTION
-    def get_sensor_metadata(self, acp_id):
-        print("get_sensor_metadata {}".format(acp_id))
+    # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
+    def get(self, acp_id):
+        print("get {}".format(acp_id))
         global SENSORS, SENSOR_TYPES
         try:
             sensor_details = SENSORS[acp_id]
@@ -45,9 +45,20 @@ class DataAPI(object):
                 if acp_type_id in SENSOR_TYPES:
                     sensor_details["acp_type_info"] = SENSOR_TYPES[acp_type_id]
         except:
-            print("get_sensor_metadata() no sensor id {}".format(acp_id))
+            print("get() no sensor id {}".format(acp_id))
             return {}
         return sensor_details
+
+    # Get the metadata for a given sensor TYPE (e.g. 'rad-ath')
+    def get_type(self, acp_type_id):
+        print("get_type {}".format(acp_type_id))
+        global SENSOR_TYPES
+        try:
+            type_info = SENSOR_TYPES[acp_type_id]
+        except:
+            print("get_type() no sensor type id {}".format(acp_type_id))
+            return {}
+        return type_info
 
     def get_floor_number(self, coordinate_system, floor_number):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
