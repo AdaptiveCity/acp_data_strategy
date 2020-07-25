@@ -52,13 +52,8 @@ class DataAPI(object):
     # Get the metadata for a given sensor TYPE (e.g. 'rad-ath')
     def get_type(self, acp_type_id):
         print("get_type {}".format(acp_type_id))
-        global SENSOR_TYPES
-        try:
-            type_info = SENSOR_TYPES[acp_type_id]
-        except:
-            print("get_type() no sensor type id {}".format(acp_type_id))
-            return {}
-        return type_info
+        type_info = self.type_lookup(acp_type_id)
+        return type_info if type_info is not None else {}
 
     def get_floor_number(self, coordinate_system, floor_number):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
@@ -81,7 +76,7 @@ class DataAPI(object):
 
     # Get sensors for a given crate_id
     def get_bim(self, crate_id):
-        #iterate through sensors.json0and collect all crates
+        #iterate through sensors.json and collect all crates
         sensor_list = []
 
         for acp_id in SENSORS:
@@ -113,6 +108,36 @@ class DataAPI(object):
         """
         print("get_gps returning {}".format(json_response))
         return json_response
+
+    # Return a list of sensor's metadata
+    # Returns { sensors: [..], types: [..]}
+    def list(self, args):
+        # debug listing of querystring args
+        if DEBUG:
+            args_str = ""
+            for key in args:
+                args_str += key+"="+args.get(key)+" "
+            print("list() {}/{}".format(acp_id,args_str) )
+        # Set bool to include sensor type metadata
+        include_type_info = "type_metadata" in args and args["type_metadata"] == "true"
+        sensor_list = []
+        type_list = []
+        for acp_id in SENSORS:
+            sensor = SENSORS[acp_id]
+            if True:                   # Here's where we'd filter the results
+                sensor_list.append(sensor)
+                if include_type_info:
+                    acp_type_id = sensor["acp_type_id"]
+                    type_info = self.type_lookup(acp_type_id);
+                    if type_info is not None:
+                        type_list.append(type_info)
+
+        # Build return object { sensors: [..], types: [..]}
+        return_obj = { 'sensors': sensor_list }
+        if include_type_info:
+            return_obj["types"] = type_list
+
+        return return_obj
 
     ###########################################################################
     #
@@ -151,6 +176,14 @@ class DataAPI(object):
         else:
             print("sensors.json failed to load in load_sensor_types()")
         return sensor_types
+
+    def type_lookup(self, acp_type_id):
+        global SENSOR_TYPES
+        try:
+            type_info = SENSOR_TYPES[acp_type_id]
+        except:
+            return None
+        return type_info
 
     # Update a list of objects with "acp_location_xyz" and "acp_boundary_xyz" properties
     #DEBUG this routine is common to api_bim and api_sensors so should be in acp_coordinates

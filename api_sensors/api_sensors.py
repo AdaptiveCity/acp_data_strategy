@@ -59,7 +59,7 @@ def get_floor_number_route(coordinate_system, floor_number):
 
 #DEBUG this API call **really** needs parameters (what info to show, lat/lng box?)
 # Get all sensors with a GPS location (i.e. lat/lng)
-@app.route('/get_gps')
+@app.route('/get_gps/')
 @cross_origin()
 def get_gps_route():
     global data_api
@@ -71,6 +71,14 @@ def get_type_route(acp_type_id):
     global data_api
     return data_api.get_type(acp_type_id)
 
+# Return a list of sensors
+# We could support querystring filters e.g.
+# '?feature=temperature'
+@app.route('/list/')
+#@cross_origin()
+def list_route():
+    global data_api
+    return data_api.list(request.args)
 
 ####################################################################
 #
