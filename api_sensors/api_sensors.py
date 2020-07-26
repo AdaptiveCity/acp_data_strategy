@@ -80,6 +80,15 @@ def list_route():
     global data_api
     return data_api.list(request.args)
 
+# Return a list of sensor types
+# We could support querystring filters e.g.
+# '?feature=temperature'
+@app.route('/list_types/')
+#@cross_origin()
+def list_types_route():
+    global data_api
+    return data_api.list_types(request.args)
+
 ####################################################################
 #
 # Main

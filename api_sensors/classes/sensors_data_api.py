@@ -11,7 +11,7 @@ import requests
 from requests.exceptions import HTTPError
 
 
-DEBUG = False
+DEBUG = True
 
 ###################################################################
 #
@@ -117,7 +117,7 @@ class DataAPI(object):
             args_str = ""
             for key in args:
                 args_str += key+"="+args.get(key)+" "
-            print("list() {}/{}".format(acp_id,args_str) )
+            print("list() {}".format(args_str) )
         # Set bool to include sensor type metadata
         include_type_info = "type_metadata" in args and args["type_metadata"] == "true"
         sensor_list = []
@@ -136,6 +136,27 @@ class DataAPI(object):
         return_obj = { 'sensors': sensor_list }
         if include_type_info:
             return_obj["types"] = type_list
+
+        return return_obj
+
+    # Return a list of sensor's metadata
+    # Returns { sensors: [..], types: [..]}
+    def list_types(self, args):
+        # debug listing of querystring args
+        if DEBUG:
+            args_str = ""
+            for key in args:
+                args_str += key+"="+args.get(key)+" "
+            print("list_types() {}".format(args_str) )
+        # Set bool to include sensor type metadata
+        type_list = []
+        for acp_type_id in SENSOR_TYPES:
+            if True:                   # Here's where we'd filter the results
+                type_info = self.type_lookup(acp_type_id);
+                type_list.append(type_info)
+
+        return_obj = { }
+        return_obj["types"] = type_list
 
         return return_obj
 
