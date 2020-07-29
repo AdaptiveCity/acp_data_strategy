@@ -61,7 +61,7 @@ class DataAPI(object):
         except:
             print('get() sensor {} not found'.format(acp_id))
             print(sys.exc_info())
-            return '{ "error": "readings_data_api get Exception" }'
+            return '{ "acp_error_msg": "readings_data_api get Exception" }'
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
         response.headers['Content-Type'] = 'application/json'
@@ -96,10 +96,12 @@ class DataAPI(object):
 
             if "metadata" in args and args["metadata"] == "true":
                 response_obj["sensor_metadata"] = sensor_metadata
-        except:
+        except FileNotFoundError as e:
             print('get() sensor {} not found'.format(acp_id))
             print(sys.exc_info())
-            return '{ "error": "readings_data_api get_day() Exception" }'
+            response_obj = {}
+            response_obj["acp_error_id"] = "NO_READINGS"
+            response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
         response.headers['Content-Type'] = 'application/json'
