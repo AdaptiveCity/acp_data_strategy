@@ -54,7 +54,8 @@ class DataAPI(object):
 
             records = self.get_day_records(acp_id, today, sensor_metadata)
 
-            response_obj["reading"] = json.loads(records[-1])
+            if len(records) > 0:
+                response_obj["reading"] = json.loads(records[-1])
 
             if "metadata" in args and args["metadata"] == "true":
                 response_obj["sensor_metadata"] = sensor_metadata
@@ -202,20 +203,23 @@ class DataAPI(object):
     # sensor_metadata is required to work out where the data is stored
     def get_day_records(self, acp_id, readings_day, sensor_metadata):
 
-        YYYY = readings_day[0:4]
-        MM   = readings_day[5:7]
-        DD   = readings_day[8:10]
+        try:
+            YYYY = readings_day[0:4]
+            MM   = readings_day[5:7]
+            DD   = readings_day[8:10]
 
-        day_file = sensor_metadata["acp_type_info"]["day_file"]
+            day_file = sensor_metadata["acp_type_info"]["day_file"]
 
-        readings_file_name = ( day_file.replace("<acp_id>",acp_id)
-                                       .replace("<YYYY>",YYYY)
-                                       .replace("<MM>",MM)
-                                       .replace("<DD>",DD)
-        )
+            readings_file_name = ( day_file.replace("<acp_id>",acp_id)
+                                           .replace("<YYYY>",YYYY)
+                                           .replace("<MM>",MM)
+                                           .replace("<DD>",DD)
+            )
 
-        print("get_day_records() readings_file_name {}".format(readings_file_name))
-
+            print("get_day_records() readings_file_name {}".format(readings_file_name))
+        except:
+            print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
+            return []
         return open(readings_file_name, "r").readlines()
 
     #################################################
@@ -223,6 +227,7 @@ class DataAPI(object):
     #################################################
 
     def get_sensor_metadata(self, acp_id):
+        print("get_sensor_metadata() {}".format(acp_id))
         sensors_api_url = self.settings["API_SENSORS"]+'get/'+acp_id+"/"
         #fetch data from Sensors api
         try:
@@ -231,10 +236,9 @@ class DataAPI(object):
             # access JSON content
             sensor_metadata = response.json()
         except HTTPError as http_err:
-            print(f'get_sensor_metadata HTTP GET error occurred: {http_err}')
+            print(f'get_sensor_metadata() HTTP GET error occurred: {http_err}')
             return { "error": "readings_data_api: get_sensor_metadata() HTTP error." }
         except Exception as err:
-            print(f'space_api.py Other GET error occurred: {err}')
+            print(f'get_sensor_metadata() Other GET error occurred: {err}')
             return { "error": "readings_data_api: Exception in get_sensor_metadata()."}
-
         return sensor_metadata
