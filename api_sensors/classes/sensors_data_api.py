@@ -77,6 +77,7 @@ class DataAPI(object):
     # Get sensors for a given crate_id
     def get_bim(self, crate_id):
         #iterate through sensors.json and collect all crates
+        #DEBUG I think we will change JSON API returns from lists to objects !!
         sensor_list = []
 
         for acp_id in SENSORS:
@@ -89,25 +90,17 @@ class DataAPI(object):
 
     #DEBUG this function needs parameters or renaming
     #DEBUG moved from space API
+    # Note we are using a 'list_obj', i.e. { "id1": { "acp_id": "id1", ..}, "id2": { "acp_id": "id2", ...} }
     def get_gps(self):
-        #response['data'].append({'sensor':sdir,
-        #    'acp_ts':jdata['acp_ts'],
-        #    'latitude':jdata['metadata']['gateways'][0]['latitude'],
-        #    'longitude':jdata['metadata']['gateways'][0]['longitude']
-        #})
-        #DEBUG mockup
-        json_response = """
-            { "sensors": [ { "sensor": "ijl20-sodaq-ttn",
-                          "acp_ts": "1591094324.123",
-                          "acp_lat": 52.210927,
-                          "acp_lng": 0.092740,
-                          "description": "Outside FE11"
-                        }
-                      ]
-            }
-        """
-        print("get_gps returning {}".format(json_response))
-        return json_response
+        sensor_list_obj = {}
+
+        for acp_id in SENSORS:
+            sensor = SENSORS[acp_id]
+            if ( "acp_location" in sensor and
+                 sensor["acp_location"]["system"] == "GPS" ):
+                sensor_list_obj[acp_id] = sensor
+
+        return { 'sensors': sensor_list_obj }
 
     # Return a list of sensor's metadata
     # Returns { sensors: [..], types: [..]}

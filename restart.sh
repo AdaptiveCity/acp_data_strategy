@@ -26,6 +26,8 @@ echo
 echo "Issuing run.sh command for all API processes:"
 ./run.sh
 
+sleep 2
+
 echo
 echo "Showing status.sh for all API processes:"
 ./status.sh
