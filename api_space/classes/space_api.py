@@ -43,12 +43,7 @@ class DataAPI(object):
     def get_crate_svg(self, crate_id, children):
         print("data_api get_crate_svg",crate_id, children)
         #the following fails to return the right floorplan for FF (specifically GW20/GW23)
-        bim_api_url = self.settings["API_BIM"]+"get_xyz/"+crate_id+"/"+str(children)+"/"
-        return self.get_svg(bim_api_url)
-
-    # Get SVG for a FLOOR, e.g. 'FF'
-    def get_floor_svg(self,crate_id):
-        bim_api_url = self.settings["API_BIM"]+"get/"+crate_id+"/1/"
+        bim_api_url = self.settings["API_BIM"]+"get_xyzf/"+crate_id+"/"+str(children)+"/"
         return self.get_svg(bim_api_url)
 
     # This functions returns every crate based on floor number,
@@ -101,10 +96,9 @@ class DataAPI(object):
         """
 
         #parse the loaded json file and transform all location data into SVG polygons
-        for crate in bim_objects:
+        for crate_id in bim_objects:
+            crate = bim_objects[crate_id]
             point_list=''
-
-            crate_id = crate['crate_id']
 
             for pairs in crate['acp_boundary_xyz'][0]['boundary']:
                 # Note y is NEGATIVE for XYZF (anti-clockwise)-> SVG (clockwise)
@@ -227,35 +221,6 @@ class DataAPI(object):
                     sensors[sensor]=sensor_dict
 
         return json.dumps({crate:sensors})
-
-
-    ###########################################
-    ## EVERYTHING BELOW THIS WILL BE DELETED ##
-    ## (except Support Functions, of course) ##
-    ###########################################
-
-    #DEBUG this function needs parameters or renaming
-    #DEBUG sensor_gps_coords() ??
-    def get_sensors_latlng(self):
-        #response['data'].append({'sensor':sdir,
-        #    'acp_ts':jdata['acp_ts'],
-        #    'latitude':jdata['metadata']['gateways'][0]['latitude'],
-        #    'longitude':jdata['metadata']['gateways'][0]['longitude']
-        #})
-        #DEBUG mockup
-        json_response = """
-            { "sensors": [ { "sensor": "ijl20-sodaq-ttn",
-                          "acp_ts": "1591094324.123",
-                          "acp_lat": 52.210927,
-                          "acp_lng": 0.092740,
-                          "description": "Outside FE11"
-                        }
-                      ]
-            }
-        """
-        print("gps_coords returning {}".format(json_response))
-        return json_response
-
 
     ###########################################################################
     #

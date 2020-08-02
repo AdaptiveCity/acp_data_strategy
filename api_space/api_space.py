@@ -29,17 +29,8 @@ csrf.init_app(app)
 #api/space for SVG related things
 #################################
 
-#DEBUG this API call **really** needs parameters (what info to show, lat/lng box?)
-@app.route('/get_sensors_latlng/')
-@cross_origin()
-def gps_sensors_latlng_route():
-    global user_pages
-    response = make_response(space_api.get_sensors_latlng(), 200)
-    response.mimetype = "text/xml"
-    return response
-
-@app.route('/get/bim/<crate_id>/', defaults={'children': 0})
-@app.route('/get/bim/<crate_id>/<children>/')
+@app.route('/get_bim/<crate_id>/', defaults={'children': 0})
+@app.route('/get_bim/<crate_id>/<children>/')
 def get_svg_by_crate(crate_id,children):
     global space_api
     if str(children)=='all': #or type(children)!=int:
@@ -89,4 +80,3 @@ if __name__ == '__main__':
     app.run( host=settings["space_host"],
              port=settings["space_port"],
              debug=DEBUG)
-

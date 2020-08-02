@@ -24,7 +24,7 @@ CORS(app)
 
 @app.route('/get/<crate_id>/', defaults={'children': 0})
 @app.route('/get/<crate_id>/<children>/')
-def get_bim_tree_route(crate_id,children):
+def get_route(crate_id,children):
     global data_api
     if str(children)=='all': #or type(children)!=int:
         children=999
@@ -33,10 +33,12 @@ def get_bim_tree_route(crate_id,children):
             children=int(children)
         except:
             children=999
-    response = make_response(data_api.get_bim_tree(crate_id, children), 200)
+    response = make_response(data_api.get(crate_id, children), 200)
     response.mimetype = "application/json"
     return response
 
+# get_floor_number/<coordinate_system>/<floor_number>/
+# Returns BIM objects for floor EXCLUDING crate_type=="floor"
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')
 def get_floor_number_route(coordinate_system,floor_number):
     global data_api
@@ -52,9 +54,9 @@ def get_gps_route(crate_id, children):
     response.mimetype = "application/json"
     return response
 
-@app.route('/get_xyz/<crate_id>/', defaults={'children': 0})
-@app.route('/get_xyz/<crate_id>/<children>/')
-def get_xyz_route(crate_id, children):
+@app.route('/get_xyzf/<crate_id>/', defaults={'children': 0})
+@app.route('/get_xyzf/<crate_id>/<children>/')
+def get_xyzf_route(crate_id, children):
     global data_api
     response = make_response(data_api.get_xyzf(crate_id, children), 200)
     response.mimetype = "application/json"
@@ -83,4 +85,3 @@ if __name__ == '__main__':
     app.run( host=settings["bim_host"],
              port=settings["bim_port"],
              debug=DEBUG)
-

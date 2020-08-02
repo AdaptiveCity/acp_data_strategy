@@ -34,25 +34,26 @@ class DataAPI(object):
     #####################################################################
 
     #takes in crate_id and depth and returns all children of that crate
-    def get_bim_tree(self, crate_id, depth):
+    def get(self, crate_id, depth):
         global BIM
 
         if DEBUG:
-            print("get_bim_tree {} {}".format(crate_id,depth))
+            print("get {} {}".format(crate_id,depth))
 
         # Get list  of children of the desired crate to required depth
-        crates = self.get_tree(crate_id, int(depth))
+        crates = self.get_tree_list(crate_id, int(depth))
 
         if crates is None:
-            return ""
+            return {}
 
-        return json.dumps(crates)
+        # Convert crates list [..] into list obj { "FE11": { ..}, .. }
+        return self.list_to_dict("crate_id",crates)
 
     #takes in floor number and returns all room/corridor crates that have acp_location[f]==floor
     def get_floor_number(self, coordinate_system,floor_number):
         global BIM
 
-        crates = []
+        crates_dict = {}
         # coords.f(acp_location) will return floor number
         coords = self.coordinate_systems[coordinate_system]
 
@@ -62,11 +63,11 @@ class DataAPI(object):
             if "acp_location" in crate:
                 loc = crate["acp_location"]
                 if loc["system"] == coordinate_system and coords.f(loc) == int(floor_number):
-                    crates += [ crate ]
+                    crates_dict[crate_id] = crate
 
-        self.add_xyzf(crates)
+        self.add_xyzf(crates_dict)
 
-        return json.dumps(crates)
+        return crates_dict
 
     # Return the BIM object with additional properties (if they don't already exist):
     #     acp_lat, acp_lng, acp_alt
@@ -74,30 +75,37 @@ class DataAPI(object):
     #DEBUG api_bim.py get_gps depth not implemented - maybe we don't need it
     def get_gps(self, crate_id, depth):
         if crate_id not in BIM:
-            return "[]"
+            return {}
         crate = BIM[crate_id]
         if "acp_location" not in crate:
             # We need acp_location to for the coordinate system
-            return "[]"
+            return {}
         coordinate_system = crate["acp_location"]["system"]
         if "acp_boundary" in crate and "acp_boundary_gps" not in crate:
             crate["acp_boundary_gps"] = self.acp_boundary_to_gps(coordinate_system, crate["acp_boundary"])
         #DEBUG api_bim.py get_gps not implemented acp_lat, acp_lng, acp_alt
-        return json.dumps([crate])
+        crate_dict = {}
+        crate_dict[crate_id] = crate
+        return crate_dict
 
     # Return the BIM object with additional properties (if they don't already exist):
     #     acp_boundary_xyz with x,y coordinates in anticlockwise, meters units
     #DEBUG api_bim.py get_gps depth not implemented yet
     def get_xyzf(self, crate_id, depth):
         # Get list  of children of the desired crate to required depth
-        crates = self.get_tree(crate_id, int(depth))
+        crates_list = self.get_tree_list(crate_id, int(depth))
 
-        self.add_xyzf(crates)
+        crates_dict = self.list_to_dict("crate_id", crates_list)
 
-        if crates is None:
-            return ""
+        if DEBUG:
+            print("get_xyzf {}".format(crates_dict))
 
-        return json.dumps(crates)
+        self.add_xyzf(crates_dict)
+
+        if crates_dict is None:
+            return {}
+
+        return crates_dict
 
     ###########################################################################
     #
@@ -116,12 +124,13 @@ class DataAPI(object):
         print(file_name," loaded successfully")
         return BIM_data
 
-    # Update a list of creates with "acp_location_xyz" and "acp_boundary_xyz" properties
+    # Update a dictionary of creates with "acp_location_xyz" and "acp_boundary_xyz" properties
     def add_xyzf(self, crates):
         if crates is None:
             return
 
-        for crate in crates:
+        for crate_id in crates:
+            crate = crates[crate_id]
             if "acp_location" not in crate:
                 # We need acp_location to for the coordinate system
                 return # exit with crates unchanged
@@ -160,7 +169,7 @@ class DataAPI(object):
         return children
 
     # Return list of crates by flattening tree from crate_id down
-    def get_tree(self, crate_id, depth):
+    def get_tree_list(self, crate_id, depth):
 
         if DEBUG:
             print("get_tree",depth,crate_id)
@@ -176,7 +185,8 @@ class DataAPI(object):
             remaining_depth = depth - 1
 
             for child in children:
-                crate_list += self.get_tree(child["crate_id"], remaining_depth)
+                # recursion
+                crate_list += self.get_tree_list(child["crate_id"], remaining_depth)
 
         return crate_list
 
@@ -237,6 +247,15 @@ class DataAPI(object):
 
     def point_to_xy(self, coordinate_system, point):
         return self.coordinate_systems[coordinate_system].xy(point)
+
+    # Convert a list of objs into a dictionary
+    def list_to_dict(self, key_name, list):
+        return_obj = {}
+        # iterate the list objects
+        for list_obj in list:
+            # for each list object, add it as a dictionary entry
+            return_obj[list_obj[key_name]] = list_obj
+        return return_obj
 
     ####################################################################
     # Load the coordinate system modules into self.coordinate_systems  #
