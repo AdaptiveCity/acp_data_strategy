@@ -57,7 +57,7 @@ class DataAPI(object):
 
     def get_floor_number(self, coordinate_system, floor_number):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
-        sensor_list = []
+        sensor_list_obj = {}
         # coords.f(acp_location) will return floor number
         coords = self.coordinate_systems[coordinate_system]
 
@@ -68,25 +68,26 @@ class DataAPI(object):
             if "acp_location" in sensor:
                 loc = sensor["acp_location"]
                 if loc["system"] == coordinate_system and coords.f(loc) == int(floor_number):
-                    sensor_list.append(sensor)
+                    sensor_list_obj[acp_id] = sensor
 
-        self.add_xyzf(sensor_list)
+        self.add_xyzf(coordinate_system, sensor_list_obj)
 
-        return { 'sensors': sensor_list }
+        return { 'sensors': sensor_list_obj }
 
-    # Get sensors for a given crate_id
-    def get_bim(self, crate_id):
+    # Get sensors for a given crate_id, returning dictionary of sensors
+    def get_bim(self, coordinate_system, crate_id):
         #iterate through sensors.json and collect all crates
-        #DEBUG I think we will change JSON API returns from lists to objects !!
-        sensor_list = []
+        sensor_list_obj = {}
 
         for acp_id in SENSORS:
             sensor = SENSORS[acp_id]
             if ( "crate_id" in sensor and
                  sensor["crate_id"] == crate_id ):
-                sensor_list += [ sensor ]
+                sensor_list_obj[acp_id] =  sensor
 
-        return { 'sensors': sensor_list }
+        self.add_xyzf(coordinate_system, sensor_list_obj)
+
+        return { 'sensors': sensor_list_obj }
 
     #DEBUG this function needs parameters or renaming
     #DEBUG moved from space API
@@ -113,27 +114,27 @@ class DataAPI(object):
             print("list() {}".format(args_str) )
         # Set bool to include sensor type metadata
         include_type_info = "type_metadata" in args and args["type_metadata"] == "true"
-        sensor_list = []
-        type_list = []
+        sensor_list_obj = {}
+        type_list_obj = {}
         for acp_id in SENSORS:
             sensor = SENSORS[acp_id]
             if True:                   # Here's where we'd filter the results
-                sensor_list.append(sensor)
+                sensor_list_obj[acp_id] = sensor
                 if include_type_info:
                     acp_type_id = sensor["acp_type_id"]
-                    type_info = self.type_lookup(acp_type_id);
+                    type_info = self.type_lookup(acp_type_id)
                     if type_info is not None:
-                        type_list.append(type_info)
+                        type_list_obj[acp_type_id] = type_info
 
         # Build return object { sensors: [..], types: [..]}
-        return_obj = { 'sensors': sensor_list }
+        return_obj = { 'sensors': sensor_list_obj }
         if include_type_info:
-            return_obj["types"] = type_list
+            return_obj["types"] = type_list_obj
 
         return return_obj
 
-    # Return a list of sensor's metadata
-    # Returns { sensors: [..], types: [..]}
+    # Return a list of sensor type  metadata
+    # Returns { types: { "elsys-ems": {...}, ... }}
     def list_types(self, args):
         # debug listing of querystring args
         if DEBUG:
@@ -142,14 +143,14 @@ class DataAPI(object):
                 args_str += key+"="+args.get(key)+" "
             print("list_types() {}".format(args_str) )
         # Set bool to include sensor type metadata
-        type_list = []
+        type_list_obj = {}
         for acp_type_id in SENSOR_TYPES:
             if True:                   # Here's where we'd filter the results
-                type_info = self.type_lookup(acp_type_id);
-                type_list.append(type_info)
+                type_info = self.type_lookup(acp_type_id)
+                type_list_obj[acp_type_id] = type_info
 
         return_obj = { }
-        return_obj["types"] = type_list
+        return_obj["types"] = type_list_obj
 
         return return_obj
 
@@ -199,18 +200,21 @@ class DataAPI(object):
             return None
         return type_info
 
-    # Update a list of objects with "acp_location_xyz" and "acp_boundary_xyz" properties
+    # Update a list_obj of objects with "acp_location_xyz" and "acp_boundary_xyz" properties
     #DEBUG this routine is common to api_bim and api_sensors so should be in acp_coordinates
-    def add_xyzf(self, obj_list):
-        if obj_list is None:
+    def add_xyzf(self, coordinate_system, list_obj):
+        if list_obj is None:
             return
 
-        for obj in obj_list:
-            if "acp_location" not in obj:
+        for acp_id in list_obj:
+            if "acp_location" not in list_obj[acp_id]:
                 # We need acp_location to for the coordinate system
                 continue # no acp_location in this object so skip
+            obj = list_obj[acp_id]
             acp_location = obj["acp_location"]
-            coordinate_system = acp_location["system"]
+            sensor_coordinate_system = acp_location["system"]
+            if sensor_coordinate_system != coordinate_system:
+                continue
             # Note the xyz coordinates may already be cached in the bim data
             if "acp_location_xyz" not in obj:
                 obj["acp_location_xyz"] = self.coordinate_systems[coordinate_system].xyzf(acp_location)
@@ -313,62 +317,6 @@ class DataAPI(object):
 
         return 'no such query found'
 
-    ##OLD IMPLEMENTATION THAW WAS USING BIM API
-    def get_sensors_count_old(self, crate_id, depth):
-        global SENSORS
-        #get children of the desired crate
-        BIM=self.query_BIM(crate_id, depth)
-
-        children=[]
-        for i in BIM:
-            children.append(i['crate_id'])
-
-        #if no children,then return the crate itself
-        if(len(children)<1):
-            children.append(crate_id)
-
-        responses=[]
-
-        for child in children:
-
-            #initiate the sensor counter
-            counter=0
-
-            #retrieve crate boundary, floor and type
-            #since it's used to reference what crate
-            #sensors belong to
-            #find_in_list
-
-            child_object=self.find_in_list(child, BIM)
-
-            boundary=child_object['acp_boundary'][0]['boundary']
-            child_floor=child_object['acp_location']['f']
-            child_type=child_object['crate_type']
-
-            json_response={}
-            json_response['crate_id']=child
-
-            for sensor in SENSORS:
-                #acquire location data for x,y and floor
-                x_loc=SENSORS[sensor]['acp_location']['x']
-                y_loc=SENSORS[sensor]['acp_location']['y']
-                sensor_floor=SENSORS[sensor]['acp_location']['f']
-
-                #determine the type of child to check what sensors belong to it
-                if child_type=='room' or child_type=='floor':
-                    #for rooms and floors we have to take into account the level at which sensors are
-                    #deployed, since x/y for different floors overlap
-                    if(self.is_point_in_path(x_loc,y_loc,boundary) and sensor_floor==child_floor):
-                        counter+=1
-
-                if(child_type=='building'):
-                    if(self.is_point_in_path(x_loc,y_loc,boundary)):
-                        counter+=1
-
-                json_response['sensor']=counter
-            responses.append(json_response)
-        return {'data':responses}#{'crate':crate_id, 'sensors':counter}
-
     #https://en.wikipedia.org/wiki/Even-odd_rule
     def is_point_in_path(self,x: int, y: int, poly) -> bool:
         #Determine if the point is in the path.
@@ -398,39 +346,6 @@ class DataAPI(object):
             if x['crate_id'] == item_id:
                 print ("I found it!")
                 return x
-
-    def query_BIM(self, crate_id, depth):
-       # api_url = self.settings["API_BIM"]+
-        api_url="http://127.0.0.1:5010/api/bim/"+"get/"+crate_id+"/"+str(depth)
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status()
-            # access JSOn content
-            bim_objects = response.json()
-        except HTTPError as http_err:
-            print(f'HTTP error occurred: {http_err}')
-            exit(1)
-        except Exception as err:
-            print(f'Other error occurred: {err}')
-            exit(1)
-
-        floor=bim_objects[0]['acp_location']['f']
-        #so we need floor=1 specifier
-
-        api_url = "http://127.0.0.1:5010/api/bim/"+"/select/floor/"+str(floor)
-
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status()
-            # access JSOn content
-            bim_response = response.json()
-            return bim_response
-        except HTTPError as http_err:
-            print(f'HTTP error occurred: {http_err}')
-            exit(1)
-        except Exception as err:
-            print(f'Other error occurred: {err}')
-            exit(1)
 
     ####################################################################
     # Load the coordinate system modules into self.coordinate_systems  #

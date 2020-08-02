@@ -31,10 +31,10 @@ def get_route(acp_id):
     global data_api
     return data_api.get(acp_id)
 
-@app.route('/get_bim/<crate_id>/')
-def get_bim_route(crate_id):
+@app.route('/get_bim/<coordinate_system>/<crate_id>/')
+def get_bim_route(coordinate_system, crate_id):
     global data_api
-    return data_api.get_bim(crate_id)
+    return data_api.get_bim(coordinate_system, crate_id)
 
 #DEBUG replaced with get_floor_number
 #@app.route('/get_count/<crate_id>/', defaults={'children': 0})
