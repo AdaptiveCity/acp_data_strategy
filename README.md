@@ -7,6 +7,10 @@ protocols and formats. Rather, we are assuming the data will continue to be tail
 each source and consequently be fairly diverse and we will take steps *where appropriate*
 to make the data manageable.
 
+## Installation
+
+See [INSTALLTION.md](INSTALLATION.md).
+
 ## Summary of our approach
 
 1. We propagate the data around our platform using JSON objects. This provides readability
