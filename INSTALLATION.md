@@ -63,8 +63,9 @@ Test (bim) API with:
 ```
 You should see a Json return message with object properties.
 
-If that fails, maybe the nginx configuration is wrong, check that by going to the api directly:
+If that fails, maybe the nginx configuration is wrong, check that by going to the api on `localhost` directly, either
+via a browser if you are installing on a workstation with a GUI, or use `wget` from the command line on the server.
 ```
-<servername>:5010/get/FE11/
+wget http://localhost:5010/get/FE11/
 ```
 In case it has changed, the port used is defined in `acp_data_strategy/settings.json`.
