@@ -9,7 +9,7 @@ to make the data manageable.
 
 ## Installation
 
-See [INSTALLTION.md](INSTALLATION.md).
+See [INSTALLATION.md](INSTALLATION.md).
 
 ## Summary of our approach
 
