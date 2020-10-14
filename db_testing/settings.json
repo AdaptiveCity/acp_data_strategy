@@ -1,0 +1,14 @@
+{
+    "PGHOST": "127.0.0.1",
+    "PGDATABASE": "acp_prod",
+    "PGUSER": "acp_prod",
+    "PGPASSWORD": "",
+    "PGPORT": "5432",
+
+    "TABLE_ISM": "indoor_system_metadata",
+    "TABLE_SENSORS": "sensors",
+    "TABLE_BIM": "bim",
+
+    "ADMIN": "admin",
+    "ADMIN_PASSWORD": "password"
+}

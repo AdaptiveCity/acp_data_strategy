@@ -1,0 +1,28 @@
+{
+    "elsys-ems-049361": {
+        "acp_id": "elsys-ems-049361",
+        "acp_type_id": "elsys-ems",
+        "acp_ts": "1591094324.123",
+        "crate_id": "FN05",
+        "acp_location": {
+            "x": 330,
+            "y": 20,
+            "zf": 1,
+            "f": 1,
+            "system": "WGB"
+        }
+    },
+    "elsys-co2-041ba8": {
+        "acp_ts": "1598549758",
+        "acp_type_id": "elsys-co2",
+        "acp_id": "elsys-co2-041ba8",
+        "crate_id": "FW01",
+        "acp_location": {
+            "x": 195,
+            "y": 17,
+            "zf": 1,
+            "f": 1,
+            "system": "WGB"
+        }
+    }
+}

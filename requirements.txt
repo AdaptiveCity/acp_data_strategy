@@ -4,4 +4,4 @@ flask-wtf
 pandas
 numpy
 requests
-
+psycopg2
