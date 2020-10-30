@@ -9,9 +9,28 @@ from dbconn import DBConn
 DEBUG = True
 
 ####################################################################
-# Import
+# Clear database
 ####################################################################
-def json_db_import(json_filename):
+def db_clear():
+    db_conn = DBConn(settings)
+
+    query = ("DELETE FROM " + settings["TABLE_SENSORS"] )
+    db_conn.dbwrite(query)
+
+####################################################################
+# Report database status
+####################################################################
+def db_status():
+    db_conn = DBConn(settings)
+
+    query = ("SELECT COUNT(*) FROM " + settings["TABLE_SENSORS"] )
+    rows = db_conn.dbread(query)
+    print("rows in {} {}".format(settings["TABLE_SENSORS"],rows))
+
+####################################################################
+# Import JSON -> Database
+####################################################################
+def db_write(json_filename):
     with open(json_filename, 'r') as test_sensors:
         sensors_data = test_sensors.read()
 
@@ -28,17 +47,17 @@ def json_db_import(json_filename):
         query = ("INSERT INTO " + settings["TABLE_SENSORS"] +
                 " (acp_id, sensor_info) VALUES ('" + acp_id + "','" + json.dumps(sensors[acp_id]) + "')")
         try:
-            #db_conn.dbwrite(query)
-            print(query)
+            db_conn.dbwrite(query)
+            #print(query)
             flag = True
         except:
             if DEBUG:
                 print(sys.exc_info())
 
 ####################################################################
-# Export
+# Export database -> JSON
 ####################################################################
-def json_db_export(json_filename):
+def db_read(json_filename):
     #with open(json_filename, 'r') as test_sensors:
     #    sensors_data = test_sensors.read()
     #
@@ -49,17 +68,18 @@ def json_db_export(json_filename):
     #
     #print(sensors)
 
+    outfile = open(json_filename,'w') if json_filename is not None else sys.stdout
+
     db_conn = DBConn(settings)
 
-    for acp_id in sensors:
-        query = ("SELECT * FROM " + settings["TABLE_SENSORS"] )
-        try:
-            db_conn.dbread(query)
-            print(query)
-            flag = True
-        except:
-            if DEBUG:
-                print(sys.exc_info())
+    query = ("SELECT * FROM " + settings["TABLE_SENSORS"] )
+    try:
+        rows = db_conn.dbread(query)
+        print(rows)
+        flag = True
+    except:
+        if DEBUG:
+            print(sys.exc_info())
 
 ####################################################################
 # Load settings
@@ -82,11 +102,17 @@ def parse_init():
                         nargs='?',
                         metavar='<filename>',
                         help='JSON file for import or export')
+    parser.add_argument('--clear',
+                        action='store_true',
+                        help='ERASE all data from sensors table')
+    parser.add_argument('--status',
+                        action='store_true',
+                        help='Report status of sensors table')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--import',
+    group.add_argument('--dbwrite',
                         action='store_true',
                         help='Import jsonfile -> PostgreSQL')
-    group.add_argument('--export',
+    group.add_argument('--dbread',
                         action='store_true',
                         help='Export PostgreSQL -> jsonfile (or stdout if no jsonfile)')
     return parser
@@ -104,15 +130,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print(args)
-    
+
     settings = load_settings()
 
     print("loaded settings.json")
 
-    #######################
-    # execute command
-    #######################
-    if sys.argv[1] == "write":
-        json_db_write(sys.argv[2])
-    elif sys.argv[1] == "read":
-        json_db_read(sys.argv[2])
+    # If --clear is requested, do this AS WELL as other options (e.g. --dbload)
+    if args.clear:
+        db_clear()
+
+    # If --status is requested, do this AS WELL as other options
+    if args.status:
+        db_status()
+
+    if args.dbread:
+        db_read(args.jsonfile)
+    elif args.dbwrite:
+        db_write(args.jsonfile)
