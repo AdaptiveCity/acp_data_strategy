@@ -2,15 +2,16 @@
 
 import json
 import sys
+import argparse
 
 from dbconn import DBConn
 
 DEBUG = True
 
 ####################################################################
-# Write
+# Import
 ####################################################################
-def json_db_write(json_filename):
+def json_db_import(json_filename):
     with open(json_filename, 'r') as test_sensors:
         sensors_data = test_sensors.read()
 
@@ -35,9 +36,9 @@ def json_db_write(json_filename):
                 print(sys.exc_info())
 
 ####################################################################
-# Write
+# Export
 ####################################################################
-def json_db_read(json_filename):
+def json_db_export(json_filename):
     #with open(json_filename, 'r') as test_sensors:
     #    sensors_data = test_sensors.read()
     #
@@ -61,6 +62,36 @@ def json_db_read(json_filename):
                 print(sys.exc_info())
 
 ####################################################################
+# Load settings
+####################################################################
+def load_settings():
+    with open('secrets/settings.json', 'r') as settings_file:
+        settings_data = settings_file.read()
+
+    # parse file
+    settings = json.loads(settings_data)
+    return settings
+
+####################################################################
+# Set up argument parsing
+####################################################################
+
+def parse_init():
+    parser = argparse.ArgumentParser(description='Import/export json data <-> PostgreSQL')
+    parser.add_argument('--jsonfile',
+                        nargs='?',
+                        metavar='<filename>',
+                        help='JSON file for import or export')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--import',
+                        action='store_true',
+                        help='Import jsonfile -> PostgreSQL')
+    group.add_argument('--export',
+                        action='store_true',
+                        help='Export PostgreSQL -> jsonfile (or stdout if no jsonfile)')
+    return parser
+
+####################################################################
 #
 # Main
 #
@@ -69,14 +100,12 @@ def json_db_read(json_filename):
 if __name__ == '__main__':
     print("json_db {} args",len(sys.argv))
 
-    ######################
-    # load settings.json
-    ######################
-    with open('settings.json', 'r') as settings_file:
-        settings_data = settings_file.read()
+    parser = parse_init()
+    args = parser.parse_args()
 
-    # parse file
-    settings = json.loads(settings_data)
+    print(args)
+    
+    settings = load_settings()
 
     print("loaded settings.json")
 
