@@ -1,85 +1,13 @@
 #!/usr/bin/env python3
 
-import json
-import sys
 import argparse
+import sys
+import json
 
-from dbconn import DBConn
+from classes.json_db import JsonDB
 
 DEBUG = True
 
-####################################################################
-# Clear database
-####################################################################
-def db_clear():
-    db_conn = DBConn(settings)
-
-    query = ("DELETE FROM " + settings["TABLE_SENSORS"] )
-    db_conn.dbwrite(query)
-
-####################################################################
-# Report database status
-####################################################################
-def db_status():
-    db_conn = DBConn(settings)
-
-    query = ("SELECT COUNT(*) FROM " + settings["TABLE_SENSORS"] )
-    rows = db_conn.dbread(query)
-    print("rows in {} {}".format(settings["TABLE_SENSORS"],rows))
-
-####################################################################
-# Import JSON -> Database
-####################################################################
-def db_write(json_filename):
-    with open(json_filename, 'r') as test_sensors:
-        sensors_data = test_sensors.read()
-
-    # parse file
-    sensors = json.loads(sensors_data)
-
-    print("loaded {}".format(json_filename))
-
-    print(sensors)
-
-    db_conn = DBConn(settings)
-
-    for acp_id in sensors:
-        query = ("INSERT INTO " + settings["TABLE_SENSORS"] +
-                " (acp_id, sensor_info) VALUES ('" + acp_id + "','" + json.dumps(sensors[acp_id]) + "')")
-        try:
-            db_conn.dbwrite(query)
-            #print(query)
-            flag = True
-        except:
-            if DEBUG:
-                print(sys.exc_info())
-
-####################################################################
-# Export database -> JSON
-####################################################################
-def db_read(json_filename):
-    #with open(json_filename, 'r') as test_sensors:
-    #    sensors_data = test_sensors.read()
-    #
-    # parse file
-    #sensors = json.loads(sensors_data)
-    #
-    #print("loaded {}".format(json_filename))
-    #
-    #print(sensors)
-
-    outfile = open(json_filename,'w') if json_filename is not None else sys.stdout
-
-    db_conn = DBConn(settings)
-
-    query = ("SELECT * FROM " + settings["TABLE_SENSORS"] )
-    try:
-        rows = db_conn.dbread(query)
-        print(rows)
-        flag = True
-    except:
-        if DEBUG:
-            print(sys.exc_info())
 
 ####################################################################
 # Load settings
@@ -112,9 +40,15 @@ def parse_init():
     group.add_argument('--dbwrite',
                         action='store_true',
                         help='Import jsonfile -> PostgreSQL')
+    group.add_argument('--dbmerge',
+                        action='store_true',
+                        help='Read records from jsonfile (or stdin if no jsonfile) and merge into matching PostgrSQL records')
     group.add_argument('--dbread',
                         action='store_true',
-                        help='Export PostgreSQL -> jsonfile (or stdout if no jsonfile)')
+                        help='Export most recent PostgreSQL records -> jsonfile (or stdout if no jsonfile)')
+    group.add_argument('--dbreadall',
+                        action='store_true',
+                        help='Export ALL records from PostgreSQL -> jsonfile (or stdout if no jsonfile)')
     return parser
 
 ####################################################################
@@ -124,26 +58,27 @@ def parse_init():
 ####################################################################
 
 if __name__ == '__main__':
-    print("json_db {} args",len(sys.argv))
 
     parser = parse_init()
     args = parser.parse_args()
 
-    print(args)
-
     settings = load_settings()
 
-    print("loaded settings.json")
+    json_db = JsonDB(settings)
 
     # If --clear is requested, do this AS WELL as other options (e.g. --dbload)
     if args.clear:
-        db_clear()
+        json_db.db_clear()
 
     # If --status is requested, do this AS WELL as other options
     if args.status:
-        db_status()
+        json_db.db_status()
 
     if args.dbread:
-        db_read(args.jsonfile)
+        json_db.db_read(args.jsonfile)
+    elif args.dbreadall:
+        json_db.db_readall(args.jsonfile)
     elif args.dbwrite:
-        db_write(args.jsonfile)
+        json_db.db_write(args.jsonfile)
+    elif args.dbmerge:
+        json_db.db_merge(args.jsonfile)
