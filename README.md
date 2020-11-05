@@ -56,13 +56,16 @@ during the data flow. For example this includes the `location` of the non-moving
 
 `acp_id`: sensor identifier, globally unique e.g. `elsys-eye-049876`.
 
-`acp_type`: sensor type, determines data format e.g. `elsys-eye`.
+`acp_type_id`: sensor type, determines data format e.g. `elsys-eye`.
 
 `acp_event`: event type, for timestamped events, e.g. `openclose`.
 
 `acp_event_value`: qualifier or data reading for event, e.g. `open`.
 
 `acp_ts`: epoch timestamp most relevant to data reading or event, e.g. `"1586461606.465372"`.
+
+`acp_ts_end`: if the data reading represents a period, epoch timestamp most relevant to the 'end' of the
+data reading or event, e.g. `"1586461609.5372"`.
 
 `acp_lat`, `acp_lng`, `acp_alt`: WGS84 location information most relevant to reading or event.
 
