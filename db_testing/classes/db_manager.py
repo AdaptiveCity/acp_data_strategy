@@ -65,13 +65,19 @@ class DBManager(object):
 
         print("loaded {}".format(json_filename))
 
-        print(sensors)
+        #print(sensors)
 
         db_conn = DBConn(self.settings)
 
         for acp_id in sensors:
-            query = "INSERT INTO " + db_table["table_name"] + " (acp_id, sensor_info) VALUES (%s, %s)"
-            query_args = ( acp_id, json.dumps(sensors[acp_id]))
+            # Create a datetime version of the "acp_ts" record timestamp
+            if "acp_ts" in sensors[acp_id]:
+                acp_ts = datetime.fromtimestamp(float(sensors[acp_id]["acp_ts"]))
+            else:
+                acp_ts = datetime.now()
+
+            query = "INSERT INTO " + db_table["table_name"] + " (acp_id, acp_ts, sensor_info) VALUES (%s, %s, %s)"
+            query_args = ( acp_id, acp_ts, json.dumps(sensors[acp_id]))
             try:
                 db_conn.dbwrite(query, query_args)
             except:
