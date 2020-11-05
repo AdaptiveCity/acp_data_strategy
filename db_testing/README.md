@@ -1,4 +1,4 @@
-# json_db.sh
+# db_manager.sh
 
 This is a utility to move AdaptiveCity sensor metadata and sensor_type metadata between JSON files and PostgreSQL.
 
@@ -9,9 +9,9 @@ Records are added cumulatively to the table so that a record is kept of changes 
 to be included with the incoming data, and the previous record for that sensor (if it exists) will have that value set as
 its `acp_ts_end`. The new record with have `acp_ts_end` as `NULL`.
 
-Consequently, the basic `json_db.sh --dbread ...` which reads the database and outputs JSON is coded to only extract the lastest
+Consequently, the basic `db_manager.sh --dbread ...` which reads the database and outputs JSON is coded to only extract the lastest
 record for each sensor / sensor_type, returned as a json object with the `acp_id` as property names. If the entire history is
-required then the `json_db.sh --dbreadall ...` command can be used and the result will be a json list.
+required then the `db_manager.sh --dbreadall ...` command can be used and the result will be a json list.
 
 ## install
 
@@ -40,10 +40,10 @@ source venv/bin/activate
 python3 -m pip install psycopg2
 ```
 
-## Command line usage of `json_db.sh`
+## Command line usage of `db_manager.sh`
 
 ```
-json_db.sh
+db_manager.sh
     --status
     --clear
     --dbread --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>]
@@ -51,17 +51,17 @@ json_db.sh
     --dbwrite --dbtable <tablename> [--jsonfile <filename>]
     --dbmerge --dbtable <tablename> [--jsonfile <filename>]
 
-## `json_db.sh --status --dbtable <tablename>`
+## `db_manager.sh --status --dbtable <tablename>`
 
 Reports some general status of the given database table (e.g. number of rows, most recent update)
 
-## `json_db.sh --clear --dbtable <tablename> [--id <identifier>]`
+## `db_manager.sh --clear --dbtable <tablename> [--id <identifier>]`
 
 WARNING: removes rows from the table
 
 If an identifier is given (i.e. an `acp_id` or `acp_type_id`) then only the records for that item will be removed.
 
-## `json_db.sh --dbread --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
+## `db_manager.sh --dbread --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
 
 READS the database table, returning a json object with a property-per-sensor (or sensor_type)
 
@@ -72,21 +72,21 @@ recent in each case. I.e. for the `sensors` table then most recent sensor metada
 
 If an `--id` is given, then only the latest data for that identifier will be returned.
 
-## `json_db.sh --dbreadall --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
+## `db_manager.sh --dbreadall --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
 
 Like `--dbread`, but returns **all** the records in the database table, not only the most recent for each
 sensor / sensor_type.
 
 Consequently the json returned is a *json list*, not a json object with a property-per-sensor/sensor_type.
 
-## `json_db.sh --dbwrite --dbtable <tablename> [--jsonfile <filename>]
+## `db_manager.sh --dbwrite --dbtable <tablename> [--jsonfile <filename>]
 
 Kind-of the inverse of `--dbread`.
 
 So for a given json file e.g. `sensors.json`, a `--dbwrite --jsonfile sensors.json` followed by `--dbread --jsonfile sensors2.json`
 should result in `sensors.json` and `sensors2.json` having the same content.
 
-## `json_db.sh --dbmerge --dbtable <tablename> [--jsonfile <filename>]`
+## `db_manager.sh --dbmerge --dbtable <tablename> [--jsonfile <filename>]`
 
 This is similar to a `--dbwrite` **except** each the data from the `--jsonfile` will be **merged** with the corresponding object
 in the database. This is useful if the new json contains a new property for existing sensors, e.g. `ttn_settings` so these can be

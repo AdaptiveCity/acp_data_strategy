@@ -4,7 +4,7 @@ import argparse
 import sys
 import json
 
-from classes.json_db import JsonDB
+from classes.db_manager import DBManager
 
 DEBUG = True
 
@@ -30,23 +30,32 @@ def parse_init():
                         nargs='?',
                         metavar='<filename>',
                         help='JSON file for import or export')
+    parser.add_argument('--dbtable',
+                        nargs='?',
+                        metavar='<tablename>',
+                        default='sensors',
+                        help='Name of PostgreSQL table e.g. "sensors", "sensor_types".')
+    parser.add_argument('--id',
+                        nargs='?',
+                        metavar='<identifier>',
+                        help='Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".')
     parser.add_argument('--clear',
                         action='store_true',
                         help='ERASE all data from sensors table')
     parser.add_argument('--status',
                         action='store_true',
                         help='Report status of sensors table')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--dbwrite',
+    command_group = parser.add_mutually_exclusive_group()
+    command_group.add_argument('--dbwrite',
                         action='store_true',
                         help='Import jsonfile -> PostgreSQL')
-    group.add_argument('--dbmerge',
+    command_group.add_argument('--dbmerge',
                         action='store_true',
                         help='Read records from jsonfile (or stdin if no jsonfile) and merge into matching PostgrSQL records')
-    group.add_argument('--dbread',
+    command_group.add_argument('--dbread',
                         action='store_true',
                         help='Export most recent PostgreSQL records -> jsonfile (or stdout if no jsonfile)')
-    group.add_argument('--dbreadall',
+    command_group.add_argument('--dbreadall',
                         action='store_true',
                         help='Export ALL records from PostgreSQL -> jsonfile (or stdout if no jsonfile)')
     return parser
@@ -64,21 +73,27 @@ if __name__ == '__main__':
 
     settings = load_settings()
 
-    json_db = JsonDB(settings)
+    db_manager = DBManager(settings)
+
+    # Convert the --dbtable <tablename> into settings object e.g.
+    # { "table_name": "sensors", "id": "acp_id", "info": "sensor_info" }
+    dbtable = None
+    if args.dbtable:
+        dbtable = settings["TABLES"][args.dbtable]
 
     # If --clear is requested, do this AS WELL as other options (e.g. --dbload)
     if args.clear:
-        json_db.db_clear()
+        db_manager.db_clear(dbtable, args.id)
 
     # If --status is requested, do this AS WELL as other options
     if args.status:
-        json_db.db_status()
+        db_manager.db_status(dbtable, args.id)
 
     if args.dbread:
-        json_db.db_read(args.jsonfile)
+        db_manager.db_read(args.jsonfile, dbtable)
     elif args.dbreadall:
-        json_db.db_readall(args.jsonfile)
+        db_manager.db_readall(args.jsonfile, dbtable)
     elif args.dbwrite:
-        json_db.db_write(args.jsonfile)
+        db_manager.db_write(args.jsonfile, dbtable)
     elif args.dbmerge:
-        json_db.db_merge(args.jsonfile)
+        db_manager.db_merge(args.jsonfile, dbtable)
