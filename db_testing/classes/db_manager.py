@@ -11,6 +11,14 @@ from classes.dbconn import DBConn
 
 DEBUG = True
 
+"""
+Reads/writes DB table: <id>,acp_ts,acp_ts_end,<json_info>
+
+The <id> and <json_info> column names are defined in settings.json.
+
+E.g. 'sensors' table is acp_id,acp_ts,acp_ts_end,sensor_info.
+"""
+
 class DBManager(object):
 
     def __init__(self, settings):
@@ -29,29 +37,43 @@ class DBManager(object):
     # Report database status
     ####################################################################
     def db_status(self, db_table, id):
+        # Get table properties from settings.json
         table_name = db_table["table_name"]
-        where = " WHERE "+db_table["id"]+"='"+id+"'" if id else ""
+        id_name = db_table["id"]
+        json_info = db_table["json_info"]
+
+        # General 'WHERE' clause if --id given
+        where = " WHERE "+id_name+"='"+id+"'" if id else ""
+
+        # Build/execute query for record count
+        print("Querying table {} {}".format(table_name, where))
         db_conn = DBConn(self.settings)
         query = "SELECT COUNT(*) FROM {} {}".format(table_name, where)
         count = db_conn.dbread(query,None)[0][0]
-
-        query = "SELECT MAX(acp_ts) FROM {} {}".format(table_name, where)
-        max_ts = db_conn.dbread(query,None)[0][0]
-
-        if id:
-            query = "SELECT acp_ts FROM {} {} AND 'acp_ts_end' is NULL".format(table_name, where)
-
-        where = " where acp_ts = (select MAX(acp_ts) from {})".format(table_name)
-        query = "select acp_id,sensor_info->'acp_ts' from {} {}".format(table_name, where)
-        ret = db_conn.dbread(query,None)
-        print(ret)
-
         if count == 0:
-            print("zero rows from {}".format(table_name))
+            print("zero rows found")
         else:
-            print("{} rows in {}, latest {}".format(count,
-                                                table_name,
-                                                datetime.strftime(max_ts,"%Y-%m-%d %H:%M:%S")))
+            print("{} rows found".format(count))
+
+            # Build/execute query for max_ts
+            query = "SELECT MAX(acp_ts) FROM {} {}".format(table_name, where)
+            max_ts = db_conn.dbread(query,None)[0][0]
+            print("max_ts {}".format(max_ts))
+
+            # Build/execute query for row with newest acp_ts
+            if id:
+                where = "WHERE {} = '{}' AND acp_ts_end IS NULL".format(id_name, id, table_name)
+                query = "SELECT {},acp_ts,{} FROM {} {}".format(id_name,json_info,table_name, where)
+            else:
+                where = "WHERE acp_ts = (SELECT MAX(acp_ts) from {})".format(table_name)
+                query = "SELECT {},acp_ts,{} from {} {}".format(id_name,json_info,table_name, where)
+
+            ret_id, ret_acp_ts, ret_info = db_conn.dbread(query,None)[0]
+            print("newest entry",ret_info)
+
+            #print("{} rows in {}, latest {}".format(count,
+            #                                        table_name,
+            #                                        datetime.strftime(max_ts,"%Y-%m-%d %H:%M:%S")))
 
     ####################################################################
     # db_write Import JSON -> Database
@@ -60,8 +82,11 @@ class DBManager(object):
         with open(json_filename, 'r') as test_sensors:
             sensors_data = test_sensors.read()
 
-        # parse file
-        sensors = json.loads(sensors_data)
+        table_name = db_table["table_name"]
+        id_name = db_table["id"]
+        json_info = db_table["json_info"]
+        # parse file { "<id>" : { "<id_name>: "<id", ...} }
+        obj_list = json.loads(sensors_data)
 
         print("loaded {}".format(json_filename))
 
@@ -69,15 +94,21 @@ class DBManager(object):
 
         db_conn = DBConn(self.settings)
 
-        for acp_id in sensors:
+        for id in obj_list:
             # Create a datetime version of the "acp_ts" record timestamp
-            if "acp_ts" in sensors[acp_id]:
-                acp_ts = datetime.fromtimestamp(float(sensors[acp_id]["acp_ts"]))
+            if "acp_ts" in obj_list[id]:
+                acp_ts = datetime.fromtimestamp(float(obj_list[id]["acp_ts"]))
             else:
                 acp_ts = datetime.now()
 
-            query = "INSERT INTO " + db_table["table_name"] + " (acp_id, acp_ts, sensor_info) VALUES (%s, %s, %s)"
-            query_args = ( acp_id, acp_ts, json.dumps(sensors[acp_id]))
+            # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts
+            query = "UPDATE {} SET acp_ts_end=%s WHERE {}=%s AND acp_ts_end IS NULL".format(table_name, id_name)
+            query_args = (acp_ts, id)
+            db_conn.dbwrite(query, query_args)
+
+            # Add new entry with this acp_ts
+            query = "INSERT INTO {} ({}, acp_ts, {})".format(table_name,id_name,json_info)+" VALUES (%s, %s, %s)"
+            query_args = ( id, acp_ts, json.dumps(obj_list[id]))
             try:
                 db_conn.dbwrite(query, query_args)
             except:
@@ -87,12 +118,23 @@ class DBManager(object):
     ####################################################################
     # db_read Export database -> JSON (latest records only)
     ####################################################################
-    def db_read(self, json_filename, db_table):
+    def db_read(self, json_filename, db_table, id):
         db_conn = DBConn(self.settings)
-        # To select *all* the latest sensor objects:
-        query = ("SELECT acp_id, sensor_info FROM " + db_table["table_name"]
-                 + " WHERE acp_ts_end IS NULL"
-                )
+
+        if id:
+            # To select the latest object for id
+            query = "SELECT {},{} FROM {} WHERE acp_ts_end IS NULL AND {}='{}'".format(
+                        db_table["id"],
+                        db_table["json_info"],
+                        db_table["table_name"],
+                        db_table["id"],
+                        id)
+        else:
+            # To select *all* the latest sensor objects:
+            query = "SELECT {},{} FROM {} WHERE acp_ts_end IS NULL".format(
+                        db_table["id"],
+                        db_table["json_info"],
+                        db_table["table_name"])
 
         try:
             result_obj = {}
@@ -110,10 +152,24 @@ class DBManager(object):
     ####################################################################
     # db_read Export database -> JSON (latest records only)
     ####################################################################
-    def db_readall(self, json_filename, db_table):
+    def db_readall(self, json_filename, db_table,id):
         db_conn = DBConn(self.settings)
         # To select *all* the latest sensor objects:
-        query = "SELECT acp_id, sensor_info FROM " + db_table["table_name"]
+        if id:
+            # To select the latest object for id
+            query = "SELECT {},{} FROM {} WHERE {}='{}'".format(
+                        db_table["id"],
+                        db_table["json_info"],
+                        db_table["table_name"],
+                        db_table["id"],
+                        id)
+        else:
+            # To select *all* the latest sensor objects:
+            query = "SELECT {},{} FROM {}".format(
+                        db_table["id"],
+                        db_table["json_info"],
+                        db_table["table_name"])
+
         try:
             result_list = []
             rows = db_conn.dbread(query, None)

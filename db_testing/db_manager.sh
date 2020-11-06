@@ -90,9 +90,9 @@ if __name__ == '__main__':
         db_manager.db_status(dbtable, args.id)
 
     if args.dbread:
-        db_manager.db_read(args.jsonfile, dbtable)
+        db_manager.db_read(args.jsonfile, dbtable, args.id)
     elif args.dbreadall:
-        db_manager.db_readall(args.jsonfile, dbtable)
+        db_manager.db_readall(args.jsonfile, dbtable, args.id)
     elif args.dbwrite:
         db_manager.db_write(args.jsonfile, dbtable)
     elif args.dbmerge:

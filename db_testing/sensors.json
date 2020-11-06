@@ -1,0 +1,29 @@
+{
+    "elsys-eye-044777": {
+        "acp_id": "elsys-eye-044504",
+        "acp_type_id": "elsys-eye",
+        "acp_ts": "1597055777",
+        "crate_id": "ll_0_1",
+        "acp_location": {
+            "x": 11,
+            "y": 38,
+            "zf": 1.0,
+            "f": 0,
+            "system": "LL"
+        }
+    },
+    "rad-tilt-003d47": {
+        "acp_id": "rad-tilt-003d47",
+        "acp_type_id": "rad-tilt",
+        "acp_ts": "1591094777.123",
+        "crate_id": "ll_0_1",
+        "description": "Lockdown Lab RadioBridge test tilt",
+        "acp_location": {
+            "x": 11,
+            "y": 37,
+            "zf": 1.0,
+            "f": 0,
+            "system": "LL"
+        }
+    }
+}
