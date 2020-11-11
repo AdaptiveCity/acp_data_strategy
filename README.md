@@ -166,10 +166,13 @@ or by providing a 'push' mechanism when the metadata changes.
 #### Global
 
 Global position information for the sensor data is standardized as:
-
-* `acp_lat`: floating point WGS84 latitude (North positive)
-* `acp_lng`: floating point WGS84 longitude (East positive)
-* `acp_alt`: floating point WGS84 altitude in meters.
+```
+"acp_location": { "system": "GPS", "lat": 52.1234, "lng": 0.1234567, "alt": 42 }
+```
+where
+* `lat`: floating point WGS84 latitude (North positive)
+* `lng`: floating point WGS84 longitude (East positive)
+* `alt`: optional floating point WGS84 altitude in meters.
 
 For mobile sensors, location information is likely to included in the sensor data and this may be
 interpreted by `acp_decoders` such that these properties can be populated (if the sensor has not
