@@ -62,14 +62,15 @@ during the data flow. For example this includes the `location` of the non-moving
 
 `acp_event_value`: qualifier or data reading for event, e.g. `open`.
 
-`acp_ts`: epoch timestamp most relevant to data reading or event, e.g. `"1586461606.465372"`.
+`acp_ts`: epoch timestamp seconds most relevant to data reading or event, e.g. `"1586461606.465372"` (the decimal part is optional).
 
 `acp_ts_end`: if the data reading represents a period, epoch timestamp most relevant to the 'end' of the
 data reading or event, e.g. `"1586461609.5372"`.
 
-`acp_lat`, `acp_lng`, `acp_alt`: WGS84 location information most relevant to reading or event.
-
-`acp_location`: location using a custom coordinate system e.g. `{ "system": "WGB", "x": 12, "y":45, "f": 1 }`.
+`acp_location`: location using a coordinate system e.g. `{ "system": "WGB", "x": 12, "y":45, "f": 1 }`. The WGS84
+coordinate system is predefined with `{ "system": "GPS", "lat": 52.123456, "lng": 0.123, "alt": 42 }` where
+altitude (meters) is optional. All other coordinate systems are `
+{ "system": "<system_id>", ... <any other parameters relevant to that system }`
 
 `acp_confidence`: a value `0..1` indicating the reliability of the sensor reading.
 
