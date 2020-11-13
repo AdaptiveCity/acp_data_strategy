@@ -17,7 +17,7 @@ Now as the `acp_prod` user you should have `~/acp_data_strategy/secrets/`
 
 As sudo user:
 ```
-cp ~acp_prod/nginx/includes2/cdbb_apis.conf /etc/nginx/includes2/
+sudo cp ~acp_prod/acp_data_strategy/nginx/includes2/cdbb_apis.conf /etc/nginx/includes2/
 sudo nginx -t
 sudo service nginx restart
 ```
