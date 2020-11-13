@@ -73,3 +73,15 @@ via a browser if you are installing on a workstation with a GUI, or use `wget` f
 wget http://localhost:5010/get/FE11/
 ```
 In case it has changed, the port used is defined in `acp_data_strategy/settings.json`.
+
+## To launch on reboot
+
+As `acp_prod` user:
+```
+crontab -e
+```
+
+Add line:
+```
+@reboot /home/acp_prod/acp_data_strategy/run.sh
+```
