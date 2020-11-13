@@ -22,6 +22,10 @@ sudo nginx -t
 sudo service nginx restart
 ```
 
+```
+sudo apt install libpq-dev
+```
+
 As user `acp_prod`:
 
 Create the required Python virtualenv:
