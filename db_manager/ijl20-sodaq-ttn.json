@@ -1,0 +1,60 @@
+[
+    {
+        "acp_id": "ijl20-sodaq-ttn",
+        "sensor_info": {
+            "acp_id": "ijl20-sodaq-ttn",
+            "acp_location": {
+                "lat": 52.210927,
+                "lng": 0.09274,
+                "system": "GPS"
+            },
+            "acp_ts": "1591094324.123",
+            "acp_type_id": "ijl20-sodaq",
+            "crate_id": "FE11"
+        }
+    },
+    {
+        "acp_id": "ijl20-sodaq-ttn",
+        "sensor_info": {
+            "acp_id": "ijl20-sodaq-test",
+            "acp_location": {
+                "lat": 52.210927,
+                "lng": 0.09274,
+                "system": "GPS"
+            },
+            "acp_ts": "1591094324.123",
+            "acp_type_id": "ijl20-sodaq",
+            "crate_id": "FE11",
+            "foo": "bah"
+        }
+    },
+    {
+        "acp_id": "ijl20-sodaq-ttn",
+        "sensor_info": {
+            "acp_id": "ijl20-sodaq-test",
+            "acp_location": {
+                "lat": 52.210927,
+                "lng": 0.09274,
+                "system": "GPS"
+            },
+            "acp_ts": "1606150252.580329",
+            "acp_type_id": "ijl20-sodaq",
+            "crate_id": "FE11",
+            "foo": "bah"
+        }
+    },
+    {
+        "acp_id": "ijl20-sodaq-ttn",
+        "sensor_info": {
+            "acp_id": "ijl20-sodaq-test",
+            "acp_location": {
+                "lat": 52.210927,
+                "lng": 0.09274,
+                "system": "GPS"
+            },
+            "acp_ts": "1606150413.941613",
+            "acp_type_id": "ijl20-sodaq",
+            "crate_id": "FE11"
+        }
+    }
+]

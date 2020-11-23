@@ -47,10 +47,6 @@ def parse_init():
                         metavar='<tablename>',
                         default=None,
                         help='Import jsonfile -> PostgreSQL')
-    command_group.add_argument('--dbmerge',
-                        metavar='<tablename>',
-                        default=None,
-                        help='Read records from jsonfile (or stdin if no jsonfile) and SHALLOW MERGE base properties into matching PostgrSQL records')
     command_group.add_argument('--dbread',
                         metavar='<tablename>',
                         default=None,
@@ -59,6 +55,10 @@ def parse_init():
                         metavar='<tablename>',
                         default=None,
                         help='Export ALL records from PostgreSQL table -> jsonfile (or stdout if no jsonfile)')
+    command_group.add_argument('--dbmerge',
+                        metavar='<tablename>',
+                        default=None,
+                        help='Read records from jsonfile (or stdin if no jsonfile) and SHALLOW MERGE base properties into matching PostgrSQL records')
     return parser
 
 ####################################################################
