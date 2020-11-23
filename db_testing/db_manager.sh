@@ -30,16 +30,11 @@ def parse_init():
                         nargs='?',
                         metavar='<filename>',
                         help='JSON file for import or export')
-    parser.add_argument('--dbtable',
-                        nargs='?',
-                        metavar='<tablename>',
-                        default='sensors',
-                        help='Name of PostgreSQL table e.g. "sensors", "sensor_types".')
     parser.add_argument('--id',
                         nargs='?',
                         metavar='<identifier>',
                         help='Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".')
-    parser.add_argument('--clear',
+    parser.add_argument('--dbclear',
                         action='store_true',
                         help='ERASE all data from sensors table')
     parser.add_argument('--status',
@@ -53,8 +48,10 @@ def parse_init():
                         action='store_true',
                         help='Read records from jsonfile (or stdin if no jsonfile) and merge into matching PostgrSQL records')
     command_group.add_argument('--dbread',
-                        action='store_true',
-                        help='Export most recent PostgreSQL records -> jsonfile (or stdout if no jsonfile)')
+                        nargs='?',
+                        metavar='<tablename>',
+                        default='sensors',
+                        help='Export most recent PostgreSQL records from table -> jsonfile (or stdout if no jsonfile)')
     command_group.add_argument('--dbreadall',
                         action='store_true',
                         help='Export ALL records from PostgreSQL -> jsonfile (or stdout if no jsonfile)')
@@ -75,15 +72,21 @@ if __name__ == '__main__':
 
     db_manager = DBManager(settings)
 
-    # Convert the --dbtable <tablename> into settings object e.g.
-    # { "table_name": "sensors", "id": "acp_id", "info": "sensor_info" }
-    dbtable = None
-    if args.dbtable:
-        dbtable = settings["TABLES"][args.dbtable]
-
-    # If --clear is requested, do this AS WELL as other options (e.g. --dbload)
-    if args.clear:
-        db_manager.db_clear(dbtable, args.id)
+    # If --dbclear is requested, do this AS WELL as other options (e.g. --dbload)
+    if args.dbclear:
+        # Convert the --dbtable <tablename> into settings object e.g.
+        # { "table_name": "sensors", "id": "acp_id", "info": "sensor_info" }
+        dbtable = None
+        if args.dbtable:
+            try:
+                dbtable = settings["TABLES"][args.dbtable]
+            except KeyError:
+                print("--dbclear <tablename> argument not recognized ({})".format(args.dbtable),file=sys.stderr,flush=True)
+                sys.exit(1)
+            db_manager.db_clear(dbtable, args.id)
+        else:
+            print("--dbclear required <tablename> argument (e.g. sensors, sensor_types) missing",file=sys.stderr,flush=True)
+            sys.exit(1)
 
     # If --status is requested, do this AS WELL as other options
     if args.status:
