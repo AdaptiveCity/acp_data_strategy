@@ -2,16 +2,35 @@
 
 This is a utility to move AdaptiveCity sensor metadata and sensor_type metadata between JSON files and PostgreSQL.
 
-In general the table is assumed to have the structure `identifier`, `timestamp updated`, `timestamp ended`, `json info`, e.g.
-the `sensors` table below.
+Our strategy is, in general, to store our data as JSON objects. We could easily use an object store like MongoDB but
+for greater flexibility we are using PostgreSQL tables with a `jsonb` column. Note that the object data is stored
+in the JSON, but also we **promote** some properties into actual database columns (e.g. for `sensors`:
+`acp_id`, `acp_ts`, `acp_end_ts`) to take advantage of PostgreSQL query capability and indexing.
+
+In general the data table is assumed to have the structure:
+```
+<identifier>, acp_ts, acp_ts_end, <json info>
+```
+the `sensors` table is:
+```
+acp_id, acp_ts, acp_ts_end, sensor_info
+```
 
 Records are added cumulatively to the table so that a record is kept of changes to a given sensor. This requires an `acp_ts`
 to be included with the incoming data, and the previous record for that sensor (if it exists) will have that value set as
 its `acp_ts_end`. The new record with have `acp_ts_end` as `NULL`.
 
-Consequently, the basic `db_manager.sh --dbread ...` which reads the database and outputs JSON is coded to only extract the lastest
-record for each sensor / sensor_type, returned as a json object with the `acp_id` as property names. If the entire history is
-required then the `db_manager.sh --dbreadall ...` command can be used and the result will be a json list.
+Consequently, the basic:
+```
+`db_manager.sh --dbread sensors
+```
+which reads the database and outputs JSON is coded to only extract the lastest
+record for each sensor / sensor_type, returned as a json *object* with the `acp_id` as property names. If the entire history is
+required then:
+```
+db_manager.sh --dbreadall sensors
+```
+command can be used and the result will be a json *list*.
 
 ## install
 
@@ -36,24 +55,63 @@ CREATE TABLE public.sensors (
 ```
 
 ```
+cd ~/acp_data_strategy
 source venv/bin/activate
 python3 -m pip install psycopg2
 ```
 
+## `secrets/settings.json`
+
+You will need to collect the `~acp_prod/acp_data_strategy/db_manager/secrets/` directory from another server.
+
+The `settings.json` content currently is as below, note as the `acp_prod` user you do not need the `PGPASSWORD`:
+```
+{
+    "PGHOST": "127.0.0.1",
+    "PGDATABASE": "acp_prod",
+    "PGUSER": "acp_prod",
+    "PGPASSWORD": "",
+    "PGPORT": "5432",
+
+    "TABLES": {
+        "sensors": {
+            "table_name": "sensors",
+            "id":         "acp_id",
+            "json_info":  "sensor_info"
+        },
+        "sensor_types": {
+            "table_name": "sensor_types",
+            "id":         "acp_type_id",
+            "json_info":  "type_info"
+        }
+    }
+
+}
+```
+Note the `TABLES` structure allows custom names to be used for the identifier and JSON columns, and the `<tablename>`
+given in the `db_manager.sh` commands is actually a key into the `TABLES` dictionary.
+
 ## Command line usage of `db_manager.sh`
 
 ```
+cd ~/acp_data_strategy/db_manager
+source ../venv/bin/activate
+
 ./db_manager.sh --help
 
-usage: db_manager.sh [-h] [--jsonfile [<filename>]] [--id <identifier>] [--dbclear <tablename>]
-                     [--status [<tablename>]]
-                     [--dbwrite <tablename> | --dbread <tablename> | --dbreadall <tablename> | --dbmerge <tablename>]
+usage: db_manager.sh [--help] [--jsonfile <filename>] [--id <identifier>]
+            (--status [<tablename>]  |
+             --dbread <tablename>    |
+             --dbreadall <tablename> |
+             --dbwrite <tablename>   |
+             --dbmerge <tablename>   |
+             --dbclear <tablename>)
 
 Import/export json data <-> PostgreSQL
 
 optional arguments:
   -h, --help            show this help message and exit
-  --jsonfile [<filename>]
+  --jsonfile <filename>
                         JSON file for import or export
   --id <identifier>     Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".
   --dbclear <tablename>
