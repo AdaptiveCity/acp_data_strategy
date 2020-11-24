@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 import time
 
-from classes.bim_data_api import DataAPI
+from classes.bim_data_api import BIMDataAPI
 
 DEBUG = True
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     print("BIM API loaded settings.json")
 
-    data_api = DataAPI(settings)
+    data_api = BIMDataAPI(settings)
 
     print("Starting BIM API on {}:{}".format(settings["bim_host"],settings["bim_port"]))
     app.run( host=settings["bim_host"],

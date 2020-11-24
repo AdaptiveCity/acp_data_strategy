@@ -18,5 +18,7 @@
 
   "readings_base_path": "/media/acp/",
   "readings_host": "0.0.0.0",
-  "readings_port": 5012
+  "readings_port": 5012,
+
+  "coordinate_systems": ["WGB", "IFM", "LL", "VLAB"]
 }
