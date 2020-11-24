@@ -16,13 +16,13 @@ the `sensors` table is:
 acp_id, acp_ts, acp_ts_end, sensor_info
 ```
 
-Records are added cumulatively to the table so that a record is kept of changes to a given sensor. This requires an `acp_ts`
-to be included with the incoming data, and the previous record for that sensor (if it exists) will have that value set as
-its `acp_ts_end`. The new record with have `acp_ts_end` as `NULL`.
+Records are added cumulatively to the table so that a record is kept of changes to a given sensor. The `acp_ts` timestamp
+can be included with the incoming data, or db_manager.sh will use `now()` and the previous record for that sensor (if it exists)
+ will have that value set as its `acp_ts_end`. The new record with have `acp_ts_end` as `NULL`.
 
 Consequently, the basic:
 ```
-`db_manager.sh --dbread sensors
+db_manager.sh --dbread sensors
 ```
 which reads the database and outputs JSON is coded to only extract the lastest
 record for each sensor / sensor_type, returned as a json *object* with the `acp_id` as property names. If the entire history is
@@ -32,7 +32,7 @@ db_manager.sh --dbreadall sensors
 ```
 command can be used and the result will be a json *list*.
 
-## install
+## Installation
 
 (will be added to `acp_data_strategy` readme)
 
@@ -139,7 +139,7 @@ actual tables in the database.
 
 Current table references include `sensors` and `sensor_types` but others will be added.
 
-### `db_manager.sh --clear <tablename> [--id <identifier>]`
+### `db_manager.sh --dbclear <tablename> [--id <identifier>]`
 
 WARNING: removes ALL rows from the table if no `--id` is given.
 
