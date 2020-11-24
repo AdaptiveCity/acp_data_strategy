@@ -134,7 +134,7 @@ class DBManager(object):
     ####################################################################
     # db_write Import JSON -> Database
     ####################################################################
-    def db_write(self, json_filename, db_table):
+    def db_write(self, json_filename, db_table, id):
         try:
             with open(json_filename, 'r') as json_sensors:
                 sensors_data = json_sensors.read()
@@ -149,13 +149,22 @@ class DBManager(object):
 
         db_conn = DBConn(self.settings)
 
-        for id in obj_list:
-            self.write_obj(db_conn, id, obj_list[id], db_table)
+        if id:
+            if id in obj_list:
+                self.write_obj(db_conn, id, obj_list[id], db_table)
+            else:
+                print("db_write --id '{}' not found in json file".format(id),flush=True,file=sys.stderr)
+                exit(1)
+            exit(0)
+
+        # No --id given then iterate through all objects in json file
+        for obj_id in obj_list:
+            self.write_obj(db_conn, obj_id, obj_list[obj_id], db_table)
 
     ####################################################################
     # db_merge Merge JSON -> Database
     ####################################################################
-    def db_merge(self, json_filename, db_table):
+    def db_merge(self, json_filename, db_table, id):
         with open(json_filename, 'r') as json_sensors:
             json_data = json_sensors.read()
 
@@ -166,8 +175,17 @@ class DBManager(object):
 
         db_conn = DBConn(self.settings)
 
-        for id in obj_list:
-            self.write_obj(db_conn, id, obj_list[id], db_table, merge=True)
+        if id:
+            if id in obj_list:
+                self.write_obj(db_conn, id, obj_list[id], db_table, merge=True)
+            else:
+                print("db_merge --id '{}' not found in json file".format(id),flush=True,file=sys.stderr)
+                exit(1)
+            exit(0)
+
+        # No --id given then iterate through all objects in json file
+        for obj_id in obj_list:
+            self.write_obj(db_conn, obj_id, obj_list[obj_id], db_table, merge=True)
 
     ####################################################################
     # db_read Export database -> JSON (latest records only)

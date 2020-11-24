@@ -126,7 +126,7 @@ if __name__ == '__main__':
     elif args.dbwrite:
         try:
             dbtable = settings["TABLES"][args.dbwrite]
-            db_manager.db_write(args.jsonfile, dbtable)
+            db_manager.db_write(args.jsonfile, dbtable, args.id)
         except KeyError:
             print("--dbwrite <tablename> argument not recognized ({})".format(args.dbreadwrite),file=sys.stderr,flush=True)
             sys.exit(1)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     elif args.dbmerge:
         try:
             dbtable = settings["TABLES"][args.dbmerge]
-            db_manager.db_merge(args.jsonfile, dbtable)
+            db_manager.db_merge(args.jsonfile, dbtable, args.id)
         except KeyError:
             print("--dbmerge <tablename> argument not recognized ({})".format(args.dbreadmerge),file=sys.stderr,flush=True)
             sys.exit(1)
