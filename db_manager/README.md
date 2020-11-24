@@ -45,8 +45,9 @@ python3 -m pip install psycopg2
 ```
 ./db_manager.sh --help
 
-usage: db_manager.sh [-h] [--jsonfile [<filename>]] [--dbtable [<tablename>]] [--id [<identifier>]] [--clear]
-                     [--status] [--dbwrite | --dbmerge | --dbread | --dbreadall]
+usage: db_manager.sh [-h] [--jsonfile [<filename>]] [--id <identifier>] [--dbclear <tablename>]
+                     [--status [<tablename>]]
+                     [--dbwrite <tablename> | --dbread <tablename> | --dbreadall <tablename> | --dbmerge <tablename>]
 
 Import/export json data <-> PostgreSQL
 
@@ -54,28 +55,39 @@ optional arguments:
   -h, --help            show this help message and exit
   --jsonfile [<filename>]
                         JSON file for import or export
-  --dbtable [<tablename>]
-                        Name of PostgreSQL table e.g. "sensors", "sensor_types".
-  --id [<identifier>]   Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".
-  --clear               ERASE all data from sensors table
-  --status              Report status of sensors table
-  --dbwrite             Import jsonfile -> PostgreSQL
-  --dbmerge             Read records from jsonfile (or stdin if no jsonfile) and merge into matching PostgrSQL records
-  --dbread              Export most recent PostgreSQL records -> jsonfile (or stdout if no jsonfile)
-  --dbreadall           Export ALL records from PostgreSQL -> jsonfile (or stdout if no jsonfile)
+  --id <identifier>     Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".
+  --dbclear <tablename>
+                        ERASE data from sensors table <tablename>, optional --id <identifier> for just that sensor
+  --status [<tablename>]
+                        Report status of database with optional tablename
+  --dbwrite <tablename>
+                        Import jsonfile -> PostgreSQL
+  --dbread <tablename>  Export most recent PostgreSQL records from table -> jsonfile (or stdout if no jsonfile)
+  --dbreadall <tablename>
+                        Export ALL records from PostgreSQL table -> jsonfile (or stdout if no jsonfile)
+  --dbmerge <tablename>
+                        Read records from jsonfile (or stdin if no jsonfile) and SHALLOW MERGE base properties into
+                        matching PostgrSQL records
 ```
 
-## `db_manager.sh --status --dbtable <tablename>`
+## Examples
 
-Reports some general status of the given database table (e.g. number of rows, most recent update)
+### `db_manager.sh --status [<tablename>]`
 
-## `db_manager.sh --clear --dbtable <tablename> [--id <identifier>]`
+Reports some general status of the given database table (e.g. number of rows, most recent update).
 
-WARNING: removes rows from the table
+As in all examples, `<tablename>` is actually a key in `settings.json` which does not necessarily equate to the names of
+actual tables in the database.
+
+Current table references include `sensors` and `sensor_types` but others will be added.
+
+### `db_manager.sh --clear <tablename> [--id <identifier>]`
+
+WARNING: removes ALL rows from the table if no `--id` is given.
 
 If an identifier is given (i.e. an `acp_id` or `acp_type_id`) then only the records for that item will be removed.
 
-## `db_manager.sh --dbread --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
+### `db_manager.sh --dbread <tablename> [--jsonfile <filename>] [--id <identifier>`]
 
 READS the database table, returning a json object with a property-per-sensor (or sensor_type)
 
@@ -86,21 +98,22 @@ recent in each case. I.e. for the `sensors` table then most recent sensor metada
 
 If an `--id` is given, then only the latest data for that identifier will be returned.
 
-## `db_manager.sh --dbreadall --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>`]
+### `db_manager.sh --dbreadall <tablename> [--jsonfile <filename>] [--id <identifier>`]
 
 Like `--dbread`, but returns **all** the records in the database table, not only the most recent for each
-sensor / sensor_type.
+sensor / sensor_type. I.e. for each sensor multiple records may be returned, with different `acp_ts` values.
 
 Consequently the json returned is a *json list*, not a json object with a property-per-sensor/sensor_type.
 
-## `db_manager.sh --dbwrite --dbtable <tablename> [--jsonfile <filename>]
+### `db_manager.sh --dbwrite <tablename> [--jsonfile <filename>]
 
 Kind-of the inverse of `--dbread`.
 
-So for a given json file e.g. `sensors.json`, a `--dbwrite --jsonfile sensors.json` followed by `--dbread --jsonfile sensors2.json`
+So for a given json file e.g. `sensors.json`, a `--dbclear sensors` followed by `--dbwrite sensors --jsonfile sensors.json`
+followed by `--dbread sensors --jsonfile sensors2.json`
 should result in `sensors.json` and `sensors2.json` having the same content.
 
-## `db_manager.sh --dbmerge --dbtable <tablename> [--jsonfile <filename>]`
+### `db_manager.sh --dbmerge<tablename> [--jsonfile <filename>]`
 
 This is similar to a `--dbwrite` **except** each the data from the `--jsonfile` will be **merged** with the corresponding object
 in the database. This is useful if the new json contains a new property for existing sensors, e.g. `ttn_settings` so these can be

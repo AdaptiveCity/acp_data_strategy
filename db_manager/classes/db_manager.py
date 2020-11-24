@@ -6,7 +6,7 @@
 import json
 import sys
 from datetime import datetime
-
+import copy # used for deepcopy
 from classes.dbconn import DBConn
 
 DEBUG = True
@@ -40,7 +40,7 @@ class DBManager(object):
         # Get table properties from settings.json
         table_name = db_table["table_name"]
         id_name = db_table["id"]
-        json_info = db_table["json_info"]
+        json_name = db_table["json_info"]
 
         # General 'WHERE' clause if --id given
         where = " WHERE "+id_name+"='"+id+"'" if id else ""
@@ -63,10 +63,10 @@ class DBManager(object):
             # Build/execute query for row with newest acp_ts
             if id:
                 where = "WHERE {} = '{}' AND acp_ts_end IS NULL".format(id_name, id, table_name)
-                query = "SELECT {},acp_ts,{} FROM {} {}".format(id_name,json_info,table_name, where)
+                query = "SELECT {},acp_ts,{} FROM {} {}".format(id_name,json_name,table_name, where)
             else:
                 where = "WHERE acp_ts = (SELECT MAX(acp_ts) from {})".format(table_name)
-                query = "SELECT {},acp_ts,{} from {} {}".format(id_name,json_info,table_name, where)
+                query = "SELECT {},acp_ts,{} from {} {}".format(id_name,json_name,table_name, where)
 
             ret_id, ret_acp_ts, ret_info = db_conn.dbread(query,None)[0]
             print("    newest entry:\n{}".format(ret_info))
@@ -75,55 +75,82 @@ class DBManager(object):
             #                                        table_name,
             #                                        datetime.strftime(max_ts,"%Y-%m-%d %H:%M:%S")))
 
+
+    ###################################################################################################################
+    # write_obj - inserts a new database object record (used by db_write, db_merge)
+    #   db_conn:       the database connection
+    #   id:            the object identifier, e.g. "ijl20-sodaq-ttn"
+    #   json_info_obj: the JSON information payload defining object
+    #   db_table:      the 'TABLES' object from settings.json that gives the column names
+    #   merge:         boolean that controls whether to "write" the json_info_obj or "merge" it into existing record.
+    ###################################################################################################################
+    def write_obj(self, db_conn, id, json_info_obj, db_table, merge=False):
+        table_name = db_table["table_name"]
+        id_name = db_table["id"]
+        json_name = db_table["json_info"]
+        # Create a datetime version of the "acp_ts" record timestamp
+        if "acp_ts" in json_info_obj:
+            update_acp_ts = datetime.fromtimestamp(float(json_info_obj["acp_ts"]))
+        else:
+            update_acp_ts = datetime.now()
+            json_info_obj["acp_ts"] = '{:.6f}'.format(datetime.timestamp(update_acp_ts))
+
+        # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts (ONLY IF NEW acp_ts is NEWER)
+        # First get acp_ts of most recent entry for current is
+        query = f'SELECT acp_ts,{json_name} FROM {table_name} WHERE {id_name}=%s AND acp_ts_end IS NULL'
+        query_args = (id,)
+        r = db_conn.dbread(query, query_args)
+        # Go ahead and update/insert if no records found or this record is newer than most recent
+        if len(r) == 0 or r[0][0] < update_acp_ts:
+            # Update (optional) existing record with acp_ts_end timestamp
+            #DEBUG HERE WE WANT TO UPDATE acp_ts_end in the OBJECT
+            update_json_info = {}
+            if len(r) == 1:
+                update_json_info = copy.deepcopy(r[0][1])
+                # Add "acp_ts_end" timestamp to json info of previous record
+                update_json_info.update( { 'acp_ts_end': '{:.6f}'.format(datetime.timestamp(update_acp_ts)) } )
+                # Update (optional) existing record with acp_ts_end timestamp
+                query = f'UPDATE {table_name} SET acp_ts_end=%s, {json_name}=%s WHERE {id_name}=%s AND acp_ts_end IS NULL'
+                query_args = (update_acp_ts, json.dumps(update_json_info), id)
+                db_conn.dbwrite(query, query_args)
+
+            if merge and len(r) == 1:
+                update_json_info.update(json_info_obj)
+                del update_json_info["acp_ts_end"]
+            else:
+                update_json_info = json_info_obj
+
+            # Add new entry with this acp_ts
+            query = f'INSERT INTO {table_name} ({id_name}, acp_ts, {json_name})'+" VALUES (%s, %s, %s)"
+            query_args = ( id, update_acp_ts, json.dumps(update_json_info))
+            try:
+                db_conn.dbwrite(query, query_args)
+            except:
+                if DEBUG:
+                    print(sys.exc_info(),flush=True,file=sys.stderr)
+        else:
+            print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
+
     ####################################################################
     # db_write Import JSON -> Database
     ####################################################################
     def db_write(self, json_filename, db_table):
-        with open(json_filename, 'r') as json_sensors:
-            sensors_data = json_sensors.read()
+        try:
+            with open(json_filename, 'r') as json_sensors:
+                sensors_data = json_sensors.read()
+        except FileNotFoundError:
+            print("db_write --jsonfile not found: {}".format(json_filename),flush=True,file=sys.stderr)
+            exit(1)
 
-        table_name = db_table["table_name"]
-        id_name = db_table["id"]
-        json_info = db_table["json_info"]
         # parse file { "<id>" : { "<id_name>: "<id", ...} }
         obj_list = json.loads(sensors_data)
 
-        print("db_write loaded {}".format(json_filename),flush=True,file=sys.stderr)
-
-        #print(sensors)
+        print("db_write loaded: {}".format(json_filename),flush=True,file=sys.stderr)
 
         db_conn = DBConn(self.settings)
 
         for id in obj_list:
-            # Create a datetime version of the "acp_ts" record timestamp
-            if "acp_ts" in obj_list[id]:
-                acp_ts = datetime.fromtimestamp(float(obj_list[id]["acp_ts"]))
-            else:
-                acp_ts = datetime.now()
-                obj_list[id]["acp_ts"] = '{:.6f}'.format(datetime.timestamp(acp_ts))
-
-            # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts (ONLY IF NEW acp_ts is NEWER)
-            # First get acp_ts of most recent entry for current is
-            query = f'SELECT acp_ts FROM {table_name} WHERE {id_name}=%s AND acp_ts_end IS NULL'
-            query_args = (id,)
-            r = db_conn.dbread(query, query_args)
-            # Go ahead and update/insert if no records found or this record is newer than most recent
-            if len(r) == 0 or r[0][0] < acp_ts:
-                # Update (optional) existing record with acp_ts_end timestamp
-                query = f'UPDATE {table_name} SET acp_ts_end=%s WHERE {id_name}=%s AND acp_ts_end IS NULL'
-                query_args = (acp_ts, id)
-                db_conn.dbwrite(query, query_args)
-
-                # Add new entry with this acp_ts
-                query = f'INSERT INTO {table_name} ({id_name}, acp_ts, {json_info})'+" VALUES (%s, %s, %s)"
-                query_args = ( id, acp_ts, json.dumps(obj_list[id]))
-                try:
-                    db_conn.dbwrite(query, query_args)
-                except:
-                    if DEBUG:
-                        print(sys.exc_info(),flush=True,file=sys.stderr)
-            else:
-                print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
+            self.write_obj(db_conn, id, obj_list[id], db_table)
 
     ####################################################################
     # db_merge Merge JSON -> Database
@@ -132,9 +159,6 @@ class DBManager(object):
         with open(json_filename, 'r') as json_sensors:
             json_data = json_sensors.read()
 
-        table_name = db_table["table_name"]
-        id_name = db_table["id"]
-        json_name = db_table["json_info"]
         # parse file { "<id>" : { "<id_name>: "<id", ...} }
         obj_list = json.loads(json_data)
 
@@ -143,41 +167,7 @@ class DBManager(object):
         db_conn = DBConn(self.settings)
 
         for id in obj_list:
-            # Create a datetime version of the "acp_ts" record timestamp
-            if "acp_ts" in obj_list[id]:
-                update_acp_ts = datetime.fromtimestamp(float(obj_list[id]["acp_ts"]))
-            else:
-                update_acp_ts = datetime.now()
-                obj_list[id]["acp_ts"] = '{:.6f}'.format(datetime.timestamp(update_acp_ts))
-
-            # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts (ONLY IF NEW acp_ts is NEWER)
-            # First get acp_ts of most recent entry for current is
-            query = f'SELECT acp_ts, {json_name} FROM {table_name} WHERE {id_name}=%s AND acp_ts_end IS NULL'
-            query_args = (id,)
-            r = db_conn.dbread(query, query_args)
-            # Go ahead and update/insert if no records found or this info is newer than most recent
-            if len(r) == 0 or r[0][0] < update_acp_ts:
-                new_json_info = {}
-                if len(r) == 1:
-                    new_json_info = r[0][1]
-                    # Update (optional) existing record with acp_ts_end timestamp
-                    query = f'UPDATE {table_name} SET acp_ts_end=%s WHERE {id_name}=%s AND acp_ts_end IS NULL'
-                    query_args = (update_acp_ts, id)
-                    db_conn.dbwrite(query, query_args)
-
-                # Here is where the JSON merge happens
-                new_json_info.update(obj_list[id])
-
-                # Add new entry with this acp_ts and merged json
-                query = f'INSERT INTO {table_name} ({id_name}, acp_ts, {json_name})'+" VALUES (%s, %s, %s)"
-                query_args = ( id, update_acp_ts, json.dumps(new_json_info))
-                try:
-                    db_conn.dbwrite(query, query_args)
-                except:
-                    if DEBUG:
-                        print(sys.exc_info(),flush=True,file=sys.stderr)
-            else:
-                print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
+            self.write_obj(db_conn, id, obj_list[id], db_table, merge=True)
 
     ####################################################################
     # db_read Export database -> JSON (latest records only)
@@ -204,8 +194,8 @@ class DBManager(object):
             result_obj = {}
             rows = db_conn.dbread(query, None)
             for row in rows:
-                acp_id, sensor_info = row
-                result_obj[acp_id] = sensor_info
+                id, json_info = row
+                result_obj[id] = json_info
 
             self.write_json(result_obj, json_filename)
 
@@ -238,8 +228,8 @@ class DBManager(object):
             result_list = []
             rows = db_conn.dbread(query, None)
             for row in rows:
-                acp_id, sensor_info = row
-                result_list.append( { 'acp_id': acp_id, 'sensor_info': sensor_info } )
+                id, json_info = row
+                result_list.append( json_info )
 
             self.write_json(result_list, json_filename)
 
