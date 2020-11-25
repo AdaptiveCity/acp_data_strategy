@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 import time
 
-from classes.sensors_data_api import DataAPI
+from classes.sensors_data_api import SensorsDataAPI
 
 DEBUG = True
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     print("SENSORS API loaded settings.json")
 
-    data_api = DataAPI(settings)
+    data_api = SensorsDataAPI(settings)
 
     print("Starting SENSORS API on {}:{}".format(settings["sensors_host"],settings["sensors_port"]))
     app.run( host=settings["sensors_host"],

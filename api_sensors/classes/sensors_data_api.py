@@ -23,7 +23,7 @@ SENSORS=None
 
 SENSOR_TYPES=None
 
-class DataAPI(object):
+class SensorsDataAPI(object):
 
     def __init__(self, settings):
         global SENSORS, SENSOR_TYPES
