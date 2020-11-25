@@ -43,13 +43,27 @@ python3 -m pip install psycopg2
 ## Command line usage of `db_manager.sh`
 
 ```
-db_manager.sh
-    --status
-    --clear
-    --dbread --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>]
-    --dbreadall --dbtable <tablename> [--jsonfile <filename>] [--id <identifier>]
-    --dbwrite --dbtable <tablename> [--jsonfile <filename>]
-    --dbmerge --dbtable <tablename> [--jsonfile <filename>]
+./db_manager.sh --help
+
+usage: db_manager.sh [-h] [--jsonfile [<filename>]] [--dbtable [<tablename>]] [--id [<identifier>]] [--clear]
+                     [--status] [--dbwrite | --dbmerge | --dbread | --dbreadall]
+
+Import/export json data <-> PostgreSQL
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --jsonfile [<filename>]
+                        JSON file for import or export
+  --dbtable [<tablename>]
+                        Name of PostgreSQL table e.g. "sensors", "sensor_types".
+  --id [<identifier>]   Identifier to limit the scope e.g. (for --tablename sensors) "elsys-eye-044504".
+  --clear               ERASE all data from sensors table
+  --status              Report status of sensors table
+  --dbwrite             Import jsonfile -> PostgreSQL
+  --dbmerge             Read records from jsonfile (or stdin if no jsonfile) and merge into matching PostgrSQL records
+  --dbread              Export most recent PostgreSQL records -> jsonfile (or stdout if no jsonfile)
+  --dbreadall           Export ALL records from PostgreSQL -> jsonfile (or stdout if no jsonfile)
+```
 
 ## `db_manager.sh --status --dbtable <tablename>`
 
@@ -99,7 +113,9 @@ database, i.e. this is not a recursive 'deep' merge.
 
 email ijl20 to Rohit 2020-10-14:
 
-I'm in the process of doing something similar between the JSON files and postgresql to complete the acp_data_strategy work using the data from postgresql rather than the files (as you had it in the prior iteration of acp_data_strategy). I.e. see acp_data_strategy/db_testing and you'll see the work in progress.
+I'm in the process of doing something similar between the JSON files and postgresql to complete the acp_data_strategy
+work using the data from postgresql rather than the files (as you had it in the prior iteration of acp_data_strategy).
+I.e. see acp_data_strategy/db_testing and you'll see the work in progress.
 
 I.e. the 'json' file format of our sensor and sensor_type data can act as a means of exchange of data between the database and TTN.
 
@@ -110,7 +126,8 @@ acp_data_strategy/secrets/sensor_types.json
 
 both of which are JSON 'dictionaries' keyed on acp_id and acp_type_id respectively.
 
-I am writing python/bash scripts that will import/export data from the tables from/to JSON files. I'll need to support multiple methods for file <-> database, but in principle these are similar to file <-> ttn, e.g. I'll have something like:
+I am writing python/bash scripts that will import/export data from the tables from/to JSON files. I'll need to support
+multiple methods for file <-> database, but in principle these are similar to file <-> ttn, e.g. I'll have something like:
 ```
 sensors_write.py <sensors json file name>:
 
@@ -131,4 +148,5 @@ sensor_read <acp_id> <sensors json file name>:
 sensor_delete <acp_id>:
              deletes that sensor from the database
 ```
-So pretty basic, but should form a useful set of scripts for the database (me) and TTN (you) with JSON files in the middle, and in due course we'll add the capability of going straight database <-> ttn but the file scripts will still be useful.
+So pretty basic, but should form a useful set of scripts for the database (me) and TTN (you) with JSON files in
+the middle, and in due course we'll add the capability of going straight database <-> ttn but the file scripts will still be useful.

@@ -46,19 +46,19 @@ class DBManager(object):
         where = " WHERE "+id_name+"='"+id+"'" if id else ""
 
         # Build/execute query for record count
-        print("Querying table {} {}".format(table_name, where))
+        print("\nQuerying table {} {}:".format(table_name, where))
         db_conn = DBConn(self.settings)
         query = "SELECT COUNT(*) FROM {} {}".format(table_name, where)
         count = db_conn.dbread(query,None)[0][0]
         if count == 0:
-            print("zero rows found")
+            print("    zero rows found")
         else:
-            print("{} rows found".format(count))
+            print("    {} rows found".format(count))
 
             # Build/execute query for max_ts
             query = "SELECT MAX(acp_ts) FROM {} {}".format(table_name, where)
             max_ts = db_conn.dbread(query,None)[0][0]
-            print("max_ts {}".format(max_ts))
+            print("    most recent update: {}".format(max_ts))
 
             # Build/execute query for row with newest acp_ts
             if id:
@@ -69,7 +69,7 @@ class DBManager(object):
                 query = "SELECT {},acp_ts,{} from {} {}".format(id_name,json_info,table_name, where)
 
             ret_id, ret_acp_ts, ret_info = db_conn.dbread(query,None)[0]
-            print("newest entry",ret_info)
+            print("    newest entry:\n{}".format(ret_info))
 
             #print("{} rows in {}, latest {}".format(count,
             #                                        table_name,
@@ -88,7 +88,7 @@ class DBManager(object):
         # parse file { "<id>" : { "<id_name>: "<id", ...} }
         obj_list = json.loads(sensors_data)
 
-        print("loaded {}".format(json_filename))
+        print("db_write loaded {}".format(json_filename),flush=True,file=sys.stderr)
 
         #print(sensors)
 
@@ -101,19 +101,28 @@ class DBManager(object):
             else:
                 acp_ts = datetime.now()
 
-            # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts
-            query = "UPDATE {} SET acp_ts_end=%s WHERE {}=%s AND acp_ts_end IS NULL".format(table_name, id_name)
-            query_args = (acp_ts, id)
-            db_conn.dbwrite(query, query_args)
-
-            # Add new entry with this acp_ts
-            query = "INSERT INTO {} ({}, acp_ts, {})".format(table_name,id_name,json_info)+" VALUES (%s, %s, %s)"
-            query_args = ( id, acp_ts, json.dumps(obj_list[id]))
-            try:
+            # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts (ONLY IF NEW acp_ts is NEWER)
+            # First get acp_ts of most recent entry for current is
+            query = f'SELECT acp_ts FROM {table_name} WHERE {id_name}=%s AND acp_ts_end IS NULL'
+            query_args = (id,)
+            r = db_conn.dbread(query, query_args)
+            # Go ahead and update/insert if no records found or this record is newer than most recent
+            if len(r) == 0 or r[0][0] < acp_ts:
+                # Update (optional) existing record with acp_ts_end timestamp
+                query = f'UPDATE {table_name} SET acp_ts_end=%s WHERE {id_name}=%s AND acp_ts_end IS NULL'
+                query_args = (acp_ts, id)
                 db_conn.dbwrite(query, query_args)
-            except:
-                if DEBUG:
-                    print(sys.exc_info())
+
+                # Add new entry with this acp_ts
+                query = f'INSERT INTO {table_name} ({id_name}, acp_ts, {json_info})'+" VALUES (%s, %s, %s)"
+                query_args = ( id, acp_ts, json.dumps(obj_list[id]))
+                try:
+                    db_conn.dbwrite(query, query_args)
+                except:
+                    if DEBUG:
+                        print(sys.exc_info(),flush=True,file=sys.stderr)
+            else:
+                print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
 
     ####################################################################
     # db_read Export database -> JSON (latest records only)
@@ -147,7 +156,7 @@ class DBManager(object):
 
         except:
             if DEBUG:
-                print(sys.exc_info())
+                print(sys.exc_info(),flush=True,file=sys.stderr)
 
     ####################################################################
     # db_read Export database -> JSON (latest records only)
@@ -181,7 +190,7 @@ class DBManager(object):
 
         except:
             if DEBUG:
-                print(sys.exc_info())
+                print(sys.exc_info(),flush=True,file=sys.stderr)
 
     ####################################################################
     # write_json: output a python dict to json file

@@ -1,0 +1,320 @@
+{
+    "EMS001": {
+        "acp_id": "EMS001",
+        "acp_location": {
+            "f": 0,
+            "system": "WGB",
+            "x": 135,
+            "y": 91,
+            "zf": 0.55
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-ems",
+        "crate_id": "GW02"
+    },
+    "EMS002": {
+        "acp_id": "EMS002",
+        "acp_location": {
+            "f": 0,
+            "system": "WGB",
+            "x": 89,
+            "y": 318,
+            "zf": 0.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-ems",
+        "crate_id": "GW20-GF"
+    },
+    "aqa-mot-61cd22": {
+        "acp_id": "aqa-mot-61cd22",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 21,
+            "y": 40,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "aqa-mot",
+        "crate_id": "ll_0_3",
+        "description": "Front door zigbee motion sensor"
+    },
+    "aqa-mot-6657d3": {
+        "acp_id": "aqa-mot-6657d3",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 13,
+            "y": 39,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "aqa-mot",
+        "crate_id": "ll_0_1",
+        "description": "ijl20 test zigbee motion"
+    },
+    "aqa-wd-5c12f3": {
+        "acp_id": "aqa-wd-5c12f3",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 12,
+            "y": 37,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "aqa-wd",
+        "crate_id": "ll_0_1",
+        "description": "ijl20 test zigbee open/close"
+    },
+    "aqa-wd-5c91b3": {
+        "acp_id": "aqa-wd-5c91b3",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 22,
+            "y": 40,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "aqa-wd",
+        "crate_id": "ll_0_3",
+        "description": "Front door zigbee open/close"
+    },
+    "aqa-wd-5c91cb": {
+        "acp_id": "aqa-wd-5c91cb",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 18,
+            "y": 34,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "aqa-wd",
+        "crate_id": "ll_0_2",
+        "description": "Rear door zigbee open/close"
+    },
+    "elsys-co2-041ba8": {
+        "acp_id": "elsys-co2-041ba8",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 195,
+            "y": 17,
+            "zf": 1
+        },
+        "acp_ts": "1598549758",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FW01"
+    },
+    "elsys-co2-041ba9": {
+        "acp_id": "elsys-co2-041ba9",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 370,
+            "y": 10,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FN07"
+    },
+    "elsys-co2-041baa": {
+        "acp_id": "elsys-co2-041baa",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 215,
+            "y": 10,
+            "zf": 1
+        },
+        "acp_ts": "1597055029",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FW01"
+    },
+    "elsys-co2-0460ec": {
+        "acp_id": "elsys-co2-0460ec",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 220,
+            "y": 30,
+            "zf": 1
+        },
+        "acp_ts": "1597055029",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FW01"
+    },
+    "elsys-co2-0461e4": {
+        "acp_id": "elsys-co2-0461e4",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 195,
+            "y": 10,
+            "zf": 1
+        },
+        "acp_ts": "1597055029",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FW01"
+    },
+    "elsys-co2-0461e6": {
+        "acp_id": "elsys-co2-0461e6",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 114,
+            "y": 570,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FW26"
+    },
+    "elsys-co2-0461e7": {
+        "acp_id": "elsys-co2-0461e7",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 370,
+            "y": 30,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-co2",
+        "crate_id": "FN07"
+    },
+    "elsys-ems-048f2b": {
+        "acp_id": "elsys-ems-048f2b",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 550,
+            "y": 235,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-ems",
+        "crate_id": "FE11"
+    },
+    "elsys-ems-049361": {
+        "acp_id": "elsys-ems-049361",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 23,
+            "y": 40,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-ems",
+        "crate_id": "ll_0_3",
+        "description": "Front door lora open/close"
+    },
+    "elsys-eye-044501": {
+        "acp_id": "elsys-eye-044501",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 460,
+            "y": 10,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "elsys-eye",
+        "crate_id": "FN07"
+    },
+    "elsys-eye-044504": {
+        "acp_id": "elsys-eye-044504",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 11,
+            "y": 38,
+            "zf": 1.0
+        },
+        "acp_ts": "1597055777",
+        "acp_type_id": "elsys-eye",
+        "crate_id": "ll_0_1"
+    },
+    "elsys-eye-044777": {
+        "acp_id": "elsys-eye-044504",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 11,
+            "y": 38,
+            "zf": 1.0
+        },
+        "acp_ts": "1597055777",
+        "acp_type_id": "elsys-eye",
+        "crate_id": "ll_0_1"
+    },
+    "ijl20-co2-0366b0": {
+        "acp_id": "ijl20-co2-0366b0",
+        "acp_location": {
+            "f": 1,
+            "system": "WGB",
+            "x": 575,
+            "y": 240,
+            "zf": 1
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "ijl20-co2",
+        "crate_id": "FE11"
+    },
+    "ijl20-sodaq-ttn": {
+        "acp_id": "ijl20-sodaq-ttn",
+        "acp_location": {
+            "lat": 52.210927,
+            "lng": 0.09274,
+            "system": "GPS"
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "ijl20-sodaq",
+        "crate_id": "FE11"
+    },
+    "innr-smartplug-fe53c1": {
+        "acp_id": "innr-smartplug-fe53c1",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 24.5,
+            "y": 40,
+            "zf": 2.0
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "innr-smartplug",
+        "crate_id": "ll_0_3",
+        "description": "ijl20 test zigbee smartplug (lobby lamp)"
+    },
+    "rad-ath-003d0f": {
+        "acp_id": "rad-ath-003d0f",
+        "acp_location": {
+            "agl": 1,
+            "lat": 52.211,
+            "lng": 0.09033,
+            "system": "GPS"
+        },
+        "acp_ts": "1591094324.123",
+        "acp_type_id": "rad-ath",
+        "crate_id": "outside",
+        "description": "Lockdown Lab RadioBridge outside air temp & humidity"
+    },
+    "rad-tilt-003d47": {
+        "acp_id": "rad-tilt-003d47",
+        "acp_location": {
+            "f": 0,
+            "system": "LL",
+            "x": 11,
+            "y": 37,
+            "zf": 1.0
+        },
+        "acp_ts": "1591094777.123",
+        "acp_type_id": "rad-tilt",
+        "crate_id": "ll_0_1",
+        "description": "Lockdown Lab RadioBridge test tilt"
+    }
+}

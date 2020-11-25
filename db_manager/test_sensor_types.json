@@ -1,0 +1,405 @@
+{
+    "aqa-mot": {
+        "acp_ts": "1596121902",
+        "acp_type_id": "aqa-mot",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "Aqara Zigbee Motion Sensor with light level",
+        "features": {
+            "battery": {
+                "jsonpath": "$.config.battery",
+                "name": "Battery (%)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "battery",
+                "units": "percent"
+            },
+            "lightlevel": {
+                "jsonpath": "$.state.lightlevel",
+                "name": "Light level (raw)",
+                "range": [
+                    0,
+                    50000
+                ],
+                "short_name": "lightlevel",
+                "units": "raw"
+            },
+            "lux": {
+                "jsonpath": "$.state.lux",
+                "name": "Light level (lux)",
+                "range": [
+                    0,
+                    600
+                ],
+                "short_name": "lux",
+                "units": "lux"
+            },
+            "presence": {
+                "jsonpath": "$.state.presence",
+                "name": "Presence (true/false)",
+                "range": [
+                    0,
+                    1
+                ],
+                "short_name": "presence",
+                "units": "boolean"
+            },
+            "temperature": {
+                "jsonpath": "$.config.temperature",
+                "name": "Temperature (Celsius*100)",
+                "range": [
+                    -1000,
+                    4000
+                ],
+                "short_name": "temp",
+                "units": "celsius*100"
+            }
+        },
+        "name": "Aqara Zigbee Motion",
+        "notes": "Not sure if we can get the battery status",
+        "short_name": "Aqara Motion"
+    },
+    "aqa-wd": {
+        "acp_ts": "1596121602",
+        "acp_type_id": "aqa-wd",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "Aqara Zigbee Window/Door Sensor with temperature and battery %",
+        "features": {
+            "open": {
+                "jsonpath": "$.state.open",
+                "name": "Open (true/false)",
+                "range": [
+                    0,
+                    1
+                ],
+                "short_name": "open",
+                "units": "boolean"
+            },
+            "temperature": {
+                "jsonpath": "$.config.temperature",
+                "name": "Temperature (Celsius*100)",
+                "range": [
+                    -1000,
+                    4000
+                ],
+                "short_name": "temp",
+                "units": "celsius*100"
+            }
+        },
+        "name": "Aqara Zigbee Window/Door",
+        "notes": "Can send acp_event on door open/close",
+        "short_name": "Aqara WD"
+    },
+    "elsys-co2": {
+        "acp_ts": "1591074324.123",
+        "acp_type_id": "elsys-co2",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "General purpose indoor enviromental sensor.",
+        "features": {
+            "co2": {
+                "jsonpath": "$.payload_cooked.co2",
+                "name": "CO2 (ppb)",
+                "range": [
+                    300,
+                    500
+                ],
+                "short_name": "co2",
+                "units": "ppb"
+            },
+            "humidity": {
+                "jsonpath": "$.payload_cooked.humidity",
+                "name": "Humidity (Percent)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "humidity",
+                "units": "percent"
+            },
+            "temperature": {
+                "jsonpath": "$.payload_cooked.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            },
+            "vdd": {
+                "jsonpath": "$.payload_cooked.vdd",
+                "name": "Battery millivolts",
+                "range": [
+                    3400,
+                    3800
+                ],
+                "short_name": "vdd",
+                "units": "millivolts"
+            }
+        },
+        "name": "Elsys indoor CO2, Temp and Humidity",
+        "notes": "",
+        "short_name": "Elsys CO2"
+    },
+    "elsys-ems": {
+        "acp_ts": "1595840036",
+        "acp_type_id": "elsys-ems",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "General purpose indoor enviromental sensor with temperature, humidity, reed switch, battery voltage.",
+        "features": {
+            "humidity": {
+                "jsonpath": "$.payload_cooked.humidity",
+                "name": "Humidity (Percent)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "humidity",
+                "units": "percent"
+            },
+            "openclose": {
+                "jsonpath": "$.payload_cooked.digital",
+                "name": "Open/Close",
+                "range": [
+                    0,
+                    1
+                ],
+                "short_name": "openclose",
+                "units": "ppb"
+            },
+            "temperature": {
+                "jsonpath": "$.payload_cooked.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            },
+            "vdd": {
+                "jsonpath": "$.payload_cooked.vdd",
+                "name": "Battery millivolts",
+                "range": [
+                    3000,
+                    4000
+                ],
+                "short_name": "vdd",
+                "units": "millivolts"
+            }
+        },
+        "name": "Elsys EMS",
+        "notes": "https://www.elsys.se/shop/product/ems/?v=f003c44deab6",
+        "short_name": "Elsys EMS"
+    },
+    "elsys-eye": {
+        "acp_ts": "1597578643",
+        "acp_type_id": "elsys-eye",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "General purpose indoor enviromental sensor with 8x8 IR GridEye sensor.",
+        "feature_default": "temperature",
+        "features": {
+            "humidity": {
+                "jsonpath": "$.payload_cooked.humidity",
+                "name": "Humidity (Percent)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "humidity",
+                "units": "percent"
+            },
+            "lux": {
+                "jsonpath": "$.payload_cooked.light",
+                "name": "Light level (lux)",
+                "range": [
+                    0,
+                    600
+                ],
+                "short_name": "lux",
+                "units": "lux"
+            },
+            "motion": {
+                "jsonpath": "$.payload_cooked.motion",
+                "name": "Motion",
+                "range": [
+                    0,
+                    5
+                ],
+                "short_name": "motion",
+                "units": "0..255 motion counts"
+            },
+            "temperature": {
+                "jsonpath": "$.payload_cooked.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            },
+            "vdd": {
+                "jsonpath": "$.payload_cooked.vdd",
+                "name": "Battery millivolts",
+                "range": [
+                    3000,
+                    4000
+                ],
+                "short_name": "vdd",
+                "units": "millivolts"
+            }
+        },
+        "link": "https://elsys.se/public/datasheets/ERS_Eye_datasheet.pdf",
+        "name": "Elsys Eye",
+        "notes": "https://elsys.se/public/datasheets/ERS_Eye_datasheet.pdf",
+        "short_name": "Elsys Eye"
+    },
+    "ijl20-co2": {
+        "acp_ts": "1591074324.123",
+        "acp_type_id": "ijl20-co2",
+        "day_file": "/media/acp/mqtt_ttn/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "General purpose indoor enviromental sensor. Defined as acp_type_id=ijl20-co2 for dev/debug",
+        "features": {
+            "battery": {
+                "jsonpath": "$.payload_fields.vdd",
+                "name": "Battery millivolts",
+                "range": [
+                    3500,
+                    3700
+                ],
+                "short_name": "battery",
+                "units": "millivolts"
+            },
+            "co2": {
+                "jsonpath": "$.payload_fields.co2",
+                "name": "CO2 (ppb)",
+                "range": [
+                    300,
+                    500
+                ],
+                "short_name": "co2",
+                "units": "ppb"
+            },
+            "humidity": {
+                "jsonpath": "$.payload_fields.humidity",
+                "name": "Humidity (Percent)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "humidity",
+                "units": "percent"
+            },
+            "temperature": {
+                "jsonpath": "$.payload_fields.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            }
+        },
+        "name": "Elsys indoor CO2 (ijl20), Temp and Humidity",
+        "notes": "",
+        "short_name": "Elsys CO2 (ijl20)"
+    },
+    "ijl20-sodaq": {
+        "acp_ts": "1595840036",
+        "acp_type_id": "ijl20-sodaq",
+        "day_file": "/media/acp/mqtt_ttn/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "Microchip SODAQ ExpLoRer development board, periodically sending temperature in deg C.",
+        "features": {
+            "temperature": {
+                "jsonpath": "$.payload_fields.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            }
+        },
+        "name": "ijl20 dev SODAQ ExpLoRer board (TTN)",
+        "notes": "https://www.microchip.com/developmenttools/ProductDetails/PartNO/THW1022",
+        "short_name": "ijl20 sodaq"
+    },
+    "monnit-Temperature": {
+        "acp_ts": "1605273436.123",
+        "acp_type_id": "monnit-Temperature",
+        "day_file": "/media/acp/mqtt_csn/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "IFM Monnit wireless temperature sensor",
+        "feature_default": "temperature",
+        "features": {
+            "battery": {
+                "jsonpath": "$.monnit_signalvoltage",
+                "name": "Battery (volts)",
+                "range": [
+                    2,
+                    4
+                ],
+                "short_name": "battery",
+                "units": "volts"
+            },
+            "signal": {
+                "jsonpath": "$.monnit_signalstrength",
+                "name": "Signal Strength (dB)",
+                "range": [
+                    -120,
+                    -50
+                ],
+                "short_name": "signal",
+                "units": "dB"
+            },
+            "temperature": {
+                "jsonpath": "$.monnit_value",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            }
+        },
+        "name": "Monnit Temperature",
+        "notes": "https://www.monnit.com/",
+        "short_name": "Monnit Temp"
+    },
+    "rad-ath": {
+        "acp_ts": "1591074324.123",
+        "acp_type_id": "rad-ath",
+        "day_file": "/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+        "description": "A more accurate temperature and humidity sensor in a waterproof housing. url:...",
+        "feature_default": "temperature",
+        "features": {
+            "humidity": {
+                "jsonpath": "$.payload_cooked.humidity",
+                "name": "Humidity (Percent)",
+                "range": [
+                    0,
+                    100
+                ],
+                "short_name": "humidity",
+                "units": "percent"
+            },
+            "temperature": {
+                "jsonpath": "$.payload_cooked.temperature",
+                "name": "Temperature (Celsius)",
+                "range": [
+                    -10,
+                    40
+                ],
+                "short_name": "temp",
+                "units": "celsius"
+            }
+        },
+        "name": "RadioBridge IP67 Outdoor Air Temp and Humidity",
+        "notes": "We order these via sales@radiobridge.com, to agree pricing and supply for more the 10 units.",
+        "short_name": "RadioBridge ATH"
+    }
+}
