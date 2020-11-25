@@ -6,7 +6,7 @@ from datetime import datetime
 import time
 import numpy
 from flask import request
-
+import importlib
 import requests
 from requests.exceptions import HTTPError
 
@@ -23,7 +23,7 @@ SENSORS=None
 
 SENSOR_TYPES=None
 
-class DataAPI(object):
+class SensorsDataAPI(object):
 
     def __init__(self, settings):
         global SENSORS, SENSOR_TYPES
@@ -354,9 +354,15 @@ class DataAPI(object):
     def load_coordinate_systems(self):
         # this could be implemented like acp_decoders
         sys.path.append("..")
-
         self.coordinate_systems = {}
 
+        for csystem in self.settings["coordinate_systems"]:
+            import_string = "acp_coordinates."+csystem
+            cmodule = importlib.import_module(import_string)
+            cclass = getattr(cmodule, csystem)
+            self.coordinate_systems[csystem] = cclass()
+        
+        '''
         # William Gates Building
         from acp_coordinates.WGB import WGB
         self.coordinate_systems["WGB"] = WGB()
@@ -371,3 +377,4 @@ class DataAPI(object):
         from acp_coordinates.LL import LL
         self.coordinate_systems["LL"] = LL()
         print("Loaded coordinate system LL")
+        '''

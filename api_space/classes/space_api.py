@@ -31,7 +31,7 @@ DEBUG = False
 #r = requests.get('https://api.github.com/repos/psf/requests')
 #r.json()["description"]
 
-class DataAPI(object):
+class SpaceDataAPI(object):
 
     def __init__(self,settings):
         print("Initializing SPACE DataAPI")

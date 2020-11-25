@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 from flask import request
 import requests
+import importlib
 # NOTE we also have "load_coordinate_systems()" which will import modules from acp_coordinates
 
 DEBUG = True
@@ -19,7 +20,7 @@ DEBUG = True
 
 BIM=None
 
-class DataAPI(object):
+class BIMDataAPI(object):
 
     def __init__(self, settings):
         global BIM
@@ -267,6 +268,13 @@ class DataAPI(object):
 
         self.coordinate_systems = {}
 
+        for csystem in self.settings["coordinate_systems"]:
+            import_string = "acp_coordinates."+csystem
+            cmodule = importlib.import_module(import_string)
+            cclass = getattr(cmodule, csystem)
+            self.coordinate_systems[csystem] = cclass()
+
+        '''
         # William Gates Building
         from acp_coordinates.WGB import WGB
         self.coordinate_systems["WGB"] = WGB()
@@ -281,3 +289,4 @@ class DataAPI(object):
         from acp_coordinates.LL import LL
         self.coordinate_systems["LL"] = LL()
         print("Loaded coordinate system LL")
+        '''

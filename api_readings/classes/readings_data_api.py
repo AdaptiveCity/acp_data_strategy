@@ -24,7 +24,7 @@ DEBUG = True
 #r = requests.get('https://api.github.com/repos/psf/requests')
 #r.json()["description"]
 
-class DataAPI(object):
+class ReadingsDataAPI(object):
 
     def __init__(self, settings):
         print("Initializing SENSORS DataAPI")
