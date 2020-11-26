@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
+import os, sys
 import json
 
 from classes.db_manager import DBManager
@@ -13,7 +13,8 @@ DEBUG = True
 # Load settings
 ####################################################################
 def load_settings():
-    with open('secrets/settings.json', 'r') as settings_file:
+    EXECDIR = os.path.abspath(os.path.dirname(sys.argv[0]))
+    with open(EXECDIR+'/secrets/settings.json', 'r') as settings_file:
         settings_data = settings_file.read()
 
     # parse file
@@ -128,7 +129,7 @@ if __name__ == '__main__':
             dbtable = settings["TABLES"][args.dbwrite]
             db_manager.db_write(args.jsonfile, dbtable, args.id)
         except KeyError:
-            print("--dbwrite <tablename> argument not recognized ({})".format(args.dbreadwrite),file=sys.stderr,flush=True)
+            print("--dbwrite <tablename> argument not recognized ({})".format(args.dbwrite),file=sys.stderr,flush=True)
             sys.exit(1)
         exit(0)
 
@@ -138,7 +139,7 @@ if __name__ == '__main__':
             dbtable = settings["TABLES"][args.dbmerge]
             db_manager.db_merge(args.jsonfile, dbtable, args.id)
         except KeyError:
-            print("--dbmerge <tablename> argument not recognized ({})".format(args.dbreadmerge),file=sys.stderr,flush=True)
+            print("--dbmerge <tablename> argument not recognized ({})".format(args.dbmerge),file=sys.stderr,flush=True)
             sys.exit(1)
         exit(0)
 

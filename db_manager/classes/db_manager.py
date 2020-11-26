@@ -46,35 +46,38 @@ class DBManager(object):
         where = " WHERE "+id_name+"='"+id+"'" if id else ""
 
         # Build/execute query for record count
-        print("\nQuerying table {} {}:".format(table_name, where))
+        print(f'Querying table {table_name} {where}:')
         db_conn = DBConn(self.settings)
-        query = "SELECT COUNT(*) FROM {} {}".format(table_name, where)
+        query = f'SELECT COUNT(*) FROM {table_name} {where}'
         count = db_conn.dbread(query,None)[0][0]
         if count == 0:
             print("    zero rows found")
         else:
             print("    {} rows found".format(count))
 
+            # Get count of unique identifiers (acp_ts_end IS NULL)
+            # if --id NOT given
+            if not id:
+                query = f'SELECT COUNT(*) FROM {table_name} WHERE acp_ts_end IS NULL'
+                count = db_conn.dbread(query,None)[0][0]
+                print(f'    {count} unique {id_name} identifers in table')
+
             # Build/execute query for max_ts
-            query = "SELECT MAX(acp_ts) FROM {} {}".format(table_name, where)
+            query = f'SELECT MAX(acp_ts) FROM {table_name} {where}'
             max_ts = db_conn.dbread(query,None)[0][0]
-            print("    most recent update: {}".format(max_ts))
+            print(f'    most recent update was: {max_ts}')
 
             # Build/execute query for row with newest acp_ts
             if id:
-                where = "WHERE {} = '{}' AND acp_ts_end IS NULL".format(id_name, id, table_name)
-                query = "SELECT {},acp_ts,{} FROM {} {}".format(id_name,json_name,table_name, where)
+                where = f"WHERE {id_name} = '{id}' AND acp_ts_end IS NULL"
+                query = f"SELECT {id_name},acp_ts,{json_name} FROM {table_name} {where}"
             else:
-                where = "WHERE acp_ts = (SELECT MAX(acp_ts) from {})".format(table_name)
-                query = "SELECT {},acp_ts,{} from {} {}".format(id_name,json_name,table_name, where)
+                where = f"WHERE acp_ts = (SELECT MAX(acp_ts) from {table_name})"
+                query = f"SELECT {id_name},acp_ts,{json_name} from {table_name} {where}"
 
+            # Set up return values from first row with newest acp_ts returned.
             ret_id, ret_acp_ts, ret_info = db_conn.dbread(query,None)[0]
-            print("    newest entry:\n{}".format(ret_info))
-
-            #print("{} rows in {}, latest {}".format(count,
-            #                                        table_name,
-            #                                        datetime.strftime(max_ts,"%Y-%m-%d %H:%M:%S")))
-
+            print(f"    newest entry: {ret_id}")
 
     ###################################################################################################################
     # write_obj - inserts a new database object record (used by db_write, db_merge)
