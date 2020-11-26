@@ -8,7 +8,7 @@ from datetime import datetime
 import time
 from flask_wtf.csrf import CSRFProtect
 
-from classes.space_api import DataAPI as SpaceAPI
+from classes.space_api import SpaceDataAPI
 
 DEBUG = True
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     print("SpaceRender loaded settings.json")
 
-    space_api = SpaceAPI(settings)
+    space_api = SpaceDataAPI(settings)
 
     app.run( host=settings["space_host"],
              port=settings["space_port"],

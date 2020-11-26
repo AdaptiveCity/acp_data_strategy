@@ -23,6 +23,7 @@ sudo service nginx restart
 ```
 
 ```
+sudo apt install python3-dev
 sudo apt install libpq-dev
 ```
 

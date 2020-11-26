@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 import time
 
-from classes.readings_data_api import DataAPI
+from classes.readings_data_api import ReadingsDataAPI
 
 DEBUG = True
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     print("READINGS API loaded settings.json")
 
-    data_api = DataAPI(settings)
+    data_api = ReadingsDataAPI(settings)
 
     print("Starting READINGS API on {}:{}".format(settings["readings_host"],settings["readings_port"]))
     app.run( host=settings["readings_host"],
