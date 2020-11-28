@@ -349,32 +349,30 @@ Update the `CONFIG.py` file with the necessary details. Then execute the `run.sh
 The API endpoints could be accessed by querying *http://localhost:&lt;port&gt;/&lt;endpoint&gt;*
 
 ### API References
-Two class of API are available. One for BIM and the other for sensors.
 
-#### BIM APIs
-+ `/api/bim/get/<crate_id>/` - Get all the details of the specified crate_id
-+ `/api/bim/get/<crate_id>/<children>/` - Get details of the given crate_id and the child crates down to level children. If children is "all", then provides details of all the children crates.
-+ `/api/bim/get_floor_number/<system>/<floor_number>` - Get all the crates on a given floor in the specified system.
-+ `/api/bim/itog?system=&x=&y=&f=&zf=` - Given x, y, f and z of a given system, returns the corresponding Global coordinates.
-+ `/api/bim/gtoi?acp_lat=&acp_lng=&acp_alt=&system=` - Given acp_lat, acp_lng and acp_alt, returns the corresponding In-building coordinates of the queried system.
-+ `/api/bim/itoo?system=&x=&y=&f=` - Given x, y, f and z of a given system, returns the corresponding object-level values.
-+ `/api/bim/otoi?system=&crate_id=` - Given the crate_id and system, returns the x, y, z and f in the in-building system specified.
+Four classes of API are available:
+
+#### BIM API
+
+Returns data on BIM objects e.g. an office.
+
+See README.md in api_bim
+
+#### Readings API
+
+Returns sensors readings data.
+
+See README.md in api_readings
 
 #### Sensors APIs
-+ `/api/sensors/get/<acp_id>` - Give the details of the sensors with the provided acp_id.
-+ `/api/sensors/get/bim/<crate_id>` - List all the sensors in the specified crate_id.
-+ `/api/sensors/get_count/<crate_id>` - Provide a count of all the sensors in the given crate_id (Non-recursive).
-+ `/api/sensors/get_count/<crate_id>/<children>` - Provide a count of all the sensors in the given crate_id down to the specified children level. If children is "all", then count sensors in all children crates.
-+ `/api/sensor/sources` - List all the sensor sources.
-+ `/api/sensors?source=` - List all the sensors belonging to the given source.
-+ `/api/sensor/features?sensor=` - List all the feature information the given sensor could provide.
 
-### Add/Update Information
-An admin can add/update any sensor or bim. Add any admin username and password in the `CONFIG.py` file for local testing. Currently the login is through a single user which will be extended to multiple users on deployment.
+Returns metadata regarding sensors, e.g. the location.
 
-Fill in the necessary details when the form loads. Each input field has a tooltip to describe it. Some fields have validation and need to be of specific format to be accepted.
+Also returns sensor *type* information, e.g. the properties of a `monnit-Temperature` sensor type.
 
-In order to add/update sensor visit *http://localhost:5010/sensors/admin* and for bim add/update visit *http://localhost:5011/bim/admin*
+See README.md in api_sensors.
 
-TODO:
-1. Multiple user login
+#### Space API
+
+Returns SVG drawing information for BIM objects.
+
