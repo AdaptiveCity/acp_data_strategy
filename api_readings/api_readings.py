@@ -63,7 +63,7 @@ def history_data_route():
 if __name__ == '__main__':
     print("READINGS API starting...")
 
-    with open('../settings.json', 'r') as settings_file:
+    with open('../secrets/settings.json', 'r') as settings_file:
         settings_data = settings_file.read()
 
     # parse file

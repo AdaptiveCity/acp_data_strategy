@@ -15,9 +15,9 @@ app = Flask(__name__)
 CORS(app)
 
 
-###################
-# SENSORS API SHIM
-###################
+######################
+# SENSORS POSTGRES API
+######################
 
 #########################################
 #api/sensors for sensor oriented metedata
@@ -96,9 +96,9 @@ def list_types_route():
 ####################################################################
 
 if __name__ == '__main__':
-    print("SENSORS API starting...")
+    print("SENSORS PostgreSQL API starting...")
 
-    with open('../settings.json', 'r') as settings_file:
+    with open('../secrets/settings.json', 'r') as settings_file:
         settings_data = settings_file.read()
 
     # parse file

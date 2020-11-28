@@ -9,13 +9,13 @@ from flask import request
 import importlib
 import requests
 from requests.exceptions import HTTPError
-
+from classes.dbconn import DBConn
 
 DEBUG = True
 
 ###################################################################
 #
-# SENSORS DataAPI
+# SENSORS PostgreSQL DataAPI
 #
 ###################################################################
 
@@ -26,30 +26,42 @@ SENSOR_TYPES=None
 class SensorsDataAPI(object):
 
     def __init__(self, settings):
+        # Declare Python dictionaries to hold ALL sensor and sensor_type metadata
+        # These will be initialized by reading entire tables into each dictionary
         global SENSORS, SENSOR_TYPES
+
         print("Initializing SENSORS DataAPI")
         self.settings = settings
-        SENSORS = self.load_sensors()
-        SENSOR_TYPES = self.load_sensor_types()
-        print("{} loaded".format(settings["sensors_file_name"]))
+
+        # Establish connection to PostgreSQL
+        self.db_conn = DBConn(self.settings)
+
+        # Load sensor and sensor_types metadata
+        SENSORS = self.db_load_sensors()
+        SENSOR_TYPES = self.db_load_sensor_types()
+        print("Loaded sensor and sensor_types tables")
+
+        # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
         self.load_coordinate_systems()
 
     # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
+    # NOTE a 'get' of sensor metadata will read the database and refresh the entry in the SENSORS dictionary
     def get(self, acp_id):
-        print("get {}".format(acp_id))
+        print(f"get {acp_id}",file=sys.stderr, flush=True)
         global SENSORS, SENSOR_TYPES
         try:
-            sensor_details = SENSORS[acp_id]
-            if "acp_type_id" in sensor_details:
-                acp_type_id = sensor_details["acp_type_id"]
+            sensor_info = self.db_lookup_sensor(acp_id)
+            if "acp_type_id" in sensor_info:
+                acp_type_id = sensor_info["acp_type_id"]
                 if acp_type_id in SENSOR_TYPES:
-                    sensor_details["acp_type_info"] = SENSOR_TYPES[acp_type_id]
+                    sensor_info["acp_type_info"] = SENSOR_TYPES[acp_type_id]
         except:
-            print("get() no sensor id {}".format(acp_id))
+            print(f"get() no sensor id {acp_id}",file=sys.stderr, flush=True)
             return {}
-        return sensor_details
+        return sensor_info
 
     # Get the metadata for a given sensor TYPE (e.g. 'rad-ath')
+    # NOTE a 'get_type' of sensor type metadata will read the database and refresh the entry in the SENSOR_TYPES dictionary
     def get_type(self, acp_type_id):
         print("get_type {}".format(acp_type_id))
         type_info = self.type_lookup(acp_type_id)
@@ -120,7 +132,7 @@ class SensorsDataAPI(object):
             sensor = SENSORS[acp_id]
             if True:                   # Here's where we'd filter the results
                 sensor_list_obj[acp_id] = sensor
-                if include_type_info:
+                if include_type_info and "acp_type_id" in sensor:
                     acp_type_id = sensor["acp_type_id"]
                     type_info = self.type_lookup(acp_type_id)
                     if type_info is not None:
@@ -161,36 +173,60 @@ class SensorsDataAPI(object):
     ###########################################################################
 
     # This loads the sensor metadata into memory - we could use a database live instead.
-    def load_sensors(self):
-        file_name=self.settings["sensors_file_name"]
+    def db_load_sensors(self):
 
-        #Checks if sensors.json exits so we don't have to create it
-        if(path.isfile(file_name)):
-            #load sensors.json and create dict
-            with open(file_name,'r') as json_file:
-                #WGB= json.loads(json_file.read())
-                sensors=json.load(json_file)
-                print(file_name," loaded successfully in load_sensors()")
-        else:
-            print("sensors.json failed to load in load_sensors()")
-            #think of another way to load it then as we can't just use data_api
-            #global data_api
-            #sensors=json.loads(data_api.sensor_data())
-            #print(sensors)
+        # To select *all* the latest sensor objects:
+        query = "SELECT acp_id,sensor_info FROM sensors WHERE acp_ts_end IS NULL"
+
+        try:
+            sensors = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                sensors[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
         return sensors
 
-    def load_sensor_types(self):
-        file_name = self.settings["sensor_types_file_name"]
+    def db_load_sensor_types(self):
+        # To select *all* the latest sensor objects:
+        query = "SELECT acp_type_id, type_info FROM sensor_types WHERE acp_ts_end IS NULL"
 
-        #Checks if sensors.json exits so we don't have to create it
-        if(path.isfile(file_name)):
-            #load sensors.json and create dict
-            with open(file_name,'r') as json_file:
-                sensor_types = json.load(json_file)
-                print(file_name," loaded successfully in load_sensor_types()")
-        else:
-            print("sensors.json failed to load in load_sensor_types()")
+        try:
+            sensor_types = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                sensor_types[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
         return sensor_types
+
+    # Return metadata for a single sensor from the database
+    def db_lookup_sensor(self, acp_id):
+
+        query = "SELECT sensor_info FROM sensors WHERE acp_id=%s AND acp_ts_end IS NULL"
+        query_args = (acp_id,)
+
+        try:
+            sensor_info = {}
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) != 1:
+                return None
+            sensor_info = rows[0][0]
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        SENSORS["acp_id"] = sensor_info
+        return sensor_info
 
     def type_lookup(self, acp_type_id):
         global SENSOR_TYPES
@@ -361,20 +397,3 @@ class SensorsDataAPI(object):
             cmodule = importlib.import_module(import_string)
             cclass = getattr(cmodule, csystem)
             self.coordinate_systems[csystem] = cclass()
-        
-        '''
-        # William Gates Building
-        from acp_coordinates.WGB import WGB
-        self.coordinate_systems["WGB"] = WGB()
-        print("Loaded coordinate system WGB")
-
-        # IfM Building
-        from acp_coordinates.IFM import IFM
-        self.coordinate_systems["IFM"] = IFM()
-        print("Loaded coordinate system IFM")
-
-        # Lockdown Lab
-        from acp_coordinates.LL import LL
-        self.coordinate_systems["LL"] = LL()
-        print("Loaded coordinate system LL")
-        '''

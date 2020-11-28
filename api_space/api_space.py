@@ -67,7 +67,7 @@ def get_floor_number_route(coordinate_system,floor_number):
 if __name__ == '__main__':
     print("SpaceAPI starting...")
 
-    with open('../settings.json', 'r') as settings_file:
+    with open('../secrets/settings.json', 'r') as settings_file:
         settings_data = settings_file.read()
 
     # parse file

@@ -8,7 +8,9 @@ import time
 from flask import request
 import requests
 import importlib
-# NOTE we also have "load_coordinate_systems()" which will import modules from acp_coordinates
+from classes.dbconn import DBConn
+
+# NOTE we also have "load_coordinate_systems()" which will dynamically import modules from acp_coordinates
 
 DEBUG = True
 
@@ -27,7 +29,7 @@ class BIMDataAPI(object):
         print("Initializing BIM DataAPI")
         self.settings = settings
         BIM = self.load_BIM()
-        print("{} loaded".format(settings["bim_file_name"]))
+        print("Loaded bim table")
         self.load_coordinate_systems()
 
     #####################################################################
@@ -116,13 +118,22 @@ class BIMDataAPI(object):
 
     # Load ALL the BIM data from the store (usually data/BIM.json)
     def load_BIM(self):
-        file_name=self.settings["bim_file_name"]
+        db_conn = DBConn(self.settings)
 
-        #load BIM.json and create dict
-        with open(file_name,'r') as json_file:
-            #WGB= json.loads(json_file.read())
-            BIM_data=json.load(json_file)['crates']
-        print(file_name," loaded successfully")
+        # To select *all* the latest sensor objects:
+        query = "SELECT crate_id, crate_info FROM bim WHERE acp_ts_end IS NULL"
+
+        try:
+            BIM_data = {}
+            rows = db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                BIM_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
         return BIM_data
 
     # Update a dictionary of creates with "acp_location_xyz" and "acp_boundary_xyz" properties
@@ -273,20 +284,3 @@ class BIMDataAPI(object):
             cmodule = importlib.import_module(import_string)
             cclass = getattr(cmodule, csystem)
             self.coordinate_systems[csystem] = cclass()
-
-        '''
-        # William Gates Building
-        from acp_coordinates.WGB import WGB
-        self.coordinate_systems["WGB"] = WGB()
-        print("Loaded coordinate system WGB")
-
-        # IfM Building
-        from acp_coordinates.IFM import IFM
-        self.coordinate_systems["IFM"] = IFM()
-        print("Loaded coordinate system IFM")
-
-        # Lockdown Lab
-        from acp_coordinates.LL import LL
-        self.coordinate_systems["LL"] = LL()
-        print("Loaded coordinate system LL")
-        '''

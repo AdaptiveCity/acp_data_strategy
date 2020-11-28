@@ -10,7 +10,6 @@ then
     exit 1
 else
     echo $(date '+%s') starting api_space.py
-    nohup python3 api_space.py >api_space.log 2>api_space.err </dev/null & disown
+    nohup python3 api_space.py >/var/log/acp_prod/api_space.log 2>/var/log/acp_prod/api_space.err </dev/null & disown
     exit 0
 fi
-

@@ -10,6 +10,6 @@ then
     exit 1
 else
     echo $(date '+%s') starting api_bim.py
-    nohup python3 api_bim.py >api_bim.log 2>api_bim.err </dev/null & disown
+    nohup python3 api_bim.py >/var/log/acp_prod/api_bim.log 2>/var/log/acp_prod/api_bim.err </dev/null & disown
     exit 0
 fi

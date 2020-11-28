@@ -1,6 +1,0 @@
-{
-  "API_BIM": "http://127.0.0.1:5010/api/bim/",
-  "API_SENSORS": "http://127.0.0.1:5011/api/sensors/",
-  "API_READINGS": "http://127.0.0.1:5012/api/readings/",
-  "API_SPACE": "/api/space/"
-}
