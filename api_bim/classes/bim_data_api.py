@@ -28,20 +28,27 @@ class BIMDataAPI(object):
         global BIM
         print("Initializing BIM DataAPI")
         self.settings = settings
+
+        self.db_conn = DBConn(self.settings)
+
         BIM = self.load_BIM()
         print("Loaded bim table")
+
         self.load_coordinate_systems()
 
     #####################################################################
     #  METHODS CALLED FROM API                                          #
     #####################################################################
 
-    #takes in crate_id and depth and returns all children of that crate
+    # takes in crate_id and depth and returns all children of that crate
     def get(self, crate_id, depth):
         global BIM
 
         if DEBUG:
-            print("get {} {}".format(crate_id,depth))
+            print("get {} {}".format(crate_id,depth), file=sys.stdout)
+
+        # Read the crate from the DATABASE, purely to refresh the in-memory cache (BIM)
+        crate = self.db_lookup_crate(crate_id)
 
         # Get list  of children of the desired crate to required depth
         crates = self.get_tree_list(crate_id, int(depth))
@@ -118,14 +125,13 @@ class BIMDataAPI(object):
 
     # Load ALL the BIM data from the store (usually data/BIM.json)
     def load_BIM(self):
-        db_conn = DBConn(self.settings)
 
         # To select *all* the latest sensor objects:
         query = "SELECT crate_id, crate_info FROM bim WHERE acp_ts_end IS NULL"
 
         try:
             BIM_data = {}
-            rows = db_conn.dbread(query, None)
+            rows = self.db_conn.dbread(query, None)
             for row in rows:
                 id, json_info = row
                 BIM_data[id] = json_info
@@ -135,6 +141,29 @@ class BIMDataAPI(object):
             return {}
 
         return BIM_data
+
+    # Return metadata from DATABASE for a single sensor
+    # and update entry in-memory cache (BIM_data).
+    def db_lookup_crate(self, crate_id):
+        global BIM
+
+        query = "SELECT crate_info FROM bim WHERE crate_id=%s AND acp_ts_end IS NULL"
+        query_args = (crate_id,)
+
+        try:
+            crate_info = {}
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) != 1:
+                return None
+            crate_info = rows[0][0]
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        # Refresh in-memory copy
+        BIM[crate_id] = crate_info
+
+        return crate_info
 
     # Update a dictionary of creates with "acp_location_xyz" and "acp_boundary_xyz" properties
     def add_xyzf(self, crates):

@@ -45,7 +45,7 @@ class SensorsDataAPI(object):
         self.load_coordinate_systems()
 
     # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
-    # NOTE a 'get' of sensor metadata will read the database and refresh the entry in the SENSORS dictionary
+    # Note a 'get' of sensor metadata will read the DATABASE and refresh the entry in the SENSORS dictionary
     def get(self, acp_id):
         print(f"get {acp_id}",file=sys.stderr, flush=True)
         global SENSORS, SENSOR_TYPES
@@ -61,10 +61,10 @@ class SensorsDataAPI(object):
         return sensor_info
 
     # Get the metadata for a given sensor TYPE (e.g. 'rad-ath')
-    # NOTE a 'get_type' of sensor type metadata will read the database and refresh the entry in the SENSOR_TYPES dictionary
+    # Note a 'get_type' of sensor type metadata will read the DATABASE and refresh the entry in the SENSOR_TYPES dictionary
     def get_type(self, acp_type_id):
         print("get_type {}".format(acp_type_id))
-        type_info = self.type_lookup(acp_type_id)
+        type_info = self.db_lookup_sensor_type(acp_type_id)
         return type_info if type_info is not None else {}
 
     def get_floor_number(self, coordinate_system, floor_number):
@@ -208,7 +208,7 @@ class SensorsDataAPI(object):
 
         return sensor_types
 
-    # Return metadata for a single sensor from the database
+    # Return metadata from DATABASE for a single sensor
     def db_lookup_sensor(self, acp_id):
 
         query = "SELECT sensor_info FROM sensors WHERE acp_id=%s AND acp_ts_end IS NULL"
@@ -228,6 +228,27 @@ class SensorsDataAPI(object):
         SENSORS["acp_id"] = sensor_info
         return sensor_info
 
+    # Return metadata from DATABASE for a single sensor type
+    def db_lookup_sensor_type(self, acp_type_id):
+
+        query = "SELECT type_info FROM sensor_types WHERE acp_type_id=%s AND acp_ts_end IS NULL"
+        query_args = (acp_type_id,)
+
+        try:
+            type_info = {}
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) != 1:
+                return None
+            type_info = rows[0][0]
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        SENSOR_TYPES["acp_type_id"] = type_info
+        return type_info
+
+    # Lookup a sensor type (from the in-memory cache)
     def type_lookup(self, acp_type_id):
         global SENSOR_TYPES
         try:
