@@ -225,7 +225,7 @@ class SensorsDataAPI(object):
             print(sys.exc_info(),flush=True,file=sys.stderr)
             return None
 
-        SENSORS["acp_id"] = sensor_info
+        SENSORS[acp_id] = sensor_info
         return sensor_info
 
     # Return metadata from DATABASE for a single sensor type
@@ -245,7 +245,7 @@ class SensorsDataAPI(object):
             print(sys.exc_info(),flush=True,file=sys.stderr)
             return None
 
-        SENSOR_TYPES["acp_type_id"] = type_info
+        SENSOR_TYPES[acp_type_id] = type_info
         return type_info
 
     # Lookup a sensor type (from the in-memory cache)
