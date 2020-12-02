@@ -70,39 +70,49 @@ class ReadingsDataAPI(object):
 
     def get_day(self, acp_id, args):
         response_obj = {}
-        try:
-            if DEBUG:
-                args_str = ""
-                for key in args:
-                    args_str += key+"="+args.get(key)+" "
-                print("get_day() {}/{}".format(acp_id,args_str) )
-            # Lookup the sensor metadata, this will include the
-            # filepath to the readings, and also may be returned
-            # in the response.
-            sensor_metadata = self.get_sensor_metadata(acp_id)
 
-            if "date" in args:
-                selected_date = args.get("date")
-            else:
-                selected_date = Utils.getDateToday()
+        # Lookup the sensor metadata, this will include the
+        # filepath to the readings, and also may be returned
+        # in the response.
+        sensor_metadata = self.get_sensor_metadata(acp_id)
 
-            records = self.get_day_records(acp_id, selected_date, sensor_metadata)
+        if "metadata" in args and args["metadata"] == "true":
+            response_obj["sensor_metadata"] = sensor_metadata
 
-            readings = []
+        # Only get readings if sensor_metadata is not {}
+        if bool(sensor_metadata):
+            try:
+                if DEBUG:
+                    args_str = ""
+                    for key in args:
+                        args_str += key+"="+args.get(key)+" "
+                    print("get_day() {}/{}".format(acp_id,args_str) )
 
-            for line in records:
-                readings.append(json.loads(line))
+                if "date" in args:
+                    selected_date = args.get("date")
+                else:
+                    selected_date = Utils.getDateToday()
 
-            response_obj = { "readings": readings }
+                records = self.get_day_records(acp_id, selected_date, sensor_metadata)
 
-            if "metadata" in args and args["metadata"] == "true":
-                response_obj["sensor_metadata"] = sensor_metadata
-        except FileNotFoundError as e:
-            print('get() sensor {} not found'.format(acp_id))
-            print(sys.exc_info())
+                readings = []
+
+                for line in records:
+                    readings.append(json.loads(line))
+
+                response_obj["readings"] = readings
+
+            except FileNotFoundError as e:
+                print(f'get() sensor {acp_id} readings for {selected_date} not found',file=sys.stderr)
+                print(sys.exc_info())
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_READINGS"
+                response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
+        else:
             response_obj = {}
-            response_obj["acp_error_id"] = "NO_READINGS"
-            response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
+            response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
+            response_obj["acp_error_msg"] = "No metadata available for this sensor, so location of readings is unknown"
+
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
         response.headers['Content-Type'] = 'application/json'
@@ -220,7 +230,12 @@ class ReadingsDataAPI(object):
         except:
             print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
             return []
-        return open(readings_file_name, "r").readlines()
+        try:
+            readings = open(readings_file_name, "r").readlines()
+        except FileNotFoundError:
+            readings = []
+
+        return readings
 
     #################################################
     # Get data from the Sensors API
