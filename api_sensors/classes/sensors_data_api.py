@@ -60,6 +60,25 @@ class SensorsDataAPI(object):
             return {}
         return sensor_info
 
+    # Get the full history of metadata for a given sensor (e.g. 'rad-ath-003d0f')
+    # This method will necessarily read the data from the database (as the SENSORS dictionary only
+    # contains the latest metadata.
+    def get_history(self, acp_id):
+        print(f"get_history {acp_id}",file=sys.stderr, flush=True)
+        global SENSORS, SENSOR_TYPES
+        try:
+            # returns { 'sensor_history': [  <list of sensor_info objects> ], 'sensor_info': { <latest sensor_info> }
+            sensor_history_obj = self.db_lookup_sensor_history(acp_id)
+            # Add 'acp_type_info' to sensor_history_obj['sensor_info']
+            if 'acp_type_id' in sensor_history_obj['sensor_info']:
+                acp_type_id = sensor_history_obj['sensor_info']['acp_type_id']
+                if acp_type_id in SENSOR_TYPES:
+                    sensor_history_obj['acp_type_info'] = SENSOR_TYPES[acp_type_id]
+        except:
+            print(f"get() no sensor id {acp_id}",file=sys.stderr, flush=True)
+            return {}
+        return sensor_history_obj
+
     # Get the metadata for a given sensor TYPE (e.g. 'rad-ath')
     # Note a 'get_type' of sensor type metadata will read the DATABASE and refresh the entry in the SENSOR_TYPES dictionary
     def get_type(self, acp_type_id):
@@ -227,6 +246,33 @@ class SensorsDataAPI(object):
 
         SENSORS[acp_id] = sensor_info
         return sensor_info
+
+    # Return all sensor history, plus latest
+    # { 'sensor_history': [ ... ]
+    #   'sensor_info': { ... }
+    # }
+    def db_lookup_sensor_history(self, acp_id):
+        query = "SELECT acp_ts_end, sensor_info FROM sensors WHERE acp_id=%s"
+        query_args = (acp_id,)
+
+        try:
+            return_info = {}
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) == 0:
+                return None
+            sensor_history = []
+            current_sensor_info = None
+            for row in rows:
+                ( acp_ts_end, sensor_info) = row
+                if acp_ts_end is None:
+                    current_sensor_info = sensor_info
+                else:
+                    sensor_history.append(sensor_info)
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        return { 'sensor_history': sensor_history, 'sensor_info': current_sensor_info }
 
     # Return metadata from DATABASE for a single sensor type
     def db_lookup_sensor_type(self, acp_type_id):
