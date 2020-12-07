@@ -8,6 +8,7 @@ from datetime import datetime
 import time
 from flask import request, make_response
 from pathlib import Path
+from jsonpath_ng import jsonpath, parse
 
 from classes.utils import Utils
 
@@ -35,8 +36,10 @@ class ReadingsDataAPI(object):
 #  API FUNCTIONS                                                #
 #################################################################
 
-    #NEW API FUNCTION
-    #returns sensor reading for X sensors
+    # /get/<acp_id> returns most recent sensor reading for sensor
+    # Note this returns data from the most recent message from the sensor,
+    # which, depending on the sensor, may contain values for a subset of
+    # the features.
     def get(self, acp_id, args):
         response_obj = {}
         try:
@@ -68,6 +71,55 @@ class ReadingsDataAPI(object):
         response.headers['Content-Type'] = 'application/json'
         return response
 
+    # /get_feature/<acp_id> returns most recent sensor reading for sensor + feature
+    def get_feature(self, acp_id, feature_id, args):
+        response_obj = {}
+        try:
+            if DEBUG:
+                args_str = ""
+                for key in args:
+                    args_str += key+"="+args.get(key)+" "
+                print(f"Readings API get_feature {acp_id}/{feature_id}/{args_str}", file=sys.stderr)
+            # Lookup the sensor metadata, this will include the
+            # filepath to the readings, and also may be returned
+            # in the response.
+            sensor_metadata = self.get_sensor_metadata(acp_id)
+
+            path = parse(f'$.acp_type_info.features[{feature_id}].jsonpath')
+            try:
+                value_path_str = path.find(sensor_metadata)[0].value
+                print(f'get_feature value_path "{value_path_str}"')
+                value_path = parse(value_path_str)
+            except:
+                return f'{{ "acp_error_msg": "readings_data_api get_feature no {acp_id}/{feature_id}" }}'
+
+            today = Utils.getDateToday()
+
+            records = self.get_day_records(acp_id, today, sensor_metadata)
+
+            # Loop backwards through the day's records until we find one with the required feature
+            # NOTE each reading is a STRING
+            for reading in reversed(records):
+                try:
+                    reading_obj = json.loads(reading)
+                    if len(value_path.find(reading_obj)) > 0:
+                        response_obj["reading"] = reading_obj
+                        break
+                except IndexError:
+                    continue
+
+            if "metadata" in args and args["metadata"] == "true":
+                response_obj["sensor_metadata"] = sensor_metadata
+        except:
+            print(f'get_feature() sensor {acp_id} exception', file=sys.stderr)
+            print(sys.exc_info(), file=sys.stderr)
+            return '{ "acp_error_msg": "readings_data_api get_feature Exception" }'
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
     def get_day(self, acp_id, args):
         response_obj = {}
 
@@ -118,97 +170,11 @@ class ReadingsDataAPI(object):
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    def history_data(self, args):
-        if DEBUG:
-            print('history_data() Requested')
-
-        try:
-            selecteddate = args.get('date')
-            source = args.get('source')
-            sensor = args.get('sensor')
-            feature = args.get('feature')
-        except:
-            print("history_data() args error")
-            if DEBUG:
-                print(sys.exc_info())
-                print(args)
-            return '{ "data": [] }'
-
-        workingDir = ''
-        rdict = defaultdict(float)
-        print(request)
-        workingDir = ( Path(self.basePath)
-                        .resolve()
-                        .joinpath(source,'data_bin',self.date_to_path(selecteddate))
-                     )
-        if not path.exists(workingDir):
-            print("history_data() bad data path "+workingDir)
-            if DEBUG:
-                print(args)
-            return '{ "data": [] }'
-
-        response = {}
-        response['data'] = []
-
-        for f in listdir(workingDir):
-            fpath = Path(workingDir).resolve().joinpath(f)
-            with open(fpath) as json_file:
-                data = json.load(json_file)
-                if data['acp_id'] == sensor:
-                    try:
-                        rdict[float(f.split('_')[0])] = data['payload_fields'][feature]
-                    except KeyError:
-                        pass
-
-        for k in sorted(rdict.keys()):
-            response['data'].append({'ts':str(k), 'val':rdict[k]})
-
-        response['date'] = selecteddate
-        response['sensor'] = sensor
-        response['feature'] = feature
-
-        json_response = json.dumps(response)
-        return(json_response)
-
 #################################################################
 #  SUPPORT FUNCTIONS                                            #
 #################################################################
 
-    def date_to_path(self, selecteddate):
-        data = selecteddate.split('-')
-        return(data[0]+'/'+data[1]+'/'+data[2]+'/')
-
-    def date_to_sensorpath(self, selecteddate):
-        data = selecteddate.split('-')
-        return(data[0]+'/'+data[1]+'/')
-
-    #HELPER FUNCTION FOR NEW API
-    #returns most recent readings
-    def get_recent_readings(self,sensor):
-        sensor_path = self.basePath + 'mqtt_acp/sensors/'
-        selecteddate = Utils.getDateToday()
-       #load the sensor lookup table
-        response={}
-        file_dir=sensor_path+sensor+'/'+Utils.date_to_sensorpath(selecteddate)+sensor+"_"+Utils.date_to_sensorpath_name(selecteddate)+".txt"
-
-        print("attempting:",file_dir)
-
-        #adding try/catch here in case we add sensor which has not yet sent any data
-        try:
-            ip=open("./"+file_dir)
-            lines = ip.read().splitlines()
-            last_line = lines[-1]
-            jstr = last_line.strip()
-            jdata = json.loads(jstr)
-
-            response[sensor]=jdata["payload_fields"]
-
-        except:
-            print("no such sensor found, next")
-
-        return response
-
-    # Get a day's-worth of sensor readings for required sensor
+    # Get a day's-worth of sensor readings for required sensor as list of STRINGS (one per reading)
     # readings_day will be "YYYY-MM-DD"
     # sensor_metadata is required to work out where the data is stored
     def get_day_records(self, acp_id, readings_day, sensor_metadata):

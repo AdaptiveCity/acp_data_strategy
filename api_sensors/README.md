@@ -1,4 +1,4 @@
-# api_sensors
+# Sensors API - sensor and sensor type metadata
 
 This is the API to access the sensor metadata.
 

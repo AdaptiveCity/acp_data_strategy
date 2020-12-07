@@ -35,6 +35,18 @@ def get_route(acp_id):
     global data_api
     return data_api.get(acp_id, request.args)
 
+# /get_feature/<acp_id>/<feature>/[?metadata=true]
+# Returns { "reading": <the latest sensor reading>,
+#           "sensor_metadata": <sensors API data for this sensor> (optional)
+#         }
+# where:
+#   /<acp_id>/ is the sensor identifier
+#   ?metadata=true requests the sensor metadata to be included in the response
+@app.route('/get_feature/<acp_id>/<feature_id>/')
+def get_feature_route(acp_id, feature_id):
+    global data_api
+    return data_api.get_feature(acp_id, feature_id, request.args)
+
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 # Returns a day's-worth of readings for the required sensor.
 # Defaults to 'today', or optional date can be given.
@@ -43,16 +55,6 @@ def get_route(acp_id):
 def get_day_route(acp_id):
     global data_api
     return data_api.get_day(acp_id, request.args)
-
-@app.route('/historicaldata/')
-def history_data_route():
-    global data_api
-    return data_api.history_data(request.args)
-
-#@app.route('/get/bim/<crate_id>')
-#def get_sensor_readings_in_route(crate_id):#
-#    global data_api
-#    return data_api.get_sensor_readings_in(crate_id)
 
 ####################################################################
 #

@@ -1,7 +1,1 @@
-flask
-flask-cors
-flask-wtf
-pandas
-numpy
-requests
-psycopg2
+jsonpath-ng
