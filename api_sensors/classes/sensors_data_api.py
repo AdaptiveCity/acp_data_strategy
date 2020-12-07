@@ -252,7 +252,7 @@ class SensorsDataAPI(object):
     #   'sensor_info': { ... }
     # }
     def db_lookup_sensor_history(self, acp_id):
-        query = "SELECT acp_ts_end, sensor_info FROM sensors WHERE acp_id=%s"
+        query = "SELECT acp_ts_end, sensor_info FROM sensors WHERE acp_id=%s ORDER BY acp_ts_end DESC"
         query_args = (acp_id,)
 
         try:
