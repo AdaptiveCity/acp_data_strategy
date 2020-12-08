@@ -29,17 +29,17 @@ def get_route(acp_id):
     global data_api
     return data_api.get(acp_id, request.args)
 
-# /get_feature/<acp_id>/<feature_id>/[?metadata=true]
-@app.route('/get_feature/<acp_id>/<feature_id>/')
-def get_feature_route(acp_id, feature_id):
-    global data_api
-    return data_api.get_feature(acp_id, feature_id, request.args)
-
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 @app.route('/get_day/<acp_id>/')
 def get_day_route(acp_id):
     global data_api
     return data_api.get_day(acp_id, request.args)
+
+# /get_feature/<acp_id>/<feature_id>/[?metadata=true]
+@app.route('/get_feature/<acp_id>/<feature_id>/')
+def get_feature_route(acp_id, feature_id):
+    global data_api
+    return data_api.get_feature(acp_id, feature_id, request.args)
 
 # /get_floor_feature/<system>/<floor>/<feature_id>/[?metadata=true]
 @app.route('/get_floor_feature/<system>/<floor>/<feature_id>/')

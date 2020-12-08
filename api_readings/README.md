@@ -41,13 +41,13 @@ E.g. `/get_feature/elsys-eye-044504/temperature/?metadata=true`
 Returns
 ```
 { "reading": <the latest sensor reading>,
-  "sensor_metadata": <sensors API data for this sensor> (optional)
+  "sensor_info": <sensors API data for this sensor> (optional)
 }
 ```
 where:
 *  `<acp_id>` is the sensor identifier
 *  `<feature_id>` is the type of feature e.g. `co2` or `temperature`
-*  `?metadata=true` requests the sensor metadata to be included in the response
+*  `?metadata=true` requests the sensor info to be included in the response
 
 ## /get_floor_feature/<system>/<floor>/<feature_id>[?metadata=true]
 
@@ -56,8 +56,8 @@ E.g. `/get_floor_feature/WGB/1/temperature/?metadata=true`
 Returns
 ```
 { "readings": { dictionary keyed on acp_id for latest sensor reading from each sensor on floor },
-  "sensor_metadata": { dictionary keys on acp_id for sensor metadata for each sensor },
-  "acp_type_info: { dictionary keyed on acp_type_id for sensor type metadata }
+  "sensors": { dictionary keys on acp_id for sensor metadata for each sensor },
+  "sensor_types: { dictionary keyed on acp_type_id for sensor type metadata }
 }
 ```
 where:

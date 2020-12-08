@@ -86,11 +86,19 @@ class SensorsDataAPI(object):
         type_info = self.db_lookup_sensor_type(acp_type_id)
         return type_info if type_info is not None else {}
 
-    def get_floor_number(self, coordinate_system, floor_number):
+    # /get_floor_number/<system>/<floor>[?metadata=true]
+    # Returns:
+    # { "sensors": { },
+    #   "sensor_type_info" : { }
+    # }
+    #DEBUG get_floor_number should return ["sensor_types"] not ["sensor_type_info"]
+    def get_floor_number(self, coordinate_system, floor_number, args):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
         sensor_list_obj = {}
         # coords.f(acp_location) will return floor number
         coords = self.coordinate_systems[coordinate_system]
+
+        return_obj = {}
 
         for acp_id in SENSORS:
             #determine if the same floor
@@ -103,7 +111,20 @@ class SensorsDataAPI(object):
 
         self.add_xyzf(coordinate_system, sensor_list_obj)
 
-        return { 'sensors': sensor_list_obj }
+        return_obj["sensors"] = sensor_list_obj
+
+        # Iterate through the sensors and add sensor_type_info for each
+        sensor_type_info = {}
+        for acp_id in sensor_list_obj:
+            sensor = sensor_list_obj[acp_id]
+            if "acp_type_id" in sensor:
+                sensor_type_id = sensor["acp_type_id"]
+                if sensor_type_id in SENSOR_TYPES and sensor_type_id not in sensor_type_info:
+                    sensor_type_info[sensor_type_id] = SENSOR_TYPES[sensor_type_id]
+
+        return_obj["sensor_type_info"] = sensor_type_info
+
+        return return_obj
 
     # Get sensors for a given crate_id, returning dictionary of sensors
     def get_bim(self, coordinate_system, crate_id):

@@ -63,7 +63,7 @@ def get_bim_route(coordinate_system, crate_id):
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')
 def get_floor_number_route(coordinate_system, floor_number):
     global data_api
-    return data_api.get_floor_number(coordinate_system, floor_number)
+    return data_api.get_floor_number(coordinate_system, floor_number, request.args)
 
 #DEBUG this API call **really** needs parameters (what info to show, lat/lng box?)
 # Get all sensors with a GPS location (i.e. lat/lng)
