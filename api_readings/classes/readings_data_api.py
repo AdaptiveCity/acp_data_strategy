@@ -198,8 +198,8 @@ class ReadingsDataAPI(object):
             readings = {}
 
             for acp_id in sensors:
-                sensor_info = floor_sensors["sensors"][acp_id]
-                type_info = response_obj["sensor_types"][sensor_info["acp_type_id"]]
+                sensor_info = sensors[acp_id]
+                type_info = sensor_types[sensor_info["acp_type_id"]]
                 feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
                 if feature_reading is not None:
                     readings[acp_id] = feature_reading
