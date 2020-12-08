@@ -53,9 +53,11 @@ class ReadingsDataAPI(object):
             # in the response.
             sensor_info = self.get_sensor_info(acp_id)
 
+            type_info = sensor_info["acp_type_info"]
+
             today = Utils.getDateToday()
 
-            records = self.get_day_records(acp_id, today, sensor_info)
+            records = self.get_day_records(acp_id, today, type_info)
 
             if len(records) > 0:
                 response_obj["reading"] = json.loads(records[-1])
@@ -97,7 +99,7 @@ class ReadingsDataAPI(object):
                 else:
                     selected_date = Utils.getDateToday()
 
-                records = self.get_day_records(acp_id, selected_date, sensor_info)
+                records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
 
                 readings = []
 
@@ -137,7 +139,7 @@ class ReadingsDataAPI(object):
             # in the response.
             sensor_info = self.get_sensor_info(acp_id)
 
-            feature_reading = self.get_feature_reading(acp_id, feature_id, sensor_info)
+            feature_reading = self.get_feature_reading(acp_id, feature_id, sensor_info["acp_type_info"])
 
             if feature_reading is not None:
                 response_obj["reading"] = feature_reading
@@ -172,22 +174,35 @@ class ReadingsDataAPI(object):
             # Call Sensors API to find sensors on given floor
             # get_floor_sensors returns:
             # { "sensors": { },
-            #   "sensor_type_info": {}
+            #   "sensor_type_info": {} #DEBUG will change to "sensor_types"
             # }
             floor_sensors = self.get_floor_sensors(system, floor)
 
+            # Filter the sensor types to only those containing feature (maybe do this in sensors API)
+            sensor_types = {}
+            for acp_type_id in floor_sensors["sensor_type_info"]: #DEBUG ["sensor_types"]
+                if feature_id in floor_sensors["sensor_type_info"][acp_type_id]["features"]:
+                    sensor_types[acp_type_id] = floor_sensors["sensor_type_info"][acp_type_id]
+            # print(f'feature sensor_types: {sensor_types}')
+
+            # Filter the sensors to only include sensor_types with feature
+            sensors = {}
+            for acp_id in floor_sensors["sensors"]:
+                if "acp_type_id" in floor_sensors["sensors"][acp_id] and floor_sensors["sensors"][acp_id]["acp_type_id"] in sensor_types:
+                    sensors[acp_id] = floor_sensors["sensors"][acp_id]
+
             if "metadata" in args and args["metadata"] == "true":
-                response_obj["sensors"] = floor_sensors["sensors"]
-                #DEBUG get_floor_feature() Sensors API get_floor_number should return ["sensor_types"] not ["sensor_type_info"]
-                response_obj["sensor_types"] = floor_sensors["sensor_type_info"]
+                response_obj["sensors"] = sensors
+                response_obj["sensor_types"] = sensor_types
 
             readings = {}
 
-            for acp_id in floor_sensors["sensors"]:
-                sensor = floor_sensors["sensors"][acp_id]
-                sensor_info = response_obj["sensor_types"][sensor["acp_type_id"]]
-                feature_reading = self.get_feature_reading(acp_id, feature_id, sensor_info)
-                readings[acp_id] = feature_reading
+            for acp_id in sensors:
+                sensor_info = floor_sensors["sensors"][acp_id]
+                type_info = response_obj["sensor_types"][sensor_info["acp_type_id"]]
+                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
+                if feature_reading is not None:
+                    readings[acp_id] = feature_reading
 
             response_obj["readings"] = readings
 
@@ -207,14 +222,14 @@ class ReadingsDataAPI(object):
     # Get a day's-worth of sensor readings for required sensor as list of STRINGS (one per reading)
     # readings_day will be "YYYY-MM-DD"
     # sensor_info is required to work out where the data is stored
-    def get_day_records(self, acp_id, readings_day, sensor_info):
+    def get_day_records(self, acp_id, readings_day, sensor_type_info):
 
         try:
             YYYY = readings_day[0:4]
             MM   = readings_day[5:7]
             DD   = readings_day[8:10]
 
-            day_file = sensor_info["acp_type_info"]["day_file"]
+            day_file = sensor_type_info["day_file"]
 
             readings_file_name = ( day_file.replace("<acp_id>",acp_id)
                                            .replace("<YYYY>",YYYY)
@@ -222,7 +237,7 @@ class ReadingsDataAPI(object):
                                            .replace("<DD>",DD)
             )
 
-            print("get_day_records() readings_file_name {}".format(readings_file_name))
+            #print("get_day_records() readings_file_name {}".format(readings_file_name))
         except:
             print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
             return []
@@ -233,20 +248,29 @@ class ReadingsDataAPI(object):
 
         return readings
 
+    # get_feature_reading(acp_id, feature_id, type_info)
+    # Uses type_info to find jsonpath to feature in reading, and
+    # loads readings day file for sensor and iterates back through it
+    # for the latest reading for that feature.
+    # Returns 'reading' JSON object (i.e. message as sent by sensor)
+    def get_feature_reading(self, acp_id, feature_id, type_info):
 
-    def get_feature_reading(self, acp_id, feature_id, sensor_info):
+        #print(f'Readings API get_feature_reading {acp_id} {feature_id} \ntype_info:{type_info}',file=sys.stderr)
 
-        path = parse(f'$.acp_type_info.features[{feature_id}].jsonpath')
+        path = parse(f'$.features[{feature_id}].jsonpath')
+
         try:
-            value_path_str = path.find(sensor_info)[0].value
-            print(f'get_feature value_path "{value_path_str}"')
+            value_path_str = path.find(type_info)[0].value
+            #print(f'get_feature value_path "{value_path_str}"')
             value_path = parse(value_path_str)
         except:
             return f'{{ "acp_error_msg": "readings_data_api get_feature no {acp_id}/{feature_id}" }}'
 
         today = Utils.getDateToday()
 
-        records = self.get_day_records(acp_id, today, sensor_info)
+        records = self.get_day_records(acp_id, today, type_info)
+
+        #print(f'records length={len(records)}') #DEBUG
 
         # Loop backwards through the day's records until we find one with the required feature
         # NOTE each reading is a STRING
@@ -258,6 +282,7 @@ class ReadingsDataAPI(object):
             except IndexError:
                 continue
 
+        #print(f'get_feature_reading() {acp_id} returning None',file=sys.stderr)
         return None
 
     #################################################
@@ -265,7 +290,7 @@ class ReadingsDataAPI(object):
     #################################################
 
     def get_sensor_info(self, acp_id):
-        print("get_sensor_info() {}".format(acp_id))
+        #print("get_sensor_info() {}".format(acp_id))
         sensors_api_url = self.settings["API_SENSORS"]+'get/'+acp_id+"/"
         #fetch data from Sensors api
         try:
@@ -287,7 +312,7 @@ class ReadingsDataAPI(object):
 
     # E.g. get_floor_sensors('WGB',1)
     def get_floor_sensors(self, system, floor):
-        print(f"get_floor_sensors {system} {floor}")
+        #print(f"Readings API get_floor_sensors {system} {floor}")
         sensors_api_url = self.settings["API_SENSORS"]+f'get_floor_number/{system}/{floor}/?metadata=true'
         #fetch data from Sensors api
         try:
