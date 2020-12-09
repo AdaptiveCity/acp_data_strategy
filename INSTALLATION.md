@@ -1,7 +1,24 @@
 # acp_data_strategy installation
 
-This is still a work-in-progress, using JSON files (e.g. BIM.json) as the source of the data. The 'production' version will
-move that data back into Postgres.
+## Install Postgres and Setup Database
+
+Install postgres:
+
+```
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+```
+
+Create the role `acp_prod` by executing
+```
+sudo -u postgres createuser --interactive
+```
+and complete the form to create new role `acp_prod`
+
+Create the database `acp_prod` by executing
+```
+sudo -u postgres createdb acp_prod
+```
 
 Change user to `acp_prod`.
 

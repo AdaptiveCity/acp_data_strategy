@@ -7,6 +7,12 @@ protocols and formats. Rather, we are assuming the data will continue to be tail
 each source and consequently be fairly diverse and we will take steps *where appropriate*
 to make the data manageable.
 
+For the API details, see the README.md for each API family, i.e.
+* [BIM API](api_bim/README.md)
+* [Readings API](api_readings/README.md)
+* [Sensors API](api_sensors/README.md)
+* [Space API](api_space/README.md)
+
 ## Installation
 
 See [INSTALLATION.md](INSTALLATION.md).
@@ -38,6 +44,10 @@ In addition we may be able to generalize *some* of the data payload, for example
 that a for a given sensor or sensor type a `co2` reading in units `parts-per-million` is
 available in sensor data property `payload_decoded > readings > co2`.
 
+5. Reference data (i.e. everything except readings) are stored using a *timestamped transaction log*
+approach. I.e. an 'update' to the data results in a new timestamped data record, and the previous record
+is retained but flagged as being no longer current.
+
 There are two significant platform elements relevant to our approach:
 
 1. `acp_decoders`: a real-time component part of the
@@ -46,7 +56,7 @@ incoming data and allows the dynamic addition of *decoders* capable of extractin
 key properties such that the annotated data can be re-published for consumption further
 downstream like any other real-time data source.
 
-2. The `ACP sensor metadata database` (documented below) which acts as a repository for
+2. The `metadata database` (documented below) which acts as a repository for
 persistent metadata regarding the sensors which is accessible via an API for any process
 during the data flow. For example this includes the `location` of the non-moving sensors.
 
@@ -56,7 +66,7 @@ during the data flow. For example this includes the `location` of the non-moving
 
 `acp_id`: sensor identifier, globally unique e.g. `elsys-eye-049876`.
 
-`acp_type_id`: sensor type, determines data format e.g. `elsys-eye`.
+`acp_type_id`: object (e.g. sensor) type, determines data format e.g. `elsys-eye`.
 
 `acp_event`: event type, for timestamped events, e.g. `openclose`.
 
@@ -74,6 +84,9 @@ altitude (meters) is optional. All other coordinate systems are `
 
 `acp_confidence`: a value `0..1` indicating the reliability of the sensor reading.
 
+An important distinction of our approach is to concentrate on fields essential to our architectural approach (like
+locations and timestamps) and *not* confuse that with a construction ontology such as the meaning of 'concrete' or 'window'.
+
 ### Identity
 
 `acp_id` is our globally-recognized string containing a sensor identifier. In many cases our
@@ -85,7 +98,7 @@ a particular sensor. It is (strangely) common for retail sensors sending reading
 a proprietary MQTT topic format. In this case the ACP decoders will typically extract the sensor
 id from the topic and add a `acp_id` value to the data message.
 
-`acp_type` is the common string property which hints at the sensor type, e.g. `elsys-co2`. If
+`acp_type_id` is the common string property which hints at the sensor type, e.g. `elsys-co2`. If
 included in the raw incoming data (i.e. from our own sensors) this allows rapid selection of
 appropriate stream processing, rather then a complex heuristic based on the message content
 or format. If missing from the original data, we aim to attach this property as early as
@@ -117,11 +130,30 @@ message in more detail.
 
 ### Time
 
+Sensors often take a certain amount of time to gather data necessary to produce a reading (like ingesting
+sufficient air to accurately measure CO2 or particulates), perhaps in this case the 'best' time to associate
+with the sensor reading is when that process completes. A neural network may take a snapshot of a scene and then
+take some time analyzing the image to produce an object count - in this example the timestamp when the image was
+taken is likely to be the most appropriate to associate with the 'readings'. These times may differ from the time
+the sensor transmits the data (or the data is polled-for and read by a server). Consequently we
+consider the idea of *the* time for an event as somewhat simplistic, but we want as much consistency as
+possible in dealing with time in our system. Hence we define a generalized time property (`acp_ts`) as whatever
+the data owner considers the most appropriate time for a given event (i.e. sensor reading or update to metadata). In
+addition other timestamps can be included (e.g. we *always* timestamp the data when it arrives on our platform) but they
+should not be confused with `acp_ts`.
+
 `acp_ts` is intended for the property containing the timestamp most relevant to the sensor
-data reading, containing the floating point seconds in epoch stored in a string. For example:
+data reading, containing the floating point seconds in epoch stored in a STRING (this is to remove
+dependency on multi-system floating point precision).
+
+For example UTC date/time 2020-04-09 19:46:46 and 465372 microseconds is:
 ```
 "acp_ts": "1586461606.465372"
 ```
+
+`acp_ts_end` is a similar value, representing the end of a time period. In particular this is used
+when a metadata value (such as sensor properties) is updated. A new JSON object will be created with
+the current time as `acp_ts`, and the previous object will be given an `acp_ts_end` property  with the same value.
 
 Sensors designed within the project will include `acp_ts` in their transmitted data as the
 definitive time of the sensor reading, along with other timestamps from the internal processes of
@@ -301,54 +333,7 @@ sensor types, so it is helpful on the Adaptive City platform to abstract this in
 the other standardized fields, *in addition* to the data values the sensor will send anyway allowing downstream processing
 knowledgeable about the intricacies of the particular sensor to make its own interpretation of confidence or accuracy.
 
-## ACP Sensor Metadata API (Work in Progress)
-
-### Requirements
-1. Python3
-2. flask, psycopg2, flask_cors, shapely. Could be installed through pip
-
-### Installation
-Before starting the API server follow the following steps;
-#### Install Postgres and Setup Database
-
-Install postgres
-
-```
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-```
-
-Create the role `acp_prod` by executing
-```
-sudo -u postgres createuser --interactive
-```
-and complete the form to create new role `acp_prod`
-
-Create the database `acp_prod` by executing
-```
-sudo -u postgres createdb acp_prod
-```
-
-Postgres by default opens the database `acp_prod` if you are logged in as the user `acp_prod`. Switch to the `acp_prod` account and follow the following;
-
-```
-git clone https://github.com/AdaptiveCity/acp_data_strategy.git
-cd acp_data_strategy
-```
-
-Now restore the dump file into the newly created database;
-
-```
-psql -U acp_prod -d acp_prod -1 -f acp_prod.bak
-```
-
-If you want dummy data run the insert queries in the `dummy_data_queries.txt`.
-
-Update the `CONFIG.py` file with the necessary details. Then execute the `run.sh` file to start the `bim` and `sensors` api.
-
-The API endpoints could be accessed by querying *http://localhost:&lt;port&gt;/&lt;endpoint&gt;*
-
-### API References
+## API References
 
 Four classes of API are available:
 
@@ -356,13 +341,13 @@ Four classes of API are available:
 
 Returns data on BIM objects e.g. an office.
 
-See README.md in api_bim
+See [BIM API README.md](api_bim/README.md)
 
 #### Readings API
 
 Returns sensors readings data.
 
-See README.md in api_readings
+See [Readings API README.md](api_readings/README.md)
 
 #### Sensors APIs
 
@@ -370,9 +355,10 @@ Returns metadata regarding sensors, e.g. the location.
 
 Also returns sensor *type* information, e.g. the properties of a `monnit-Temperature` sensor type.
 
-See README.md in api_sensors.
+See [Sensors API README.md](ap_sensors/README.md).
 
 #### Space API
 
 Returns SVG drawing information for BIM objects.
 
+See [Space API README.md](api_space/README.md).

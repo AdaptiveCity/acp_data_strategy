@@ -163,6 +163,7 @@ class ReadingsDataAPI(object):
     #   sensor_types: { dict acp_type_id -> sensor type metadata }
     # }
     def get_floor_feature(self, system, floor, feature_id, args):
+        #t1 = datetime.now()
         response_obj = {}
         try:
             if DEBUG:
@@ -213,6 +214,8 @@ class ReadingsDataAPI(object):
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
         response.headers['Content-Type'] = 'application/json'
+        # print(f'time: {datetime.now()-t1}')
+
         return response
 
 #################################################################

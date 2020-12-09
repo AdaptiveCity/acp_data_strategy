@@ -2,6 +2,8 @@ from flask import Flask, request, render_template,url_for, redirect, jsonify, ma
 from flask_cors import CORS, cross_origin
 from os import listdir, path
 import json
+import base64
+
 from collections import defaultdict
 import sys
 from datetime import datetime
@@ -44,6 +46,20 @@ def get_svg_by_crate(crate_id,children):
     print("space_render get_svg_by_crate {} returning:\n{}\n".format(crate_id, response_string))
     response = make_response(response_string, 200)
     response.mimetype = "text/xml"
+    return response
+
+#DEBUG need to be clear if this is the "f" propery of an acp_location ?
+@app.route('/get_floor_number_json/<coordinate_system>/<floor_number>/')
+def get_floor_number_json_route(coordinate_system,floor_number):
+    global space_api
+    svg_string = space_api.get_floor_number(coordinate_system, floor_number)
+    svg_bytes = svg_string.encode('utf-8')
+    b64_bytes = base64.b64encode(svg_bytes)
+    b64_string = b64_bytes.decode('utf-8')
+    print(b64_string)
+    response_string = f'{{ "svg_encoded": "{b64_string}" }}'
+    response = make_response(response_string, 200)
+    response.mimetype = "application/json"
     return response
 
 #DEBUG change to get/bim_floor
