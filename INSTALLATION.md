@@ -62,6 +62,48 @@ As use `acp_prod` on your new server:
 psql acp_prod <acp_prod_data_backup.sql
 ```
 
+If not restoring from another database, the `acp_data_strategy` tables can be created:
+
+As the `acp_prod` user, command `psql` and:
+```
+CREATE TABLE sensors (
+    record_id SERIAL,
+    acp_id char(50) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    sensor_info jsonb
+);
+
+CREATE TABLE sensor_types (
+    record_id SERIAL,
+    acp_type_id char(50) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    type_info jsonb
+);
+
+CREATE TABLE bim (
+    record_id SERIAL,
+    crate_id char(50) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    crate_info jsonb
+);
+```
+
+## Just importing *data* from another system
+
+As `acp_prod` user:
+
+To backup the table contents on another system:
+```
+pg_dump acp_prod --data-only -t sensors >sensors_backup.sql
+```
+To restore that data:
+```
+psql acp_prod <sensors_backup.sql
+```
+
 ## Configure the data API's
 
 Change user to `acp_prod`.
