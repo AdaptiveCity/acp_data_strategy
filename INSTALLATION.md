@@ -9,16 +9,60 @@ sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-Create the role `acp_prod` by executing
+Check the PostgreSQL database is running:
 ```
-sudo -u postgres createuser --interactive
+systemctl status postgresql
 ```
-and complete the form to create new role `acp_prod`
+Also to check older versions of PostgreSQL are not still running:
+```
+ps aux | grep postgresql
+```
+If there are older versions running, use `dpkg -l | grep postgres` to see the packages involved and `sudo apt purge <package-name>`
+to uninstall the old versions. Check `/etc/postgresql/<version>/main/postgresql.conf | grep port` to ensure PostgreSQL is accessible
+via port 5432 (an alternative port can be used, but settings for PostgreSQL, acp_data_strategy API's, and acp_web need to be the
+same.
 
-Create the database `acp_prod` by executing
+See [this guide to setting up PostgreSQL for Django](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04)
+
+Change to postgres user (created by the postgres install):
 ```
-sudo -u postgres createdb acp_prod
+sudo su - postgres
 ```
+Start the `psql` console:
+```
+psql
+```
+At the `psql` prompt, create database & user `acp_prod`
+```
+CREATE DATABASE acp_prod;
+```
+Create user `acp_prod` and permit to use database (the password is in `acp_web/secrets/settings.py`):
+```
+CREATE USER acp_prod WITH PASSWORD '<password>';
+ALTER ROLE acp_prod SET client_encoding TO 'utf8';
+ALTER ROLE acp_prod SET default_transaction_isolation TO 'read committed';
+ALTER ROLE acp_prod SET timezone TO 'Europe/London';
+GRANT ALL PRIVILEGES ON DATABASE acp_prod TO acp_prod;
+```
+As the `acp_prod` user you can now test PostgreSQL access with:
+```
+psql
+```
+(Ctrl-D to quit)
+```
+
+To dump/restore a database from an existing server:
+
+As user `acp_prod` on existing server:
+```
+pg_dump -c acp_prod >acp_prod_database_backup.sql
+```
+As use `acp_prod` on your new server:
+```
+psql acp_prod <acp_prod_data_backup.sql
+```
+
+## Configure the data API's
 
 Change user to `acp_prod`.
 
