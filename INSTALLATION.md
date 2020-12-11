@@ -48,8 +48,6 @@ As the `acp_prod` user you can now test PostgreSQL access with:
 ```
 psql
 ```
-(Ctrl-D to quit)
-```
 
 To dump/restore a database from an existing server:
 
@@ -68,7 +66,7 @@ As the `acp_prod` user, command `psql` and:
 ```
 CREATE TABLE sensors (
     record_id SERIAL,
-    acp_id char(50) NOT NULL,
+    acp_id varchar(100) NOT NULL,
     acp_ts TIMESTAMP NOT NULL,
     acp_ts_end TIMESTAMP,
     sensor_info jsonb
@@ -76,7 +74,7 @@ CREATE TABLE sensors (
 
 CREATE TABLE sensor_types (
     record_id SERIAL,
-    acp_type_id char(50) NOT NULL,
+    acp_type_id varchar(100) NOT NULL,
     acp_ts TIMESTAMP NOT NULL,
     acp_ts_end TIMESTAMP,
     type_info jsonb
@@ -84,7 +82,7 @@ CREATE TABLE sensor_types (
 
 CREATE TABLE bim (
     record_id SERIAL,
-    crate_id char(50) NOT NULL,
+    crate_id varchar(100) NOT NULL,
     acp_ts TIMESTAMP NOT NULL,
     acp_ts_end TIMESTAMP,
     crate_info jsonb

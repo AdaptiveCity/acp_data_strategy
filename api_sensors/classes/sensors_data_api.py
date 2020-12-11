@@ -39,7 +39,7 @@ class SensorsDataAPI(object):
         # Load sensor and sensor_types metadata
         SENSORS = self.db_load_sensors()
         SENSOR_TYPES = self.db_load_sensor_types()
-        print("Loaded sensor and sensor_types tables")
+        # print(f'Loaded sensor and sensor_types tables SENSOR_TYPES:{SENSOR_TYPES}')
 
         # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
         self.load_coordinate_systems()
@@ -47,17 +47,23 @@ class SensorsDataAPI(object):
     # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
     # Note a 'get' of sensor metadata will read the DATABASE and refresh the entry in the SENSORS dictionary
     def get(self, acp_id):
-        print(f"get {acp_id}",file=sys.stderr, flush=True)
+        # print(f"get {acp_id}",file=sys.stderr, flush=True)
         global SENSORS, SENSOR_TYPES
         try:
             sensor_info = self.db_lookup_sensor(acp_id)
+            # print(f'got db_lookup_sensor {sensor_info}', file=sys.stderr)
             if "acp_type_id" in sensor_info:
                 acp_type_id = sensor_info["acp_type_id"]
+                # print(f'Looking up acp_type_id {acp_type_id}', file=sys.stderr)
                 if acp_type_id in SENSOR_TYPES:
                     sensor_info["acp_type_info"] = SENSOR_TYPES[acp_type_id]
+                    # print(f'Got acp_type_info {sensor_info["acp_type_id"]}', file=sys.stderr)
         except:
             print(f"get() no sensor id {acp_id}",file=sys.stderr, flush=True)
             return {}
+
+        print(f'Returning {sensor_info}', file=sys.stderr)
+
         return sensor_info
 
     # Get the full history of metadata for a given sensor (e.g. 'rad-ath-003d0f')
@@ -233,14 +239,17 @@ class SensorsDataAPI(object):
 
     def db_load_sensor_types(self):
         # To select *all* the latest sensor objects:
+        # print(f'db_load_sensor_types()', file=sys.stderr)
         query = "SELECT acp_type_id, type_info FROM sensor_types WHERE acp_ts_end IS NULL"
 
         try:
             sensor_types = {}
             rows = self.db_conn.dbread(query, None)
+            # print(f'db_load_sensor_types() loaded {len(rows)} rows', file=sys.stderr)
             for row in rows:
                 id, json_info = row
                 sensor_types[id] = json_info
+                # print(f'db_load_sensor_types() loaded {sensor_types[id]}', file=sys.stderr)
 
         except:
             print(sys.exc_info(),flush=True,file=sys.stderr)
