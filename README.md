@@ -60,7 +60,36 @@ downstream like any other real-time data source.
 persistent metadata regarding the sensors which is accessible via an API for any process
 during the data flow. For example this includes the `location` of the non-moving sensors.
 
-## Standard data fields
+## Storage method
+
+Recognizing the 'data' is generally stored as JSON objects, we use PostgreSQL as a 'transaction log object store'. This
+supports two key requirements:
+
+* The 'get' method `object_id` -> `json object`
+
+* The use of timestamps such that *updated* objects are stored as *new* object values, with the previous value retained but
+given an 'end date'.
+
+Consequently our generalized PostgreSQL table structure is:
+
+`record_id`, `<object_id>`, `acp_ts`, `acp_ts_end`, `<object_json>`
+
+where the names for `<object_id>` and `<object_json>` will be determined by the object type stored (e.g. for the
+table `sensors`, the `<object_id>` is `acp_id`, and the `<object_json>` is `sensor_info`.
+
+`record_id` is a unique value for this particular 'row' in the table, used to facilitate data management e.g. the hard delete
+of a broken entry.
+
+`<object_id>` is the name of the identifier for the current object type (e.g. `acp_id`, `acp_type_id`, `crate_id`).
+
+`<acp_ts>` is the timestamp this particular record for the object was created.
+
+`acp_ts_end` is the timestamp when this record was superceded by a more recent entry. By definition, this `acp_ts_end` will be
+the `acp_ts` value from the new entry. `acp_ts_end` will be `NULL` for the latest entry.
+
+`<object_json>` e.g. (`sensor_info`, `type_info`, `crate_info`) is the JSON data to be returned in a `/get/<object_id>/` API call.
+
+## Standard data fields in the JSON objects
 
 ### Summary
 

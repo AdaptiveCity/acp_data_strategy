@@ -68,7 +68,7 @@ class SensorsDataAPI(object):
 
     # Get the full history of metadata for a given sensor (e.g. 'rad-ath-003d0f')
     # This method will necessarily read the data from the database (as the SENSORS dictionary only
-    # contains the latest metadata.
+    # contains the latest metadata record not the prior history).
     def get_history(self, acp_id):
         print(f"get_history {acp_id}",file=sys.stderr, flush=True)
         global SENSORS, SENSOR_TYPES
@@ -282,7 +282,7 @@ class SensorsDataAPI(object):
     #   'sensor_info': { ... }
     # }
     def db_lookup_sensor_history(self, acp_id):
-        query = "SELECT acp_ts_end, sensor_info FROM sensors WHERE acp_id=%s ORDER BY acp_ts_end DESC"
+        query = "SELECT record_id, acp_ts_end, sensor_info FROM sensors WHERE acp_id=%s ORDER BY acp_ts_end DESC"
         query_args = (acp_id,)
 
         try:
@@ -293,7 +293,8 @@ class SensorsDataAPI(object):
             sensor_history = []
             current_sensor_info = None
             for row in rows:
-                ( acp_ts_end, sensor_info) = row
+                ( record_id, acp_ts_end, sensor_info) = row
+                sensor_info["acp_record_id"] = record_id # Embed the record_id
                 if acp_ts_end is None:
                     current_sensor_info = sensor_info
                 else:
