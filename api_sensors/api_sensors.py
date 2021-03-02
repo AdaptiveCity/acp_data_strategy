@@ -97,6 +97,15 @@ def list_types_route():
     global data_api
     return data_api.list_types(request.args)
 
+# /update/<acp_id>/ :
+# Updates sensor metadata for sensor 'acp_id'
+@app.route('/update/<acp_id>/', methods = ['POST'])
+def update_route(acp_id):
+    sensor_metadata = request.json
+    global data_api
+    return data_api.update(acp_id, sensor_metadata)
+
+
 ####################################################################
 #
 # Main

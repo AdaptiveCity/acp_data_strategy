@@ -212,6 +212,15 @@ class SensorsDataAPI(object):
 
         return return_obj
 
+    # Updates metadata for sensor <acp_id>
+    def update(self, acp_id, sensor_metadata):
+        if "acp_id" not in sensor_metadata or acp_id != sensor_metadata["acp_id"]:
+            return { "acp_error": "api_sensors bad acp_id in sensor metadata" }
+
+        print(f'update { acp_id }',file=sys.stderr,flush=True)
+        print(f'{ sensor_metadata }', file=sys.stderr, flush=True)
+        return {}
+
     ###########################################################################
     #
     # Support functions
@@ -495,3 +504,66 @@ class SensorsDataAPI(object):
             cmodule = importlib.import_module(import_string)
             cclass = getattr(cmodule, csystem)
             self.coordinate_systems[csystem] = cclass()
+
+    ###################################################################################################################
+    # write_obj - inserts a new database object record (used by db_write, db_merge)
+    #   id:            the object identifier, e.g. "ijl20-sodaq-ttn"
+    #   json_info_obj: the JSON information payload defining object
+    #   db_table:      the 'TABLES' object from settings.json that gives the column names
+    #   merge:         boolean that controls whether to "write" the json_info_obj or "merge" it into existing record.
+    ###################################################################################################################
+    def write_obj(self, id, json_info_obj, merge=False):
+        table_name = "sensors"
+        id_name = "acp_id"
+        json_name = "sensor_info"
+
+        if id_name not in json_info_obj:
+            print(f'Bad input, {id_name} not in json_info:\n{json_info_obj}', file=sys.stderr)
+            return
+
+        if json_info_obj[id_name] != id:
+            print(f'Bad input, {id_name} {id} does not match in json_info:\n{json_info_obj}', file=sys.stderr)
+            return
+
+        # Create a datetime version of the "acp_ts" record timestamp
+        if "acp_ts" in json_info_obj:
+            update_acp_ts = datetime.fromtimestamp(float(json_info_obj["acp_ts"]))
+        else:
+            update_acp_ts = datetime.now()
+            json_info_obj["acp_ts"] = '{:.6f}'.format(datetime.timestamp(update_acp_ts))
+
+        # Update existing record 'acp_ts_end' (currently NULL) to this acp_ts (ONLY IF NEW acp_ts is NEWER)
+        # First get acp_ts of most recent entry for current is
+        query = f'SELECT acp_ts,{json_name} FROM {table_name} WHERE {id_name}=%s AND acp_ts_end IS NULL'
+        query_args = (id,)
+        r = self.db_conn.dbread(query, query_args)
+        # Go ahead and update/insert if no records found or this record is newer than most recent
+        if len(r) == 0 or r[0][0] < update_acp_ts:
+            # Update (optional) existing record with acp_ts_end timestamp
+            #DEBUG HERE WE WANT TO UPDATE acp_ts_end in the OBJECT
+            update_json_info = {}
+            if len(r) == 1:
+                update_json_info = copy.deepcopy(r[0][1])
+                # Add "acp_ts_end" timestamp to json info of previous record
+                update_json_info.update( { 'acp_ts_end': '{:.6f}'.format(datetime.timestamp(update_acp_ts)) } )
+                # Update (optional) existing record with acp_ts_end timestamp
+                query = f'UPDATE {table_name} SET acp_ts_end=%s, {json_name}=%s WHERE {id_name}=%s AND acp_ts_end IS NULL'
+                query_args = (update_acp_ts, json.dumps(update_json_info), id)
+                self.db_conn.dbwrite(query, query_args)
+
+            if merge and len(r) == 1:
+                update_json_info.update(json_info_obj)
+                del update_json_info["acp_ts_end"]
+            else:
+                update_json_info = json_info_obj
+
+            # Add new entry with this acp_ts
+            query = f'INSERT INTO {table_name} ({id_name}, acp_ts, {json_name})'+" VALUES (%s, %s, %s)"
+            query_args = ( id, update_acp_ts, json.dumps(update_json_info))
+            try:
+                self.db_conn.dbwrite(query, query_args)
+            except:
+                if DEBUG:
+                    print(sys.exc_info(),flush=True,file=sys.stderr)
+        else:
+            print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
