@@ -1,5 +1,6 @@
 from os import listdir, path
 import json
+import copy # used for JSON deepcopy
 from collections import defaultdict
 import sys
 from datetime import datetime
@@ -215,10 +216,17 @@ class SensorsDataAPI(object):
     # Updates metadata for sensor <acp_id>
     def update(self, acp_id, sensor_metadata):
         if "acp_id" not in sensor_metadata or acp_id != sensor_metadata["acp_id"]:
+            print(f'update { acp_id } wrong acp_id in sensor_metadata',file=sys.stderr,flush=True)
             return { "acp_error": "api_sensors bad acp_id in sensor metadata" }
 
-        print(f'update { acp_id }',file=sys.stderr,flush=True)
-        print(f'{ sensor_metadata }', file=sys.stderr, flush=True)
+        try:
+            self.write_obj(acp_id, sensor_metadata)
+        except:
+            print(f'update { acp_id }',file=sys.stderr,flush=True)
+            print(f'{ json.dumps(sensor_metadata, indent=4) }', file=sys.stderr, flush=True)
+            return { "acp_error": "api_sensors db write failed" }
+
+        print(f'update { acp_id } updated',file=sys.stderr,flush=True)
         return {}
 
     ###########################################################################
@@ -540,7 +548,6 @@ class SensorsDataAPI(object):
         # Go ahead and update/insert if no records found or this record is newer than most recent
         if len(r) == 0 or r[0][0] < update_acp_ts:
             # Update (optional) existing record with acp_ts_end timestamp
-            #DEBUG HERE WE WANT TO UPDATE acp_ts_end in the OBJECT
             update_json_info = {}
             if len(r) == 1:
                 update_json_info = copy.deepcopy(r[0][1])

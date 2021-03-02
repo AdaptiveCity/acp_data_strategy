@@ -1,1 +1,37 @@
-{ "foo": "bah" }
+{
+    "acp_commit": {
+        "acp_person_id": "ijl20",
+        "acp_person_name": "Ian Lewis",
+        "comment": "test curl metadata post"
+    },
+    "acp_id": "ijl20-sodaq-ttn",
+    "acp_location": {
+        "lat": 52.210927,
+        "lng": 0.09274,
+        "system": "GPS"
+    },
+    "acp_ts": "1614690262.829",
+    "acp_type_id": "ijl20-sodaq",
+    "crate_id": "FE11",
+    "ttn_settings": {
+        "app_id": "cambridge-sensor-network2",
+        "attributes": {
+            "key": "",
+            "value": ""
+        },
+        "description": "Sodaq Explorer board with basic script in FE11 (ijl20)",
+        "dev_id": "ijl20-sodaq-ttn",
+        "lorawan_device": {
+            "activation_constraints": "local",
+            "app_eui": "70B3D57ED001AB65",
+            "app_id": "cambridge-sensor-network2",
+            "app_key": "3319726C100E49B6ECD2EEC552F1F5D9",
+            "app_s_key": "F0862F3F4CA3511C5C77CEBAB10D3877",
+            "dev_addr": "26015A4D",
+            "dev_eui": "763A53FFB342FBD8",
+            "dev_id": "ijl20-sodaq-ttn",
+            "nwk_s_key": "5D53121A072BADDDE7E98A0BAE7C8453",
+            "uses32_bit_f_cnt": true
+        }
+    }
+}
