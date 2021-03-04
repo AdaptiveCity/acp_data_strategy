@@ -180,3 +180,9 @@ Return dictionaries of sensors and metadata
 We could support querystring filters e.g. '?feature=temperature'
 
 Returns { types: { "elsys-ems": {...}, ... }}
+
+## /update/<acp_id>/ (POST)
+
+Will update the sensor metadata for `<acp_id>` to the version POSTed.
+
+The prior version will be given a `acp_ts_end` timestamp and so pushed down the history stack.
