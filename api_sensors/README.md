@@ -61,6 +61,20 @@ where
 
 i.e. the complete history is `[ sensor_info ] + sensor_history`.
 
+## /get_type_history/<acp_type_id>/
+
+Similar to `/get_history/` above but returns the entire history of the sensor type as a single list.
+
+I.e. returns:
+```
+{
+  "history": [ ... ]
+}
+```
+where
+
+`history` is the list of `type_info` JSON values for the selected sensor type
+
 ## /get_bim/<coordinate_system>/<crate_id>/
 
 E.g. `/get_bim/WGB/FE11/`
@@ -184,5 +198,11 @@ Returns { types: { "elsys-ems": {...}, ... }}
 ## /update/<acp_id>/ (POST)
 
 Will update the sensor metadata for `<acp_id>` to the version POSTed.
+
+The prior version will be given a `acp_ts_end` timestamp and so pushed down the history stack.
+
+## /update_type/<acp_type_id>/ (POST)
+
+Will update the sensor type metadata for `<acp_type_id>` to the version POSTed.
 
 The prior version will be given a `acp_ts_end` timestamp and so pushed down the history stack.
