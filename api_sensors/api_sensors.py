@@ -44,21 +44,6 @@ def get_bim_route(coordinate_system, crate_id):
     global data_api
     return data_api.get_bim(coordinate_system, crate_id)
 
-#DEBUG replaced with get_floor_number
-#@app.route('/get_count/<crate_id>/', defaults={'children': 0})
-#@app.route('/get_count/<crate_id>/<children>/')
-#def get_count_route(crate_id, children):
-#    global data_api
-#
-#    if str(children)=='all': #or type(children)!=int:
-#        children=999
-#    else:
-#        try:
-#            children=int(children)
-#        except:
-#            children=999
-#    return data_api.get_sensors_count(crate_id, children)
-
 # Return sensors found on a given floor
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')
 def get_floor_number_route(coordinate_system, floor_number):
