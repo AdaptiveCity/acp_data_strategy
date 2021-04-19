@@ -79,6 +79,13 @@ def get_type_route(acp_type_id):
     global data_api
     return data_api.get_type(acp_type_id)
 
+# /get_type_history/<acp_type_id>/ :
+# Similar to above but returns entire history of sensor metadata for a given sensor type.
+@app.route('/get_type_history/<acp_type_id>/')
+def get_type_history_route(acp_type_id):
+    global data_api
+    return data_api.get_type_history(acp_type_id)
+
 # Return a list of sensors
 # We could support querystring filters e.g.
 # '?feature=temperature'
@@ -104,6 +111,14 @@ def update_route(acp_id):
     sensor_metadata = request.json
     global data_api
     return data_api.update(acp_id, sensor_metadata)
+
+# /update_type/<acp_type_id>/ :
+# Updates metadata for sensor type 'acp_type_id'
+@app.route('/update_type/<acp_type_id>/', methods = ['POST'])
+def update_type_route(acp_type_id):
+    sensor_type_metadata = request.json
+    global data_api
+    return data_api.update_type(acp_type_id, sensor_type_metadata)
 
 
 ####################################################################

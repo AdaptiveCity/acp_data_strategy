@@ -93,6 +93,20 @@ class SensorsDataAPI(object):
         type_info = self.db_lookup_sensor_type(acp_type_id)
         return type_info if type_info is not None else {}
 
+    # Get the full history of metadata for a given sensor type (e.g. 'elsys-co2')
+    # This method will necessarily read the data from the database (as the SENSOR_TYPES dictionary only
+    # contains the latest metadata record not the prior history).
+    def get_type_history(self, acp_type_id):
+        print(f"get_type_history {acp_type_id}",file=sys.stderr, flush=True)
+        global SENSOR_TYPES
+        try:
+            # returns { 'history': [  <list of sensor_info objects> ] }
+            history = self.db_lookup_sensor_type_history(acp_type_id)
+        except:
+            print(f"get_type_history() error sensor type id {acp_type_id}",file=sys.stderr, flush=True)
+            return {}
+        return { 'history': history }
+
     # /get_floor_number/<system>/<floor>[?metadata=true]
     # Returns:
     # { "sensors": { },
@@ -227,6 +241,26 @@ class SensorsDataAPI(object):
             return { "acp_error": "api_sensors db write failed" }
 
         print(f'update { acp_id } updated',file=sys.stderr,flush=True)
+        # Update in-memory entry
+        SENSORS[acp_id] = sensor_metadata
+        return {}
+
+    # Updates metadata for sensor type <acp_type_id>
+    def update_type(self, acp_type_id, sensor_type_metadata):
+        if "acp_type_id" not in sensor_type_metadata or acp_type_id != sensor_type_metadata["acp_type_id"]:
+            print(f'update_type { acp_type_id } wrong acp_type_id in sensor_type_metadata',file=sys.stderr,flush=True)
+            return { "acp_error": "api_sensors bad acp_type_id in sensor type metadata" }
+
+        try:
+            self.write_type_obj(acp_type_id, sensor_type_metadata)
+        except:
+            print(f'update_type { acp_type_id }',file=sys.stderr,flush=True)
+            print(f'{ json.dumps(sensor_type_metadata, indent=4) }', file=sys.stderr, flush=True)
+            return { "acp_error": "api_sensors db write failed" }
+
+        # Update in-memory entry
+        SENSOR_TYPES[acp_type_id] = sensor_type_metadata
+        print(f'update_type { acp_type_id } updated',file=sys.stderr,flush=True)
         return {}
 
     ###########################################################################
@@ -339,8 +373,29 @@ class SensorsDataAPI(object):
             print(sys.exc_info(),flush=True,file=sys.stderr)
             return None
 
+        print(f'Updating SENSOR_TYPES[{acp_type_id}]')
         SENSOR_TYPES[acp_type_id] = type_info
         return type_info
+
+    # Return all sensor type history, including latest, as list
+    def db_lookup_sensor_type_history(self, acp_type_id):
+        query = "SELECT record_id, type_info FROM sensor_types WHERE acp_type_id=%s ORDER BY acp_ts_end DESC"
+        query_args = (acp_type_id,)
+
+        try:
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) == 0:
+                return None
+            history = []
+            for row in rows:
+                ( record_id, info) = row
+                info["acp_record_id"] = record_id # Embed the record_id
+                history.append(info)
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        return history
 
     # Lookup a sensor type (from the in-memory cache)
     def type_lookup(self, acp_type_id):
@@ -520,10 +575,11 @@ class SensorsDataAPI(object):
     #   db_table:      the 'TABLES' object from settings.json that gives the column names
     #   merge:         boolean that controls whether to "write" the json_info_obj or "merge" it into existing record.
     ###################################################################################################################
-    def write_obj(self, id, json_info_obj, merge=False):
-        table_name = "sensors"
-        id_name = "acp_id"
-        json_name = "sensor_info"
+
+    def write_type_obj(self, id, json_info_obj, merge=False):
+        self.write_obj(id, json_info_obj, table_name="sensor_types", id_name="acp_type_id", json_name="type_info", merge=merge)
+
+    def write_obj(self, id, json_info_obj, table_name="sensors", id_name="acp_id", json_name="sensor_info", merge=False):
 
         if id_name not in json_info_obj:
             print(f'Bad input, {id_name} not in json_info:\n{json_info_obj}', file=sys.stderr)
