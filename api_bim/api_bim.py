@@ -69,6 +69,15 @@ def get_xyzf_route(crate_id, children):
     response.mimetype = "application/json"
     return response
 
+# /update/<crate_id>/ :
+# Updates bim object metadata for crate 'crate_id'
+@app.route('/update/<crate_id>/', methods = ['POST'])
+def update_route(crate_id):
+    bim_metadata = request.json
+    global data_api
+    return data_api.update(crate_id, bim_metadata)
+
+
 ####################################################################
 #
 # Main
