@@ -37,6 +37,13 @@ def get_route(crate_id,children):
     response.mimetype = "application/json"
     return response
 
+# /get_history/<crate_id>/ :
+# Similar to '/get/' but returns entire history of metadata for a given crate.
+@app.route('/get_history/<crate_id>/')
+def get_history_route(crate_id):
+    global data_api
+    return data_api.get_history(crate_id)
+
 # get_floor_number/<coordinate_system>/<floor_number>/
 # Returns BIM objects for floor EXCLUDING crate_type=="floor"
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')

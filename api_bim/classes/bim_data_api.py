@@ -59,6 +59,21 @@ class BIMDataAPI(object):
         # Convert crates list [..] into list obj { "FE11": { ..}, .. }
         return self.list_to_dict("crate_id",crates)
 
+    # Get the full history of metadata for a given crate (e.g. 'FE11')
+    # This method will necessarily read the data from the database (as the BIM dictionary only
+    # contains the latest metadata record not the prior history).
+    def get_history(self, crate_id):
+        print(f"get_history {crate_id}",file=sys.stderr, flush=True)
+        global BIM
+        try:
+            # returns { 'history': [  <list of sensor_info objects> ] }
+            history = self.db_lookup_crate_history(crate_id)
+        except:
+            print(f"get_history() error crate_id {crate_id}",file=sys.stderr, flush=True)
+            return {}
+        return { 'history': history }
+
+
     #takes in floor number and returns all room/corridor crates that have acp_location[f]==floor
     def get_floor_number(self, coordinate_system,floor_number):
         global BIM
@@ -164,6 +179,27 @@ class BIMDataAPI(object):
         BIM[crate_id] = crate_info
 
         return crate_info
+
+    # Return all history for a given crate as list
+    def db_lookup_crate_history(self, crate_id):
+        query = "SELECT record_id, crate_info FROM bim WHERE crate_id=%s ORDER BY acp_ts_end DESC"
+        query_args = (crate_id,)
+
+        try:
+            rows = self.db_conn.dbread(query, query_args)
+            if len(rows) == 0:
+                return None
+            history = []
+            for row in rows:
+                ( record_id, info) = row
+                info["acp_record_id"] = record_id # Embed the record_id
+                history.append(info)
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return None
+
+        return history
+
 
     # Update a dictionary of creates with "acp_location_xyz" and "acp_boundary_xyz" properties
     def add_xyzf(self, crates):
