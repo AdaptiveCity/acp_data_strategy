@@ -31,9 +31,28 @@ csrf.init_app(app)
 #api/space for SVG related things
 #################################
 
+# Get SVG for selected crate (and children)
 @app.route('/get_bim/<crate_id>/', defaults={'children': 0})
 @app.route('/get_bim/<crate_id>/<children>/')
 def get_svg_by_crate(crate_id,children):
+    global space_api
+    if str(children)=='all': #or type(children)!=int:
+        children=999
+    else:
+        try:
+            children=int(children)
+        except:
+            children=999
+    response_string = space_api.get_crate_svg(crate_id, children)
+    print("space_render get_svg_by_crate {} returning:\n{}\n".format(crate_id, response_string))
+    response = make_response(response_string, 200)
+    response.mimetype = "text/xml"
+    return response
+
+# As above, but returns JSON not XML
+@app.route('/get_bim_json/<crate_id>/', defaults={'children': 0})
+@app.route('/get_bim_json/<crate_id>/<children>/')
+def get_svg_by_crate_json(crate_id,children):
     global space_api
     if str(children)=='all': #or type(children)!=int:
         children=999
