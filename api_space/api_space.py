@@ -42,10 +42,13 @@ def get_svg_by_crate(crate_id,children):
             children=int(children)
         except:
             children=999
-    response_string = space_api.get_crate_svg(crate_id, children)
-    print("space_render get_svg_by_crate {} returning:\n{}\n".format(crate_id, response_string))
+    svg_string = space_api.get_crate_svg(crate_id, children)
+    svg_bytes = svg_string.encode('utf-8')
+    b64_bytes = base64.b64encode(svg_bytes)
+    b64_string = b64_bytes.decode('utf-8')
+    response_string = f'{{ "svg_encoded": "{b64_string}" }}'
     response = make_response(response_string, 200)
-    response.mimetype = "text/xml"
+    response.mimetype = "application/json"
     return response
 
 #DEBUG need to be clear if this is the "f" propery of an acp_location ?
