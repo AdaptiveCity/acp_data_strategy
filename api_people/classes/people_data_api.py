@@ -22,11 +22,13 @@ DEBUG = True
 ###################################################################
 
 People=None
+Insts=None
 
 class PeopleDataAPI(object):
 
     def __init__(self, settings):
         global People
+        global Insts
         print("Initializing People DataAPI")
         self.settings = settings
 
@@ -34,6 +36,9 @@ class PeopleDataAPI(object):
 
         People = self.load_people()
         print("Loaded people table")
+
+        Insts = self.load_insts()
+        print("Loaded insts table")
 
         # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
         self.load_coordinate_systems()
@@ -54,7 +59,7 @@ class PeopleDataAPI(object):
 
         if hierarchy != None:
             all_insts = self.db_lookup_insts(person_info, hierarchy)
-            person_info['institutions'] = all_insts
+            person_info['insts'] = all_insts
 
         return person_info
 
@@ -100,7 +105,7 @@ class PeopleDataAPI(object):
     # Load ALL the People data from the store
     def load_people(self):
 
-        # To select *all* the latest sensor objects:
+        # To select *all* the latest people objects:
         query = "SELECT person_id, person_info FROM people WHERE acp_ts_end IS NULL"
 
         try:
@@ -115,6 +120,25 @@ class PeopleDataAPI(object):
             return {}
 
         return people_data
+
+    # Load ALL the Insts data from store
+    def load_insts(self):
+
+        # To select *all* the latest inst objects
+        query = "SELECT inst_id, inst_info FROM insts WHERE acp_ts_end IS NULL"
+
+        try:
+            insts_data = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                insts_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        return insts_data
 
     # Return metadata from DATABASE for a single person
     # and update entry in-memory cache (BIM_data).
@@ -161,62 +185,23 @@ class PeopleDataAPI(object):
 
     # Return all institutions in hierarchy
     def db_lookup_insts(self, person_info, hierarchy):
+        global Insts
         all_insts = []
-        person_insts = person_info['institutions']
+        person_insts = person_info['insts']
 
         all_insts.extend(person_insts)
-        query = "SELECT record_id, inst_info FROM institutions WHERE inst_id=%s"
 
-        if hierarchy == 'down':
+        if hierarchy == 'up':
             try:
                 for inst in person_insts:
-                    query_args = (inst,)
-                    rows = self.db_conn.dbread(query, query_args)
-                    for row in rows:
-                        (record_id, info) = row
-                        child_insts = info['child_insts']
-                        for child_inst in child_insts:
-                            if child_inst not in all_insts:
-                                all_insts.append(child_inst)
+                    if inst in Insts.keys():
+                        parent = Insts[inst]['parent_insts'][0]
+                        while parent != 'ROOT':
+                            all_insts.append(parent)
+                            parent = Insts[parent]['parent_insts'][0]
             except:
                 print(sys.exc_info(),flush=True,file=sys.stderr)
                 return None
-        elif hierarchy == 'up':
-            try:
-                for inst in person_insts:
-                    query_args = (inst,)
-                    rows = self.db_conn.dbread(query, query_args)
-                    for row in rows:
-                        (record_id, info) = row
-                        parent_insts = info['parent_insts']
-                        for parent_inst in parent_insts:
-                            if parent_inst not in all_insts:
-                                all_insts.append(parent_inst)
-            except:
-                print(sys.exc_info(),flush=True,file=sys.stderr)
-                return None
-
-        elif hierarchy == 'all':
-            try:
-                for inst in person_insts:
-                    query_args = (inst,)
-                    rows = self.db_conn.dbread(query, query_args)
-                    for row in rows:
-                        (record_id, info) = row
-
-                        child_insts = info['child_insts']
-                        for child_inst in child_insts:
-                            if child_inst not in all_insts:
-                                all_insts.append(child_inst)
-
-                        parent_insts = info['parent_insts']
-                        for parent_inst in parent_insts:
-                            if parent_inst not in all_insts:
-                                all_insts.append(parent_inst)
-            except:
-                print(sys.exc_info(),flush=True,file=sys.stderr)
-                return None
-        
         else:
             all_insts = person_insts
         
