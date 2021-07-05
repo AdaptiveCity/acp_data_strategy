@@ -48,7 +48,7 @@ class PeopleDataAPI(object):
     #####################################################################
 
     # Takes in person_id and returns the person's information
-    def get(self, person_id, hierarchy):
+    def get(self, person_id, path):
         global People
 
         if DEBUG:
@@ -57,8 +57,8 @@ class PeopleDataAPI(object):
         # Read the person from the DATABASE, purely to refresh the in-memory cache (People)
         person_info = self.db_lookup_person(person_id)
 
-        if hierarchy != None:
-            all_insts = self.db_lookup_insts(person_info, hierarchy)
+        if path:
+            all_insts = self.db_lookup_insts(person_info, path)
             person_info['insts'] = all_insts
 
         return person_info
@@ -184,26 +184,24 @@ class PeopleDataAPI(object):
         return history
 
     # Return all institutions in hierarchy
-    def db_lookup_insts(self, person_info, hierarchy):
+    def db_lookup_insts(self, person_info, path):
         global Insts
         all_insts = []
         person_insts = person_info['insts']
 
         all_insts.extend(person_insts)
 
-        if hierarchy == 'up':
-            try:
-                for inst in person_insts:
-                    if inst in Insts.keys():
-                        parent = Insts[inst]['parent_insts'][0]
-                        while parent != 'ROOT':
-                            all_insts.append(parent)
-                            parent = Insts[parent]['parent_insts'][0]
-            except:
-                print(sys.exc_info(),flush=True,file=sys.stderr)
-                return None
-        else:
-            all_insts = person_insts
+        
+        try:
+            for inst in person_insts:
+                if inst in Insts.keys():
+                    parent = Insts[inst]['parent_insts'][0]
+                    while parent != 'ROOT':
+                        all_insts.append(parent)
+                        parent = Insts[parent]['parent_insts'][0]
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return []
         
         return all_insts
 

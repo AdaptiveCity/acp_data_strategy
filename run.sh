@@ -14,3 +14,4 @@ $SCRIPT_DIR/api_sensors/run.sh
 
 $SCRIPT_DIR/api_space/run.sh
 
+$SCRIPT_DIR/api_people/run.sh

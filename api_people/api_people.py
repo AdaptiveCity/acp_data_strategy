@@ -18,11 +18,12 @@ CORS(app)
 #api/people for People oriented (meta)data
 #####################################
 
-@app.route('/get/<person_id>/', defaults={'hierarchy':None})
-@app.route('/get/<person_id>/<hierarchy>/')
-def get_route(person_id, hierarchy):
+@app.route('/get/<person_id>/', defaults={'path':'false'})
+@app.route('/get/<person_id>/<path>/')
+def get_route(person_id, path):
     global data_api
-    response = make_response(data_api.get(person_id, hierarchy), 200)
+    path = True if str(path) == 'true' else False
+    response = make_response(data_api.get(person_id, path), 200)
     response.mimetype = "application/json"
     return response
 

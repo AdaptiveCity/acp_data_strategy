@@ -44,7 +44,7 @@ class BIMDataAPI(object):
     # Takes in crate_id and depth and returns all children (default 0) of that crate
     # Note this /get/ API call returns a DICTIONARY indexed with crate_id,
     # even for a single BIM object.
-    def get(self, crate_id, depth):
+    def get(self, crate_id, depth, path):
         global BIM
 
         if DEBUG:
@@ -54,10 +54,15 @@ class BIMDataAPI(object):
         crate = self.db_lookup_crate(crate_id)
 
         # Get list  of children of the desired crate to required depth
-        crates = self.get_tree_list(crate_id, int(depth))
+        crates_list = self.get_tree_list(crate_id, int(depth))
 
-        if crates is None:
+        if crates_list is None:
             return {}
+
+        if path == True:
+            crates = self.get_crate_path(crates_list)
+        else:
+            crates = self.clear_crate_path(crates_list)
 
         # Convert crates list [..] into list obj { "FE11": { ..}, .. }
         return self.list_to_dict("crate_id",crates)
@@ -254,6 +259,25 @@ class BIMDataAPI(object):
 
         return result
 
+    def get_crate_path(self, crate_list):
+        updated_crate_list = []
+        for crate in crate_list:
+            parent_list = []
+            parent = BIM[crate['crate_id']]['parent_crate_id']
+            while parent not in self.settings['coordinate_systems']:
+                parent_list.append(parent)
+                parent = BIM[parent]['parent_crate_id']
+            parent_list.append(parent)
+            crate['parent_crate_path'] = parent_list
+            updated_crate_list.append(crate)
+        return updated_crate_list
+
+    def clear_crate_path(self, crate_list):
+        for crate in crate_list:
+            if 'parent_crate_path' in crate.keys():
+                del crate['parent_crate_path']
+        return crate_list
+            
     # return a list of immediate children of this crate
     def get_children(self, parent_id):
         #iterate through the BIM and determine if parent
