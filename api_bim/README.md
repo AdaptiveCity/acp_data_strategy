@@ -10,13 +10,13 @@ is created, with the previous record timestamped as no longer current.
 
 Information returned for a BIM object (e.g. via `/get/`) is a JSON object as stored (and displayed on `acp_web`).
 
-## /get/<crate_id>/[<depth>/]
+## /get/<crate_id>/[<depth>/]?path=
 
-Gets the BIM data for the selected crate, plus its children to selected depth.
+Gets the BIM data for the selected crate, plus its children to selected depth. If `path` is true, then another key `parent_crate_path` is included in the `crate_info`, which includes all the parent crates up the crate hierarchy.
 
 E.g.
 ```
-http://ijl20-iot/api/bim/get/FF/1/
+http://ijl20-iot/api/bim/get/FF/1/?path=true
 ```
 gets all the BIM objects that have `"parent_crate_id": "FF"`.
 

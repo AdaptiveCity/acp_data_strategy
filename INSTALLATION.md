@@ -87,6 +87,22 @@ CREATE TABLE bim (
     acp_ts_end TIMESTAMP,
     crate_info jsonb
 );
+
+CREATE TABLE people (
+    record_id SERIAL,
+    person_id varchar(100) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    person_info jsonb
+);
+
+CREATE TABLE insts (
+    record_id SERIAL,
+    inst_id varchar(100) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    inst_info jsonb
+);
 ```
 
 ## Just importing *data* from another system
@@ -149,6 +165,7 @@ Should display something like:
 1601462319.918 api_sensors  FAIL not running
 1601462319.958 api_readings FAIL not running
 1601462319.998 api_space    FAIL not running
+1601462320.006 api_people    FAIL not running
 ```
 As the `acp_prod` user, start the API's with:
 ```

@@ -9,14 +9,14 @@ is created, with the previous record timestamped as no longer current.
 
 Information returned for a People object (e.g. via `/get/`) is a JSON object as stored (and displayed on `acp_web`).
 
-## /get/<person_id>/[<hierarchy>/]
+## /get/<person_id>/?path=
 
 Gets the person data for the selected person_id, plus its parents and child institutions.
-`hierarchy` could be `up` : parent institutions, `down` : child institutions, `all` : both child and parent institutions, `blank` : only listed institutions
+`path = true` searches for all institutions up the institution hierarchy to which person_id belongs to.
 
 E.g.
 ```
-http://ijl20-iot/api/people/get/crsid-rv355/down/
+http://ijl20-iot/api/people/get/crsid-rv355/?path=true
 ```
-gets the People object that has `"person_id": "crsid-rv355"`. In addition to the listed institutions for 'person_id' all its child institutions are also listed.
+gets the People object that has `"person_id": "crsid-rv355"`. In addition to the listed institutions for 'person_id' all its parent institutions up the institution hierarchy are also listed.
 

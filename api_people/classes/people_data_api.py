@@ -21,23 +21,23 @@ DEBUG = True
 #
 ###################################################################
 
-People=None
-Insts=None
+PEOPLE=None
+INSTS=None
 
 class PeopleDataAPI(object):
 
     def __init__(self, settings):
-        global People
-        global Insts
+        global PEOPLE
+        global INSTS
         print("Initializing People DataAPI")
         self.settings = settings
 
         self.db_conn = DBConn(self.settings)
 
-        People = self.load_people()
+        PEOPLE = self.load_people()
         print("Loaded people table")
 
-        Insts = self.load_insts()
+        INSTS = self.load_insts()
         print("Loaded insts table")
 
         # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
@@ -49,7 +49,7 @@ class PeopleDataAPI(object):
 
     # Takes in person_id and returns the person's information
     def get(self, person_id, path):
-        global People
+        global PEOPLE
 
         if DEBUG:
             print("get {}".format(person_id), file=sys.stdout)
@@ -58,7 +58,7 @@ class PeopleDataAPI(object):
         person_info = self.db_lookup_person(person_id)
 
         if path:
-            all_insts = self.db_lookup_insts(person_info, path)
+            all_insts = self.retrieve_person_ints(person_info, path)
             person_info['insts'] = all_insts
 
         return person_info
@@ -67,7 +67,7 @@ class PeopleDataAPI(object):
     # This method will necessarily read the data from the database.
     def get_history(self, person_id):
         print(f"get_history {person_id}",file=sys.stderr, flush=True)
-        global BIM
+        global PEOPLE
         try:
             # returns { 'history': [  <list of sensor_info objects> ] }
             history = self.db_lookup_person_history(person_id)
@@ -91,7 +91,7 @@ class PeopleDataAPI(object):
             return { "acp_error": "api_bim db write failed" }
 
         # Update in-memory entry
-        People[person_id] = person_metadata
+        PEOPLE[person_id] = person_metadata
         print(f'update { person_id } updated',file=sys.stderr,flush=True)
         return {}
 
@@ -143,7 +143,7 @@ class PeopleDataAPI(object):
     # Return metadata from DATABASE for a single person
     # and update entry in-memory cache (BIM_data).
     def db_lookup_person(self, person_id):
-        global People
+        global PEOPLE
 
         query = "SELECT person_info FROM people WHERE person_id=%s AND acp_ts_end IS NULL"
         query_args = (person_id,)
@@ -159,7 +159,7 @@ class PeopleDataAPI(object):
             return None
 
         # Refresh in-memory copy
-        People[person_id] = person_info
+        PEOPLE[person_id] = person_info
 
         return person_info
 
@@ -184,8 +184,8 @@ class PeopleDataAPI(object):
         return history
 
     # Return all institutions in hierarchy
-    def db_lookup_insts(self, person_info, path):
-        global Insts
+    def retrieve_person_ints(self, person_info, path):
+        global INSTS
         all_insts = []
         person_insts = person_info['insts']
 
@@ -194,11 +194,11 @@ class PeopleDataAPI(object):
         
         try:
             for inst in person_insts:
-                if inst in Insts.keys():
-                    parent = Insts[inst]['parent_insts'][0]
+                if inst in INSTS.keys():
+                    parent = INSTS[inst]['parent_insts'][0]
                     while parent != 'ROOT':
                         all_insts.append(parent)
-                        parent = Insts[parent]['parent_insts'][0]
+                        parent = INSTS[parent]['parent_insts'][0]
         except:
             print(sys.exc_info(),flush=True,file=sys.stderr)
             return []

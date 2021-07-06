@@ -22,10 +22,9 @@ CORS(app)
 #api/bim for BIM oriented (meta)data
 #####################################
 
-@app.route('/get/<crate_id>/', defaults={'children': 0, 'path': 'false'})
-@app.route('/get/<crate_id>/<children>/', defaults={'path': 'false'})
-@app.route('/get/<crate_id>/<children>/<path>/')
-def get_route(crate_id,children,path):
+@app.route('/get/<crate_id>/', defaults={'children': 0})
+@app.route('/get/<crate_id>/<children>/')
+def get_route(crate_id,children):
     global data_api
     if str(children)=='all': #or type(children)!=int:
         children=999
@@ -34,7 +33,7 @@ def get_route(crate_id,children,path):
             children=int(children)
         except:
             children=999
-    path = True if str(path) == 'true' else False
+    path = True if request.args.get('path') == 'true' else False
     response = make_response(data_api.get(crate_id, children, path), 200)
     response.mimetype = "application/json"
     return response
