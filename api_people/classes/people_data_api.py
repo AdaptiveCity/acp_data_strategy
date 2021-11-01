@@ -186,18 +186,17 @@ class PeopleDataAPI(object):
     # Return all institutions in hierarchy
     def retrieve_person_ints(self, person_info, path):
         global INSTS
-        all_insts = []
+        all_insts = {}
         person_insts = person_info['insts']
 
-        all_insts.extend(person_insts)
-
+        all_insts.update(person_insts)
         
         try:
             for inst in person_insts:
                 if inst in INSTS.keys():
                     parent = INSTS[inst]['parent_insts'][0]
                     while parent != 'ROOT':
-                        all_insts.append(parent)
+                        all_insts.update({parent:{'inst_id':parent, 'relation':'belongs'}})
                         parent = INSTS[parent]['parent_insts'][0]
         except:
             print(sys.exc_info(),flush=True,file=sys.stderr)
