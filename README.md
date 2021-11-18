@@ -138,22 +138,60 @@ practicable in the stream processing.
 Incoming sensor data messages to the platform can be broadly categorized as *periodic* or
 *event* based. The Adaptive City platform is designed throughout to handle events in a
 timely manner, and includes pre-defined data fields to make event-based messages easy to
-recognize.
+recognize. Any event on the platform is represented as the following JSON dictionary;
 
-`acp_event` contains a globally-recognized string defining the event *type*, e.g. from the
-window/door sensor:
 ```
-"acp_event": "openclose"
+acp_event : {
+    acp_event_type : {
+        "acp_event_type" : <a globally-recognized string defining the event *type*. Must be the same as the key acp_event_type>,
+        "acp_event_value": is the event property specific to the event
+    }
+}
+```
+Some examples of the "acp_event":
+```
+{
+    ....
+    ....
+    "acp_event" : {
+        "openclose" : {
+            "acp_event_type": "openclose",
+            "acp_event_value": "open"
+        }
+    }
+    ....
+    ....
+
+}
 ```
 
-`acp_event_value` is a simple (optional) additional property which can be included for an
-event, e.g.
 ```
-"acp_event_value": "open"
+{
+    ....
+    ....
+    "acp_event": {
+        "up": {
+            "acp_event_type": "up",
+            "acp_event_value": []
+        },
+        "down": {
+            "acp_event_type": "down",
+            "acp_event_value": [
+                "csn-mtcdtip-005f06"
+            ]
+        },
+        "new": {
+            "acp_event_type": "new",
+            "acp_event_value": []
+        }
+    },
+    ....
+    ....
+}
 ```
 
 Note that these common properties are *in addition* to the data that the sensor will include
-in its message anyway. They are a convenience such that the recognition of significant
+in its message anyway (Denoted by `....` in the examples above). They are a convenience such that the recognition of significant
 events can be less complex for downstream processing which is likely to ignore or analyze the
 message in more detail.
 
