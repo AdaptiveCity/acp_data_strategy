@@ -55,8 +55,12 @@ class PeopleDataAPI(object):
             print("get {}".format(person_id), file=sys.stdout)
 
         # Read the person from the DATABASE, purely to refresh the in-memory cache (People)
+        
         person_info = self.db_lookup_person(person_id)
 
+        if person_info == None:
+            return {'error': 'Person not present'}
+        
         if path:
             all_insts = self.retrieve_person_ints(person_info, path)
             person_info['insts'] = all_insts
@@ -72,7 +76,7 @@ class PeopleDataAPI(object):
             # returns { 'history': [  <list of sensor_info objects> ] }
             history = self.db_lookup_person_history(person_id)
         except:
-            print(f"get_history() error crate_id {person_id}",file=sys.stderr, flush=True)
+            print(f"get_history() error person_id {person_id}",file=sys.stderr, flush=True)
             return {}
         return { 'history': history }
 
