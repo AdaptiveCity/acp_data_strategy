@@ -8,7 +8,8 @@ from datetime import datetime
 import time
 from flask import request, make_response
 from pathlib import Path
-from jsonpath_ng import jsonpath, parse
+# from jsonpath_ng import jsonpath, parse
+from requests.models import HTTPError
 
 from classes.utils import Utils
 
@@ -76,6 +77,31 @@ class ReadingsDataAPI(object):
     # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
     def get_day(self, acp_id, args):
         response_obj = {}
+
+        # Check if the person has access to acp_id
+        permissions_api_url = self.settings["API_PERMISSIONS"]+'get/'+args['person_id']+"/"+acp_id+"/sensors/read"
+        #fetch data from Sensors api
+        try:
+            response = requests.get(permissions_api_url)
+            response.raise_for_status()
+            # access JSON content
+            permission_info = response.json()
+        except HTTPError as http_err:
+            print(f'API Permissions HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
+        except Exception as err:
+            print(f'API Permissions Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
+
+        if permission_info['permission'] == False:
+            response_obj = {}
+            response_obj["acp_error_id"] = "NO_ACCESS"
+            response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
+
+            json_response = json.dumps(response_obj)
+            response = make_response(json_response)
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
         # Lookup the sensor metadata, this will include the
         # filepath to the readings, and also may be returned
