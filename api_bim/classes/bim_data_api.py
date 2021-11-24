@@ -264,7 +264,7 @@ class BIMDataAPI(object):
         for crate in crate_list:
             parent_list = []
             parent = BIM[crate['crate_id']]['parent_crate_id']
-            while parent not in self.settings['coordinate_systems']:
+            while parent not in self.settings['coordinate_systems'] and parent in BIM:
                 parent_list.append(parent)
                 parent = BIM[parent]['parent_crate_id']
             parent_list.append(parent)

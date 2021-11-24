@@ -82,7 +82,10 @@ class PermissionsAPI(object):
             print(f'get_sensor_info() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
 
-        
+        if 'crate_id' not in sensor_info:
+            permission_obj['permission'] = True
+            return permission_obj
+            
         if sensor_info['crate_id'] in list(people_info['bim']['occupies_crates'].keys()):
             permission_obj['permission'] = True
         else:
@@ -100,6 +103,10 @@ class PermissionsAPI(object):
                 print(f'get_sensor_info() Other GET error occurred: {err}')
                 return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
 
+            if bim_info == {}:
+                permission_obj['permission'] = True
+                return permission_obj
+                
             parent_crates = bim_info[sensor_info['crate_id']]['parent_crate_path']
             person_crates = list(people_info['bim']['occupies_crates'].keys())
 

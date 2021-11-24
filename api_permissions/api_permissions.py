@@ -26,6 +26,8 @@ def get_route(person_id, object_id, object_type, operation_type):
     response.mimetype = "application/json"
     return response
 
+
+
 ####################################################################
 #
 # Main

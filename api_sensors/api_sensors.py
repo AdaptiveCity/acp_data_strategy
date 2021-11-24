@@ -29,7 +29,7 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    return data_api.get(acp_id)
+    return data_api.get(acp_id, request.args)
 
 # /get_history/<acp_id>/[?metadata=true] :
 # Similar to above but returns entire history of sensor metadata for a given sensor.
@@ -37,12 +37,12 @@ def get_route(acp_id):
 @app.route('/get_history/<acp_id>/')
 def get_history_route(acp_id):
     global data_api
-    return data_api.get_history(acp_id)
+    return data_api.get_history(acp_id, request.args)
 
 @app.route('/get_bim/<coordinate_system>/<crate_id>/')
 def get_bim_route(coordinate_system, crate_id):
     global data_api
-    return data_api.get_bim(coordinate_system, crate_id)
+    return data_api.get_bim(coordinate_system, crate_id, request.args)
 
 # Return sensors found on a given floor
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')
@@ -56,7 +56,7 @@ def get_floor_number_route(coordinate_system, floor_number):
 @cross_origin()
 def get_gps_route():
     global data_api
-    return data_api.get_gps()
+    return data_api.get_gps(request.args)
 
 #
 @app.route('/get_type/<acp_type_id>/')
@@ -95,7 +95,7 @@ def list_types_route():
 def update_route(acp_id):
     sensor_metadata = request.json
     global data_api
-    return data_api.update(acp_id, sensor_metadata)
+    return data_api.update(acp_id, sensor_metadata, request.args)
 
 # /update_type/<acp_type_id>/ :
 # Updates metadata for sensor type 'acp_type_id'
@@ -103,7 +103,7 @@ def update_route(acp_id):
 def update_type_route(acp_type_id):
     sensor_type_metadata = request.json
     global data_api
-    return data_api.update_type(acp_type_id, sensor_type_metadata)
+    return data_api.update_type(acp_type_id, sensor_type_metadata, request.args)
 
 
 ####################################################################

@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 import time
 import numpy
-from flask import request
+from flask import request, make_response
 import importlib
 import requests
 from requests.exceptions import HTTPError
@@ -47,8 +47,21 @@ class SensorsDataAPI(object):
 
     # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
     # Note a 'get' of sensor metadata will read the DATABASE and refresh the entry in the SENSORS dictionary
-    def get(self, acp_id):
+    def get(self, acp_id, args):
         # print(f"get {acp_id}",file=sys.stderr, flush=True)
+        if "person_id" in args:
+            permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == False:
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_ACCESS"
+                response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
+
+                json_response = json.dumps(response_obj)
+                response = make_response(json_response)
+                response.headers['Content-Type'] = 'application/json'
+                return response
+
         global SENSORS, SENSOR_TYPES
         try:
             sensor_info = self.db_lookup_sensor(acp_id)
@@ -70,7 +83,19 @@ class SensorsDataAPI(object):
     # Get the full history of metadata for a given sensor (e.g. 'rad-ath-003d0f')
     # This method will necessarily read the data from the database (as the SENSORS dictionary only
     # contains the latest metadata record not the prior history).
-    def get_history(self, acp_id):
+    def get_history(self, acp_id, args):
+        if "person_id" in args:
+            permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == False:
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_ACCESS"
+                response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
+
+                json_response = json.dumps(response_obj)
+                response = make_response(json_response)
+                response.headers['Content-Type'] = 'application/json'
+                return response
         print(f"get_history {acp_id}",file=sys.stderr, flush=True)
         global SENSORS, SENSOR_TYPES
         try:
@@ -123,12 +148,18 @@ class SensorsDataAPI(object):
 
         for acp_id in SENSORS:
             #determine if the same floor
-            sensor = SENSORS[acp_id]
-            print("SENSORS api get_floor_number sensor={}".format(sensor))
-            if "acp_location" in sensor:
-                loc = sensor["acp_location"]
-                if loc["system"] == coordinate_system and coords.f(loc) == int(floor_number):
-                    sensor_list_obj[acp_id] = sensor
+            permission_info = {'permission' : True}
+
+            if "person_id" in args:
+                permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == True:
+                sensor = SENSORS[acp_id]
+                print("SENSORS api get_floor_number sensor={}".format(sensor))
+                if "acp_location" in sensor:
+                    loc = sensor["acp_location"]
+                    if loc["system"] == coordinate_system and coords.f(loc) == int(floor_number):
+                        sensor_list_obj[acp_id] = sensor
 
         self.add_xyzf(coordinate_system, sensor_list_obj)
 
@@ -148,15 +179,21 @@ class SensorsDataAPI(object):
         return return_obj
 
     # Get sensors for a given crate_id, returning dictionary of sensors
-    def get_bim(self, coordinate_system, crate_id):
+    def get_bim(self, coordinate_system, crate_id, args):
         #iterate through sensors.json and collect all crates
         sensor_list_obj = {}
 
         for acp_id in SENSORS:
-            sensor = SENSORS[acp_id]
-            if ( "crate_id" in sensor and
-                 sensor["crate_id"] == crate_id ):
-                sensor_list_obj[acp_id] =  sensor
+            permission_info = {'permission' : True}
+
+            if "person_id" in args:
+                permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == True:
+                sensor = SENSORS[acp_id]
+                if ( "crate_id" in sensor and
+                    sensor["crate_id"] == crate_id ):
+                    sensor_list_obj[acp_id] =  sensor
 
         self.add_xyzf(coordinate_system, sensor_list_obj)
 
@@ -165,14 +202,20 @@ class SensorsDataAPI(object):
     #DEBUG this function needs parameters or renaming
     #DEBUG moved from space API
     # Note we are using a 'list_obj', i.e. { "id1": { "acp_id": "id1", ..}, "id2": { "acp_id": "id2", ...} }
-    def get_gps(self):
+    def get_gps(self, args):
         sensor_list_obj = {}
 
         for acp_id in SENSORS:
-            sensor = SENSORS[acp_id]
-            if ( "acp_location" in sensor and
-                 sensor["acp_location"]["system"] == "GPS" ):
-                sensor_list_obj[acp_id] = sensor
+            permission_info = {'permission' : True}
+
+            if "person_id" in args:
+                permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == True:
+                sensor = SENSORS[acp_id]
+                if ( "acp_location" in sensor and
+                    sensor["acp_location"]["system"] == "GPS" ):
+                    sensor_list_obj[acp_id] = sensor
 
         return { 'sensors': sensor_list_obj }
 
@@ -191,7 +234,12 @@ class SensorsDataAPI(object):
         type_list_obj = {}
         for acp_id in SENSORS:
             sensor = SENSORS[acp_id]
-            if True:                   # Here's where we'd filter the results
+            permission_info = {'permission' : True}
+
+            if "person_id" in args:
+                permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
+
+            if permission_info['permission'] == True:                   # Here's where we'd filter the results
                 sensor_list_obj[acp_id] = sensor
                 if include_type_info and "acp_type_id" in sensor:
                     acp_type_id = sensor["acp_type_id"]
@@ -566,3 +614,25 @@ class SensorsDataAPI(object):
                     print(sys.exc_info(),flush=True,file=sys.stderr)
         else:
             print(f'Skipping {id} (existing or newer record in table)',flush=True,file=sys.stderr)
+
+    ####################################################
+    # Get permission to access the requested information
+    ####################################################
+
+    def get_permission(self, person_id, acp_id, object_type, operation_type):
+        # Check if the person has access to acp_id
+        permissions_api_url = self.settings["API_PERMISSIONS"]+'get/'+person_id+"/"+acp_id+"/"+object_type+"/"+operation_type
+        #fetch data from Sensors api
+        try:
+            response = requests.get(permissions_api_url)
+            response.raise_for_status()
+            # access JSON content
+            permission_info = response.json()
+        except HTTPError as http_err:
+            print(f'API Permissions HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
+        except Exception as err:
+            print(f'API Permissions Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
+
+        return permission_info
