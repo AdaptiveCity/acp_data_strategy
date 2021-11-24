@@ -11,6 +11,7 @@ from pathlib import Path
 
 import requests
 from requests.models import HTTPError
+from classes.dbconn import DBConn
 
 DEBUG = True
 
@@ -25,9 +26,21 @@ DEBUG = True
 
 class PermissionsAPI(object):
 
+    SENSORS = None
+    PEOPLE = None
+    BIM = None
+
     def __init__(self, settings):
         print("Initializing Permissions DataAPI")
+        global SENSORS, PEOPLE, BIM
         self.settings = settings
+
+        # Establish connection to PostgreSQL
+        self.db_conn = DBConn(self.settings)
+
+        SENSORS = self.load_sensors()
+        PEOPLE = self.load_people()
+        BIM = self.load_BIM()
         self.basePath = self.settings['readings_base_path']
 
     def get(self, person_id, object_id, object_type, operation_type, args):
@@ -53,34 +66,8 @@ class PermissionsAPI(object):
     def get_sensor_permissions(self, person_id, object_id, operation_type, args):
         permission_obj = {}
 
-        sensors_api_url = self.settings["API_SENSORS"]+'get/'+object_id+"/"
-        #fetch data from Sensors api
-        try:
-            response = requests.get(sensors_api_url)
-            response.raise_for_status()
-            # access JSON content
-            sensor_info = response.json()
-        except HTTPError as http_err:
-            print(f'get_sensor_info() HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: get_sensor_info() HTTP error." }
-        except Exception as err:
-            print(f'get_sensor_info() Other GET error occurred: {err}')
-            return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
-
-        
-        people_api_url = self.settings["API_PEOPLE"]+'get/crsid-'+person_id+"/"
-        #fetch data from People api
-        try:
-            response = requests.get(people_api_url)
-            response.raise_for_status()
-            # access JSON content
-            people_info = response.json()
-        except HTTPError as http_err:
-            print(f'get_sensor_info() HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: get_sensor_info() HTTP error." }
-        except Exception as err:
-            print(f'get_sensor_info() Other GET error occurred: {err}')
-            return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
+        sensor_info = SENSORS[object_id]
+        people_info = PEOPLE['crsid-'+person_id]        
 
         if 'crate_id' not in sensor_info:
             permission_obj['permission'] = True
@@ -89,25 +76,17 @@ class PermissionsAPI(object):
         if sensor_info['crate_id'] in list(people_info['bim']['occupies_crates'].keys()):
             permission_obj['permission'] = True
         else:
-            bim_api_url = self.settings["API_BIM"]+'get/'+sensor_info['crate_id']+"/?path=true"
-            #fetch data from People api
             try:
-                response = requests.get(bim_api_url)
-                response.raise_for_status()
-                # access JSON content
-                bim_info = response.json()
-            except HTTPError as http_err:
-                print(f'get_sensor_info() HTTP GET error occurred: {http_err}')
-                return { "acp_error_msg": "readings_data_api: get_sensor_info() HTTP error." }
-            except Exception as err:
-                print(f'get_sensor_info() Other GET error occurred: {err}')
-                return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
+                bim_info = BIM[sensor_info['crate_id']]
+            except KeyError:
+                permission_obj['permission'] = True
+                return permission_obj
 
             if bim_info == {}:
                 permission_obj['permission'] = True
                 return permission_obj
                 
-            parent_crates = bim_info[sensor_info['crate_id']]['parent_crate_path']
+            parent_crates = bim_info['parent_crate_path']
             person_crates = list(people_info['bim']['occupies_crates'].keys())
 
             crate_flag = False
@@ -131,3 +110,77 @@ class PermissionsAPI(object):
 
     def get_people_permissions(self, person_id, object_id, operation_type, args):
         return {"permission": True}
+
+
+    ###########################################################################
+    #
+    # Support functions
+    #
+    ###########################################################################
+
+    # Load ALL the BIM data from the store (usually data/BIM.json)
+    def load_BIM(self):
+
+        # To select *all* the latest sensor objects:
+        query = "SELECT crate_id, crate_info FROM bim WHERE acp_ts_end IS NULL"
+
+        try:
+            BIM_data = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                BIM_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        updated_BIM_data = {}
+        for crate_id in BIM_data:
+            crate = BIM_data[crate_id]
+            parent_list = []
+            parent = BIM_data[crate['crate_id']]['parent_crate_id']
+            while parent not in self.settings['coordinate_systems'] and parent in BIM_data:
+                parent_list.append(parent)
+                parent = BIM_data[parent]['parent_crate_id']
+            parent_list.append(parent)
+            crate['parent_crate_path'] = parent_list
+            updated_BIM_data.update({crate_id:crate})
+
+        return updated_BIM_data
+
+
+    def load_sensors(self):
+        # To select *all* the latest sensor objects:
+        query = "SELECT acp_id,sensor_info FROM sensors WHERE acp_ts_end IS NULL"
+
+        try:
+            sensors = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                sensors[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        return sensors
+
+    def load_people(self):
+        # To select *all* the latest sensor objects:
+        # To select *all* the latest people objects:
+        query = "SELECT person_id, person_info FROM people WHERE acp_ts_end IS NULL"
+
+        try:
+            people_data = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                people_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        return people_data
