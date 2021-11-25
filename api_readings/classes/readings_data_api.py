@@ -230,11 +230,14 @@ class ReadingsDataAPI(object):
 
             # Filter the accessible sensors to only include sensor_types with feature
             sensors = {}
+
+            is_admin = self.check_admin_group_member(args['person_id'])
+
             for acp_id in floor_sensors["sensors"]:
                 # Check if person_id has permission to access acp_id
                 permission_info = {'permission' : True}
 
-                if "person_id" in args:
+                if "person_id" in args and not is_admin:
                     permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
                 if permission_info['permission'] == True:
@@ -402,3 +405,20 @@ class ReadingsDataAPI(object):
             return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
 
         return permission_info
+
+    def check_admin_group_member(self, person_id):
+        permissions_api_url = self.settings["API_PERMISSIONS"]+'get_admin/'+person_id
+        #fetch data from Sensors api
+        try:
+            response = requests.get(permissions_api_url)
+            response.raise_for_status()
+            # access JSON content
+            permission_info = response.json()
+        except HTTPError as http_err:
+            print(f'API Permissions HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
+        except Exception as err:
+            print(f'API Permissions Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
+
+        return permission_info['permission']

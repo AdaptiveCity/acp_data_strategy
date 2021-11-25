@@ -63,17 +63,32 @@ class PermissionsAPI(object):
         response.headers['Content-Type'] = 'application/json'
         return response
 
+    def get_admin(self, person_id, args):
+        permission_obj = {}
+
+        person_info = PEOPLE['crsid-'+person_id]
+
+        try:
+            if self.settings['admin_group_id'] in person_info['groups']:
+                permission_obj['permission'] = True
+            else:
+                permission_obj['permission'] = False
+        except KeyError:
+            permission_obj['permission'] = False
+
+        return permission_obj
+
     def get_sensor_permissions(self, person_id, object_id, operation_type, args):
         permission_obj = {}
 
         sensor_info = SENSORS[object_id]
-        people_info = PEOPLE['crsid-'+person_id]        
+        person_info = PEOPLE['crsid-'+person_id]        
 
         if 'crate_id' not in sensor_info:
             permission_obj['permission'] = True
             return permission_obj
             
-        if sensor_info['crate_id'] in list(people_info['bim']['occupies_crates'].keys()):
+        if sensor_info['crate_id'] in list(person_info['bim'].keys()):
             permission_obj['permission'] = True
         else:
             try:
@@ -87,7 +102,7 @@ class PermissionsAPI(object):
                 return permission_obj
                 
             parent_crates = bim_info['parent_crate_path']
-            person_crates = list(people_info['bim']['occupies_crates'].keys())
+            person_crates = list(person_info['bim'].keys())
 
             crate_flag = False
             for crate in parent_crates:

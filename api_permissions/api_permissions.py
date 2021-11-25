@@ -26,6 +26,14 @@ def get_route(person_id, object_id, object_type, operation_type):
     response.mimetype = "application/json"
     return response
 
+@app.route('/get_admin/<person_id>/')
+def get_admin_route(person_id):
+    global permission_api
+
+    response = make_response(permission_api.get_admin(person_id, request.args), 200)
+    response.mimetype = "application/json"
+    return response
+
 
 
 ####################################################################

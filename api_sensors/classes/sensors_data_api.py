@@ -146,11 +146,13 @@ class SensorsDataAPI(object):
 
         return_obj = {}
 
+        is_admin = self.check_admin_group_member(args['person_id'])
+
         for acp_id in SENSORS:
             #determine if the same floor
             permission_info = {'permission' : True}
 
-            if "person_id" in args:
+            if "person_id" in args and not is_admin:
                 permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == True:
@@ -232,11 +234,15 @@ class SensorsDataAPI(object):
         include_type_info = "type_metadata" in args and args["type_metadata"] == "true"
         sensor_list_obj = {}
         type_list_obj = {}
+        
+        # check if person_id is an admin
+        is_admin = self.check_admin_group_member(args['person_id'])
+
         for acp_id in SENSORS:
             sensor = SENSORS[acp_id]
             permission_info = {'permission' : True}
 
-            if "person_id" in args:
+            if "person_id" in args and not is_admin:
                 permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == True:                   # Here's where we'd filter the results
@@ -636,3 +642,20 @@ class SensorsDataAPI(object):
             return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
 
         return permission_info
+
+    def check_admin_group_member(self, person_id):
+        permissions_api_url = self.settings["API_PERMISSIONS"]+'get_admin/'+person_id
+        #fetch data from Sensors api
+        try:
+            response = requests.get(permissions_api_url)
+            response.raise_for_status()
+            # access JSON content
+            permission_info = response.json()
+        except HTTPError as http_err:
+            print(f'API Permissions HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
+        except Exception as err:
+            print(f'API Permissions Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
+
+        return permission_info['permission']
