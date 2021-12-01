@@ -49,7 +49,11 @@ class SensorsDataAPI(object):
     # Note a 'get' of sensor metadata will read the DATABASE and refresh the entry in the SENSORS dictionary
     def get(self, acp_id, args):
         # print(f"get {acp_id}",file=sys.stderr, flush=True)
+        is_admin = False
         if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
+        if "person_id" in args and not is_admin:
             permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == False:
@@ -84,7 +88,12 @@ class SensorsDataAPI(object):
     # This method will necessarily read the data from the database (as the SENSORS dictionary only
     # contains the latest metadata record not the prior history).
     def get_history(self, acp_id, args):
+        
+        is_admin = False
         if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
+        if "person_id" in args and not is_admin:
             permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == False:
@@ -145,8 +154,10 @@ class SensorsDataAPI(object):
         coords = self.coordinate_systems[coordinate_system]
 
         return_obj = {}
-
-        is_admin = self.check_admin_group_member(args['person_id'])
+        is_admin = False
+        
+        if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
 
         for acp_id in SENSORS:
             #determine if the same floor
@@ -185,10 +196,14 @@ class SensorsDataAPI(object):
         #iterate through sensors.json and collect all crates
         sensor_list_obj = {}
 
+        is_admin = False
+        if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
         for acp_id in SENSORS:
             permission_info = {'permission' : True}
 
-            if "person_id" in args:
+            if "person_id" in args and not is_admin:
                 permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == True:
@@ -207,10 +222,14 @@ class SensorsDataAPI(object):
     def get_gps(self, args):
         sensor_list_obj = {}
 
+        is_admin = False
+        if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
         for acp_id in SENSORS:
             permission_info = {'permission' : True}
 
-            if "person_id" in args:
+            if "person_id" in args and not is_admin:
                 permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == True:
@@ -236,7 +255,9 @@ class SensorsDataAPI(object):
         type_list_obj = {}
         
         # check if person_id is an admin
-        is_admin = self.check_admin_group_member(args['person_id'])
+        is_admin = False
+        if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
 
         for acp_id in SENSORS:
             sensor = SENSORS[acp_id]

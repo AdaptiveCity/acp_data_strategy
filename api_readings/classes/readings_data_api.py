@@ -44,7 +44,11 @@ class ReadingsDataAPI(object):
     def get(self, acp_id, args):
         response_obj = {}
 
+        is_admin = False
         if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
+        if "person_id" in args and not is_admin:
             permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == False:
@@ -92,7 +96,11 @@ class ReadingsDataAPI(object):
     def get_day(self, acp_id, args):
         response_obj = {}
 
+        is_admin = False
         if "person_id" in args:
+            is_admin = self.check_admin_group_member(args['person_id'])
+
+        if "person_id" in args and not is_admin:
             permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
 
             if permission_info['permission'] == False:
