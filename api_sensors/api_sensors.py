@@ -29,7 +29,7 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    return data_api.get(acp_id, request.args)
+    return data_api.get(acp_id)
 
 # /get_history/<acp_id>/[?metadata=true] :
 # Similar to above but returns entire history of sensor metadata for a given sensor.
@@ -37,18 +37,18 @@ def get_route(acp_id):
 @app.route('/get_history/<acp_id>/')
 def get_history_route(acp_id):
     global data_api
-    return data_api.get_history(acp_id, request.args)
+    return data_api.get_history(acp_id)
 
 @app.route('/get_bim/<coordinate_system>/<crate_id>/')
 def get_bim_route(coordinate_system, crate_id):
     global data_api
-    return data_api.get_bim(coordinate_system, crate_id, request.args)
+    return data_api.get_bim(coordinate_system, crate_id)
 
 # Return sensors found on a given floor
 @app.route('/get_floor_number/<coordinate_system>/<floor_number>/')
 def get_floor_number_route(coordinate_system, floor_number):
     global data_api
-    return data_api.get_floor_number(coordinate_system, floor_number, request.args)
+    return data_api.get_floor_number(coordinate_system, floor_number)
 
 #DEBUG this API call **really** needs parameters (what info to show, lat/lng box?)
 # Get all sensors with a GPS location (i.e. lat/lng)
@@ -56,7 +56,7 @@ def get_floor_number_route(coordinate_system, floor_number):
 @cross_origin()
 def get_gps_route():
     global data_api
-    return data_api.get_gps(request.args)
+    return data_api.get_gps()
 
 #
 @app.route('/get_type/<acp_type_id>/')
