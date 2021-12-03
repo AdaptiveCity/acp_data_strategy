@@ -44,23 +44,6 @@ class ReadingsDataAPI(object):
     def get(self, acp_id, args):
         response_obj = {}
 
-        is_admin = False
-        if "person_id" in args:
-            is_admin = self.check_admin_group_member(args['person_id'])
-
-        if "person_id" in args and not is_admin:
-            permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
-
-            if permission_info['permission'] == False:
-                response_obj = {}
-                response_obj["acp_error_id"] = "NO_ACCESS"
-                response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
-
-                json_response = json.dumps(response_obj)
-                response = make_response(json_response)
-                response.headers['Content-Type'] = 'application/json'
-                return response
-
         try:
             if DEBUG:
                 args_str = ""
@@ -95,23 +78,6 @@ class ReadingsDataAPI(object):
     # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
     def get_day(self, acp_id, args):
         response_obj = {}
-
-        is_admin = False
-        if "person_id" in args:
-            is_admin = self.check_admin_group_member(args['person_id'])
-
-        if "person_id" in args and not is_admin:
-            permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
-
-            if permission_info['permission'] == False:
-                response_obj = {}
-                response_obj["acp_error_id"] = "NO_ACCESS"
-                response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
-
-                json_response = json.dumps(response_obj)
-                response = make_response(json_response)
-                response.headers['Content-Type'] = 'application/json'
-                return response
 
         # Lookup the sensor metadata, this will include the
         # filepath to the readings, and also may be returned
@@ -163,19 +129,6 @@ class ReadingsDataAPI(object):
     # /get_feature/<acp_id> returns most recent sensor reading for sensor + feature
     def get_feature(self, acp_id, feature_id, args):
         response_obj = {}
-
-        if "person_id" in args:
-            permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
-
-            if permission_info['permission'] == False:
-                response_obj = {}
-                response_obj["acp_error_id"] = "NO_ACCESS"
-                response_obj["acp_error_msg"] = args['person_id']+" does not have access to sensor "+acp_id
-
-                json_response = json.dumps(response_obj)
-                response = make_response(json_response)
-                response.headers['Content-Type'] = 'application/json'
-                return response
 
         try:
             if DEBUG:
@@ -239,18 +192,9 @@ class ReadingsDataAPI(object):
             # Filter the accessible sensors to only include sensor_types with feature
             sensors = {}
 
-            is_admin = self.check_admin_group_member(args['person_id'])
-
             for acp_id in floor_sensors["sensors"]:
-                # Check if person_id has permission to access acp_id
-                permission_info = {'permission' : True}
-
-                if "person_id" in args and not is_admin:
-                    permission_info = self.get_permission(args['person_id'], acp_id, "sensors", "read")
-
-                if permission_info['permission'] == True:
-                    if "acp_type_id" in floor_sensors["sensors"][acp_id] and floor_sensors["sensors"][acp_id]["acp_type_id"] in sensor_types:
-                        sensors[acp_id] = floor_sensors["sensors"][acp_id]
+                if "acp_type_id" in floor_sensors["sensors"][acp_id] and floor_sensors["sensors"][acp_id]["acp_type_id"] in sensor_types:
+                    sensors[acp_id] = floor_sensors["sensors"][acp_id]
 
             if "metadata" in args and args["metadata"] == "true":
                 response_obj["sensors"] = sensors
@@ -390,43 +334,3 @@ class ReadingsDataAPI(object):
             print(f'get_floor_sensors() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
         return floor_sensors
-
-
-    ####################################################
-    # Get permission to access the requested information
-    ####################################################
-
-    def get_permission(self, person_id, acp_id, object_type, operation_type):
-        # Check if the person has access to acp_id
-        permissions_api_url = self.settings["API_PERMISSIONS"]+'get/'+person_id+"/"+acp_id+"/"+object_type+"/"+operation_type
-        #fetch data from Sensors api
-        try:
-            response = requests.get(permissions_api_url)
-            response.raise_for_status()
-            # access JSON content
-            permission_info = response.json()
-        except HTTPError as http_err:
-            print(f'API Permissions HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
-        except Exception as err:
-            print(f'API Permissions Other GET error occurred: {err}')
-            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
-
-        return permission_info
-
-    def check_admin_group_member(self, person_id):
-        permissions_api_url = self.settings["API_PERMISSIONS"]+'get_admin/'+person_id
-        #fetch data from Sensors api
-        try:
-            response = requests.get(permissions_api_url)
-            response.raise_for_status()
-            # access JSON content
-            permission_info = response.json()
-        except HTTPError as http_err:
-            print(f'API Permissions HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: API Permissions HTTP error." }
-        except Exception as err:
-            print(f'API Permissions Other GET error occurred: {err}')
-            return { "acp_error_msg": "readings_data_api: Exception in API Permissions."}
-
-        return permission_info['permission']

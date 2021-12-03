@@ -43,20 +43,10 @@ class PermissionsAPI(object):
         BIM = self.load_BIM()
         self.basePath = self.settings['readings_base_path']
 
-    def get(self, person_id, object_id, object_type, operation_type, args):
+    def check_abac(self, access_request):
         response_obj = {}
 
-        if object_type == 'sensors':
-            response_obj = self.get_sensor_permissions(person_id, object_id, operation_type, args)
-        elif object_type == 'bim':
-            response_obj = self.get_bim_permissions(person_id, object_id, operation_type, args)
-        elif object_type == 'readings':
-            response_obj = self.get_reading_permissions(person_id, object_id, operation_type, args)
-        elif object_type == 'people':
-            response_obj = self.get_people_permissions(person_id, object_id, operation_type, args)
-        else:
-            response_obj["acp_error_id"] = "OBJECT_TYPE_ERROR"
-            response_obj["acp_error_msg"] = "Object "+object_type+ "is not a valid object type."
+
 
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
