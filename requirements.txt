@@ -1,1 +1,8 @@
 jsonpath-ng
+flask
+flask-cors
+flask-wtf
+pandas
+numpy
+requests
+psycopg2
