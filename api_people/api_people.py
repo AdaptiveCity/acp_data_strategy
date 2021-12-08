@@ -26,6 +26,16 @@ def get_route(person_id):
     response.mimetype = "application/json"
     return response
 
+# Return a list of people
+# We could support querystring filters e.g.
+# '?parent_instid=CL
+@app.route('/list/')
+#@cross_origin()
+def list_route():
+    global data_api
+    return data_api.list(request.args)
+
+
 # /get_history/<person_id>/ :
 # Similar to '/get/' but returns entire history of metadata for a given person.
 @app.route('/get_history/<person_id>/')

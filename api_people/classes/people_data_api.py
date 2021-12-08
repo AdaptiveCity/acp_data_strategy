@@ -23,6 +23,7 @@ DEBUG = True
 
 PEOPLE=None
 INSTS=None
+GROUPS=None
 
 class PeopleDataAPI(object):
 
@@ -40,6 +41,9 @@ class PeopleDataAPI(object):
         INSTS = self.load_insts()
         print("Loaded insts table")
 
+        GROUPS = self.load_groups()
+        print("Loaded groups table")
+
         # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
         self.load_coordinate_systems()
 
@@ -55,17 +59,55 @@ class PeopleDataAPI(object):
             print("get {}".format(person_id), file=sys.stdout)
 
         # Read the person from the DATABASE, purely to refresh the in-memory cache (People)
-        
+
         person_info = self.db_lookup_person(person_id)
 
         if person_info == None:
             return {'error': 'Person not present'}
-        
+
         if path:
-            all_insts = self.retrieve_person_ints(person_info, path)
+            all_insts = self.retrieve_person_insts(person_info, path)
             person_info['insts'] = all_insts
 
         return person_info
+
+    # Return a list of people's metadata
+    # Maybe we should add "insts": { } for relevant inst metadata
+    # Maybe we should add "groups": { } for relevant group metadata
+    # Returns { "people": { } }
+    def list(self, args):
+        global PEOPLE
+        # debug listing of querystring args
+        if DEBUG:
+            args_str = ""
+            for key in args:
+                args_str += key+"="+args.get(key)+" "
+            print("list() {}".format(args_str) )
+        # Set bool to include sensor type metadata
+        include_inst_info = "inst_metadata" in args and args["inst_metadata"] == "true"
+        include_group_info = "group_metadata" in args and args["group_metadata"] == "true"
+        person_list_obj = {}
+        inst_list_obj = {}
+        group_list_obj = {}
+
+        for person_id in PEOPLE:
+            person = PEOPLE[person_id]
+
+            if True:                   # Here's where we'd filter the results
+                person_list_obj[person_id] = person
+                if include_inst_info and "acp_type_id" in person:
+                    acp_type_id = person["acp_type_id"]
+                    inst_info = None #self.type_lookup(acp_type_id)
+                    if info_info is not None:
+                        inst_list_obj[acp_type_id] = type_info
+
+        # Build return object { sensors: [..], types: [..]}
+        return_obj = { 'people': person_list_obj }
+        if include_inst_info:
+            return_obj["insts"] = inst_list_obj
+
+        return return_obj
+
 
     # Get the full history of metadata for a given person
     # This method will necessarily read the data from the database.
@@ -144,6 +186,25 @@ class PeopleDataAPI(object):
 
         return insts_data
 
+    # Load ALL the Groups data from store
+    def load_groups(self):
+
+        # To select *all* the latest inst objects
+        query = "SELECT group_id, group_info FROM groups WHERE acp_ts_end IS NULL"
+
+        try:
+            groups_data = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                groups_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        return groups_data
+
     # Return metadata from DATABASE for a single person
     # and update entry in-memory cache (BIM_data).
     def db_lookup_person(self, person_id):
@@ -188,13 +249,13 @@ class PeopleDataAPI(object):
         return history
 
     # Return all institutions in hierarchy
-    def retrieve_person_ints(self, person_info, path):
+    def retrieve_person_insts(self, person_info, path):
         global INSTS
         all_insts = {}
         person_insts = person_info['insts']
 
         all_insts.update(person_insts)
-        
+
         try:
             for inst in person_insts:
                 if inst in INSTS.keys():
@@ -205,7 +266,7 @@ class PeopleDataAPI(object):
         except:
             print(sys.exc_info(),flush=True,file=sys.stderr)
             return []
-        
+
         return all_insts
 
     ####################################################################
