@@ -2,8 +2,8 @@
 
 if [ -z "$1" ]
 then
-    echo 'Usage "./restart.sh <partial command name>"'
-    echo 'e.g.: "./restart.sh api_bim"'
+    echo 'Usage "tools/restart.sh <partial command name>"'
+    echo 'e.g.: "tools/restart.sh api_bim"'
     exit 0
 fi
 
@@ -30,4 +30,5 @@ sleep 2
 
 echo
 echo "Showing status.sh for all API processes:"
-./status.sh
+tools/status.sh
+

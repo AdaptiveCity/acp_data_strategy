@@ -104,6 +104,8 @@ nohup.out
 secrets.py
 secrets/
 
+db_backups/
+
 *.log
 *.err
 
