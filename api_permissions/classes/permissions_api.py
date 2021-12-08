@@ -46,7 +46,7 @@ class PermissionsAPI(object):
     def check_abac(self, access_request):
         response_obj = {}
 
-
+        
 
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
