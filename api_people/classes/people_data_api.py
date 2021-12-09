@@ -24,12 +24,15 @@ DEBUG = True
 PEOPLE=None
 INSTS=None
 GROUPS=None
+BIM=None
 
 class PeopleDataAPI(object):
 
     def __init__(self, settings):
         global PEOPLE
         global INSTS
+        global GROUPS
+        global BIM
         print("Initializing People DataAPI")
         self.settings = settings
 
@@ -43,6 +46,9 @@ class PeopleDataAPI(object):
 
         GROUPS = self.load_groups()
         print("Loaded groups table")
+
+        BIM = self.load_bim()
+        print("Loaded bim table")
 
         # Import acp_coordinates Python modules for each coordinate system listed in settings.json.
         self.load_coordinate_systems()
@@ -65,9 +71,11 @@ class PeopleDataAPI(object):
         if person_info == None:
             return {'error': 'Person not present'}
 
-        if path:
-            all_insts = self.retrieve_person_insts(person_info, path)
-            person_info['insts'] = all_insts
+        person_insts = self.retrieve_person_insts(person_info, path)
+        person_bim = self.retrieve_person_bim(person_info, path)
+        
+        person_info['insts'] = person_insts
+        person_info['bim'] = person_bim
 
         return person_info
 
@@ -189,7 +197,7 @@ class PeopleDataAPI(object):
     # Load ALL the Groups data from store
     def load_groups(self):
 
-        # To select *all* the latest inst objects
+        # To select *all* the latest group objects
         query = "SELECT group_id, group_info FROM groups WHERE acp_ts_end IS NULL"
 
         try:
@@ -204,6 +212,25 @@ class PeopleDataAPI(object):
             return {}
 
         return groups_data
+
+    # Load ALL the BIM data from store
+    def load_bim(self):
+
+        # To select *all* the latest bim objects
+        query = "SELECT crate_id, crate_info FROM bim WHERE acp_ts_end IS NULL"
+
+        try:
+            BIM_data = {}
+            rows = self.db_conn.dbread(query, None)
+            for row in rows:
+                id, json_info = row
+                BIM_data[id] = json_info
+
+        except:
+            print(sys.exc_info(),flush=True,file=sys.stderr)
+            return {}
+
+        return BIM_data
 
     # Return metadata from DATABASE for a single person
     # and update entry in-memory cache (BIM_data).
@@ -251,23 +278,41 @@ class PeopleDataAPI(object):
     # Return all institutions in hierarchy
     def retrieve_person_insts(self, person_info, path):
         global INSTS
-        all_insts = {}
         person_insts = person_info['insts']
 
-        all_insts.update(person_insts)
+        if path:
+            try:
+                for inst in person_insts:
+                    parents = []
+                    if inst in INSTS.keys():
+                        parent = INSTS[inst]['parent_insts'][0]
+                        while parent != 'ROOT':
+                            parents.append(parent)
+                            parent = INSTS[parent]['parent_insts'][0]
+                    person_insts[inst]['parents'] = parents
+            except:
+                print(sys.exc_info(),flush=True,file=sys.stderr)
+                return []
 
-        try:
-            for inst in person_insts:
-                if inst in INSTS.keys():
-                    parent = INSTS[inst]['parent_insts'][0]
-                    while parent != 'ROOT':
-                        all_insts.update({parent:{'inst_id':parent, 'relation':'belongs'}})
-                        parent = INSTS[parent]['parent_insts'][0]
-        except:
-            print(sys.exc_info(),flush=True,file=sys.stderr)
-            return []
+        return person_insts
 
-        return all_insts
+    # Return all bim objects in hierrachy
+    def retrieve_person_bim(self, person_info, path):
+        global BIM
+        person_bim = person_info['bim']
+
+        if path:
+            for crate in person_bim:
+                parent_crates = []
+                parent = BIM[crate]['parent_crate_id']
+                while parent not in self.settings['coordinate_systems'] and parent in BIM:
+                    parent_crates.append(parent)
+                    parent = BIM[parent]['parent_crate_id']
+                parent_crates.append(parent)
+                
+                person_bim[crate]['parents'] = parent_crates
+
+        return person_bim
 
     ####################################################################
     # Load the coordinate system modules into self.coordinate_systems  #
