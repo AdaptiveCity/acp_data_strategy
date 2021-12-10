@@ -73,16 +73,16 @@ class PeopleDataAPI(object):
 
         person_insts = self.retrieve_person_insts(person_info, path)
         person_bim = self.retrieve_person_bim(person_info, path)
-        
+
         person_info['insts'] = person_insts
         person_info['bim'] = person_bim
 
         return person_info
 
     # Return a list of people's metadata
-    # Maybe we should add "insts": { } for relevant inst metadata
-    # Maybe we should add "groups": { } for relevant group metadata
-    # Returns { "people": { } }
+    # Maybe we should add "insts_info": { } for relevant inst metadata
+    # Maybe we should add "groups_info": { } for relevant group metadata
+    # Returns { "people_info": { } }
     def list(self, args):
         global PEOPLE
         # debug listing of querystring args
@@ -92,8 +92,8 @@ class PeopleDataAPI(object):
                 args_str += key+"="+args.get(key)+" "
             print("list() {}".format(args_str) )
         # Set bool to include sensor type metadata
-        include_inst_info = "inst_metadata" in args and args["inst_metadata"] == "true"
-        include_group_info = "group_metadata" in args and args["group_metadata"] == "true"
+        include_inst_info = "insts_metadata" in args and args["insts_metadata"] == "true"
+        include_group_info = "groups_metadata" in args and args["groups_metadata"] == "true"
         person_list_obj = {}
         inst_list_obj = {}
         group_list_obj = {}
@@ -103,16 +103,17 @@ class PeopleDataAPI(object):
 
             if True:                   # Here's where we'd filter the results
                 person_list_obj[person_id] = person
-                if include_inst_info and "acp_type_id" in person:
-                    acp_type_id = person["acp_type_id"]
-                    inst_info = None #self.type_lookup(acp_type_id)
-                    if info_info is not None:
-                        inst_list_obj[acp_type_id] = type_info
+                if include_inst_info and "insts" in person:
+                    for inst_id in person["insts"]:
+                        if not inst_id in inst_list_obj:
+                            inst_info = self.inst_lookup(inst_id)
+                            if inst_info is not None:
+                                inst_list_obj[inst_id] = inst_info
 
         # Build return object { sensors: [..], types: [..]}
-        return_obj = { 'people': person_list_obj }
+        return_obj = { 'people_info': person_list_obj }
         if include_inst_info:
-            return_obj["insts"] = inst_list_obj
+            return_obj["insts_info"] = inst_list_obj
 
         return return_obj
 
@@ -275,6 +276,15 @@ class PeopleDataAPI(object):
 
         return history
 
+    # Lookup an inst (from the in-memory cache)
+    def inst_lookup(self, inst_id):
+        global INSTS
+        try:
+            inst_info = INSTS[inst_id]
+        except:
+            return None
+        return inst_info
+
     # Return all institutions in hierarchy
     def retrieve_person_insts(self, person_info, path):
         global INSTS
@@ -309,7 +319,7 @@ class PeopleDataAPI(object):
                     parent_crates.append(parent)
                     parent = BIM[parent]['parent_crate_id']
                 parent_crates.append(parent)
-                
+
                 person_bim[crate]['parents'] = parent_crates
 
         return person_bim
