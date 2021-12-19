@@ -56,7 +56,7 @@ def get_floor_number_route(coordinate_system, floor_number):
 @cross_origin()
 def get_gps_route():
     global data_api
-    return data_api.get_gps()
+    return data_api.get_gps(request.args)
 
 #
 @app.route('/get_type/<acp_type_id>/')
