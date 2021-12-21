@@ -18,22 +18,19 @@ CORS(app)
 #api/people for People oriented (meta)data
 #####################################
 
-@app.route('/get/<person_id>/')
+@app.route('/get/<person_id>/') # ?inst_metadata=true&bim_metadata=true&group_metadata=true
 def get_route(person_id):
     global data_api
-    path = True if request.args.get('path') == 'true' else False
-    response = make_response(data_api.get(person_id, path), 200)
-    response.mimetype = "application/json"
-    return response
+    return data_api.get(person_id, request.args)
 
 # Return a list of people
 # We could support querystring filters e.g.
 # '?parent_instid=CL
-@app.route('/list/')
+@app.route('/person_list/')
 #@cross_origin()
 def list_route():
     global data_api
-    return data_api.list(request.args)
+    return data_api.person_list(request.args)
 
 
 # /get_history/<person_id>/ :
