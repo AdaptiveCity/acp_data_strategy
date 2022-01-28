@@ -222,6 +222,89 @@ class ReadingsDataAPI(object):
 #  SUPPORT FUNCTIONS                                            #
 #################################################################
 
+    #returns day's worth of readings for an entire crate, ie FF-GW20
+    #makes suse of the get_day_records after being supplied a list
+    #of sensors in that crate, takese crate, day and type as arguments
+
+    #get bim
+     # Get sensors for a given crate_id, returning dictionary of sensors
+    # def get_bim(self, coordinate_system, crate_id):
+    #     #iterate through sensors.json and collect all crates
+    #     sensor_list_obj = {}
+
+    #     for acp_id in SENSORS:
+    #         sensor = SENSORS[acp_id]
+    #         if ( "crate_id" in sensor and
+    #              sensor["crate_id"] == crate_id ):
+    #             sensor_list_obj[acp_id] =  sensor
+
+    #     self.add_xyzf(coordinate_system, sensor_list_obj)
+
+    #     return { 'sensors': sensor_list_obj }
+
+     # /get_floor_feature/<system>/<floor>/<feature>/ returns most recent sensor reading for
+    # all sensors with required feature on a given floor
+    # E.g. /api/sensors/get_floor_feature/WGB/1/temperature
+    # { readings: { dict acp_id -> reading }
+    #   sensors: { dict acp_id -> sensor metadata }
+    #   sensor_types: { dict acp_type_id -> sensor type metadata }
+    # }
+    def get_crate_feature(self, system, floor, feature_id, args):
+        #t1 = datetime.now()
+        response_obj = {}
+        try:
+            if DEBUG:
+                args_str = ""
+                for key in args:
+                    args_str += key+"="+args.get(key)+" "
+                print(f"Readings API get_crate_feature {system}/{floor}/{feature_id}/{args_str}", file=sys.stderr)
+
+            # Call Sensors API to find sensors on given floor
+            # get_floor_sensors returns:
+            # { "sensors": { },
+            #   "sensor_type_info": {} #DEBUG will change to "sensor_types"
+            # }
+            floor_sensors = self.get_floor_sensors(system, floor)
+
+            # Filter the sensor types to only those containing feature (maybe do this in sensors API)
+            sensor_types = {}
+            for acp_type_id in floor_sensors["sensor_type_info"]: #DEBUG ["sensor_types"]
+                if feature_id in floor_sensors["sensor_type_info"][acp_type_id]["features"]:
+                    sensor_types[acp_type_id] = floor_sensors["sensor_type_info"][acp_type_id]
+            # print(f'feature sensor_types: {sensor_types}')
+
+            # Filter the sensors to only include sensor_types with feature
+            sensors = {}
+            for acp_id in floor_sensors["sensors"]:
+                if "acp_type_id" in floor_sensors["sensors"][acp_id] and floor_sensors["sensors"][acp_id]["acp_type_id"] in sensor_types:
+                    sensors[acp_id] = floor_sensors["sensors"][acp_id]
+
+            if "metadata" in args and args["metadata"] == "true":
+                response_obj["sensors"] = sensors
+                response_obj["sensor_types"] = sensor_types
+
+            readings = {}
+
+            for acp_id in sensors:
+                sensor_info = sensors[acp_id]
+                type_info = sensor_types[sensor_info["acp_type_id"]]
+                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
+                if feature_reading is not None:
+                    readings[acp_id] = feature_reading
+
+            response_obj["readings"] = readings
+
+        except:
+            print(f'get_floor_feature() sensor {system} {floor} {feature_id} exception', file=sys.stderr)
+            print(sys.exc_info(), file=sys.stderr)
+            return '{ "acp_error_msg": "readings_data_api get_floor_feature Exception" }'
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        # print(f'time: {datetime.now()-t1}')
+
+        return response
+
     # Get a day's-worth of sensor readings for required sensor as list of STRINGS (one per reading)
     # readings_day will be "YYYY-MM-DD"
     # sensor_info is required to work out where the data is stored
@@ -330,3 +413,111 @@ class ReadingsDataAPI(object):
             print(f'get_floor_sensors() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
         return floor_sensors
+
+
+    
+    # E.g. get_crate_sensors('WGB','FN07')
+    def get_crate_sensors(self, system, crate,args):
+        print(f"Readings API get_floor_sensors {system} {crate}")
+        print('\nALL args- ',args)
+        #sensors_api_url = self.settings["API_SENSORS"]+f'get_bim/{system}/{crate}'
+        #DEBUG only, I know it's not how it's supposed to be 
+        sensors_api_url = self.settings["API_SENSORS"]+'get_bim/'+str(system)+'/'+str(crate)+'/'#http://adacity-jb.al.cl.cam.ac.uk/api/sensors/'+f'get_bim/{system}/{crate}'
+        print('\nSENSOR URL: ',sensors_api_url,'\n')
+
+        #fetch data from Sensors api
+        try:
+            response = requests.get(sensors_api_url)
+            response.raise_for_status()
+            # access JSON content
+            crate_sensors = response.json()
+            sensor_list=[]
+
+            sensor_data={}
+
+            for sensor in crate_sensors['sensors']:
+                print('\nSENSOR:', sensor)
+                sensor_list.append(sensor_list)
+                #print('what',self.get_day2(sensor,args))
+                #get day's worth of readings
+                sensor_data[sensor]=json.loads(self.get_day2(sensor,args))
+
+
+                sensor_data[sensor]["acp_id"]=sensor
+
+        
+            print('\nTOTAL SENSORS IN ',crate,' : ',len(sensor_list))
+        except HTTPError as http_err:
+            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: get_crate_sensors() HTTP error." }
+        except Exception as err:
+            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in get_crate_sensors()."}
+       
+            
+       
+        return sensor_data
+        #return crate_sensors
+
+        # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
+    def get_day2(self, acp_id, args):
+        response_obj = {}
+
+        # Lookup the sensor metadata, this will include the
+        # filepath to the readings, and also may be returned
+        # in the response.
+        sensor_info = self.get_sensor_info(acp_id)
+
+        if "metadata" in args and args["metadata"] == "true":
+            response_obj["sensor_metadata"] = sensor_info
+
+        # Only get readings if sensor_info is not {}
+        if bool(sensor_info):
+            try:
+                if DEBUG:
+                    args_str = ""
+                    for key in args:
+                        args_str += key+"="+args.get(key)+" "
+                    print("get_day() {}/{}".format(acp_id,args_str) )
+
+                if "date" in args:
+                    selected_date = args.get("date")
+                else:
+                    selected_date = Utils.getDateToday()
+
+                records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
+
+                readings = []
+                
+                for line in records:
+                    raw_metadata=json.loads(line)
+                    cooked_metadata={}
+                    cooked_metadata["acp_feed_ts"]=raw_metadata["acp_feed_ts"]
+                    cooked_metadata["acp_ts"]=raw_metadata["acp_ts"]
+                    cooked_metadata["acp_id"]=raw_metadata["acp_id"]
+                    cooked_metadata["acp_type_id"]=raw_metadata["acp_type_id"]
+                    cooked_metadata["payload_cooked"]=raw_metadata["payload_cooked"]
+                    if(len(cooked_metadata["payload_cooked"])>2):
+                        #cooked_metadata=raw_metadata
+                        readings.append(cooked_metadata)
+
+                response_obj["readings"] = readings
+                print('\nTOTAL READINGS FOR ',acp_id, ' : ',len(readings))
+
+            except FileNotFoundError as e:
+                print(f'get() sensor {acp_id} readings for {selected_date} not found',file=sys.stderr)
+                print(sys.exc_info())
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_READINGS"
+                response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
+        else:
+            response_obj = {}
+            response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
+            response_obj["acp_error_msg"] = "No metadata available for this sensor, so location of readings is unknown"
+
+        #print('RESPONSE', response_obj)
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        #print('\n\ntype: ',type(json_response))
+        return json_response
