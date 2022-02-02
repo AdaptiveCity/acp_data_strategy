@@ -6,9 +6,12 @@ from collections import defaultdict
 import sys
 from datetime import datetime
 import time
+import datetime
 from flask import request, make_response
 from pathlib import Path
 from jsonpath_ng import jsonpath, parse
+from statistics import mean
+from statistics import stdev
 
 from classes.utils import Utils
 
@@ -371,6 +374,7 @@ class ReadingsDataAPI(object):
         #print(f'get_feature_reading() {acp_id} returning None',file=sys.stderr)
         return None
 
+
     #################################################
     # Get data from the Sensors API
     #################################################
@@ -392,6 +396,134 @@ class ReadingsDataAPI(object):
             return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
         return sensor_info
 
+
+    #################################################
+    #                Helper Functions               #
+    #################################################
+    def get_crate_chart(self, system, crate,args):
+        args={'date':'2022-01-20'}
+        crate_sensors=self.get_crate_sensors(system, crate, args)
+        sensor_data={'readings':{}}
+        try:
+            # sensor_list=[]
+# 
+            # sensor_data={}
+            day_ts=self.get_days_range([2022,1,20])
+            ts_list=self.split_time(day_ts[0],day_ts[1],300)
+            iterator=0
+            for timestamp in ts_list:
+                sensor_iterator=0
+                sensors_used=[]
+                print(timestamp)
+                sensor_data['readings'][timestamp]={'acp_ts':timestamp}
+
+                payload_tracker={'co2':[], 'temperature':[], 'humidity':[]}
+                ts_tracker={}
+                ts_list=[]
+                
+                for sensor in crate_sensors:
+                
+                    payload_list=crate_sensors[sensor]['readings']
+                    
+                    get_index=self.binary_search_recursive(payload_list,timestamp,0,len(payload_list)-1)
+                    print(len(payload_list)-1, get_index)
+                    if (get_index==-1):
+                        continue
+                    payload=payload_list[get_index]['payload_cooked']
+                    acp_ts=payload_list[get_index]['acp_ts']
+                    ts_tracker[sensor]=acp_ts
+                    ts_list.append(int(float(acp_ts)))
+                    print(sensor)
+
+                    if "co2" in payload:
+                        if ((payload['co2']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                            payload_tracker['co2'].append(payload['co2'])
+                    
+                    if "temperature" in payload:
+                        if ((payload['temperature']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                            payload_tracker['temperature'].append(payload['temperature'])
+
+                    if "humidity" in payload:
+                        if ((payload['humidity']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                            payload_tracker['humidity'].append(payload['humidity'])
+
+                    data_obj={}
+                   # data_obj['std']=std
+                   # data_obj['payload_cooked']=payload
+                    data_obj['acp_ts']=acp_ts
+                    data_obj['date']=datetime.datetime.fromtimestamp(int(float(acp_ts)))
+                    sensor_data['readings'][timestamp][sensor]=data_obj
+                iterator+=1
+                sensor_data['readings'][timestamp]['date']=datetime.datetime.fromtimestamp(timestamp)
+                sensor_data['readings'][timestamp]['ts_list']=ts_list
+                sensor_data['readings'][timestamp]['ts_mean']=mean(ts_list)
+                sensor_data['readings'][timestamp]['ts_std']=stdev(ts_list)
+                co2=round(mean(payload_tracker['co2']),2)
+                temperature=round(mean(payload_tracker['temperature']),2)
+                humidity=round(mean(payload_tracker['humidity']),2)
+                sensor_data['readings'][timestamp]['payload']={'co2':co2, 'temperature':temperature, 'humidity':humidity}              
+
+                   # data_obj['std']=std
+                   # sensor_data['readings'].append(data_obj)        
+                   # print('\nSENSOR:', sensor)
+                   #sensor_list.append(sensor_list)
+        except HTTPError as http_err:
+            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: get_floor_sensors() HTTP error." }
+        except Exception as err:
+            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
+        return sensor_data#'done'#floor_sensors
+        
+               
+    def binary_search_recursive(self, array, element, start, end):
+        if start > end:
+            return -1
+        
+        mid = (start + end) // 2
+
+        arr_val=int(float(array[mid]['acp_ts']))
+
+        if abs(element - arr_val)<450:
+            return mid
+    
+        if element < arr_val:
+            return self.binary_search_recursive( array, element, start, mid-1)
+        else:
+            return self.binary_search_recursive( array, element, mid+1, end)
+
+    ##get days worth of unix timestamps for 00:00 and 23:59
+    def get_days_range(self,date): #YYYY,MM,DD
+      if date=='today':
+        presentDate = datetime.datetime.now()
+      else:
+        presentDate= datetime.datetime(date[0],date[1],date[2])
+    
+      presentDate = presentDate.replace(minute=0, hour=0, second=0)
+      unix_timestamp = int(datetime.datetime.timestamp(presentDate))
+      ts_start=unix_timestamp
+    
+      if date=='today':
+        presentDate = datetime.datetime.now()
+      else:
+        presentDate = presentDate.replace(minute=59, hour=23, second=59)
+      unix_timestamp = int(datetime.datetime.timestamp(presentDate))
+      ts_end=unix_timestamp
+      print('range',[ts_start, ts_end])
+      return [ts_start, ts_end]
+
+    #split time between two timestamps in x intervals (in seconds)
+    def split_time(self,start,end, split):
+      ts_list=[]
+      start=int(start)
+      end=int(end)
+      iterator=start
+      print(iterator,end)
+      while(iterator<end):
+        ##print(datetime.datetime.utcfromtimestamp(iterator).strftime('%Y-%m-%d %H:%M:%S'))
+        ts_list.append(iterator)
+        iterator+=split  
+      return ts_list
     #################################################
     # Get sensors for a floor from the Sensors API
     #################################################

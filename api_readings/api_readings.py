@@ -41,6 +41,12 @@ def get_day_crate(system, crate_id):
     global data_api
     return data_api.get_crate_sensors(system, crate_id, request.args)
 
+# /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+@app.route('/get_crate_chart/<system>/<crate_id>/')
+def get_crate_chart(system, crate_id):
+    global data_api
+    return data_api.get_crate_chart(system, crate_id, request.args)
+
 # /get_feature/<acp_id>/<feature_id>/[?metadata=true]
 @app.route('/get_feature/<acp_id>/<feature_id>/')
 def get_feature_route(acp_id, feature_id):
