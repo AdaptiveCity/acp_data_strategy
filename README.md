@@ -13,7 +13,7 @@ For the API details, see the README.md for each API family, i.e.
 * [Sensors API](api_sensors/README.md)
 * [People API](api_people/README.md)
 * [Space API](api_space/README.md)
-* [Permission API](api_permission/README.md)
+* [Permission API](api_permissions/README.md)
 
 ## Installation
 
