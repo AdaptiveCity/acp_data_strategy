@@ -1,5 +1,6 @@
 from flask import request
 import requests
+from datetime import date, datetime
 
 class DecisionPoints(object):
     
@@ -10,15 +11,27 @@ class DecisionPoints(object):
         subject_id = access_request['subject']['subject_id']
         action = access_request['action']
 
+        # Check if permission is available for the requested action
+        if action not in permission_info['action']:
+            return grant_access
+
+        # Check if the permission is available at the current time
+        if 'time_check' in permission_info['options']:
+            time_access = self.time_check(self, permission_info['options']['time_check'])
+            if not time_access:
+                return grant_access
+
+        # Get resource values to compare
         resource_data_api = permission_info['resource']['resource_api']
         resource_data_url = settings['API_'+resource_data_api] + 'get/' + subject_id
         response = requests.get(resource_data_url).json()
         resource_value_path = permission_info['resource']['value'].strip().split('.')
-
         resource_val = self.get_value_to_compare(self, response, resource_value_path)
-        compare_result = True if permission_info['subject']['value'] in resource_val else False
 
-        if compare_result and action in permission_info['action']:
+        # Access is possible if the subject value is in resource value
+        compare_result = True if permission_info['subject']['value'] in resource_val else False        
+
+        if compare_result:
             grant_access = True
 
         return grant_access
@@ -29,25 +42,37 @@ class DecisionPoints(object):
 
         action = access_request['action']
 
+        # Check if permission is available for the requested action
+        if action not in permission_info['action']:
+            return grant_access
+
+        # Check if the permission is available at the current time
+        if 'time_check' in permission_info['options']:
+            grant_access = self.time_check(permission_info['options']['time_check'])
+            if not grant_access:
+                return grant_access
+
+        # Get subject values to compare
         subject_id = access_request['subject']['subject_id']
         subject_data_api = permission_info['subject']['subject_api']
         subject_data_url = settings['API_'+subject_data_api] + 'get/' + subject_id+'?path=true'
         subject_response = requests.get(subject_data_url).json()
         subject_value_path = permission_info['subject']['value'].strip().split('.')
-
         subject_val = self.get_value_to_compare(self, subject_response, subject_value_path)
 
+        # Get resource values to compare
         resource_id = access_request['resource']['resource_id']
         resource_data_api = permission_info['resource']['resource_api']
         resource_data_url = settings['API_'+resource_data_api] + 'get/' + resource_id
         resource_response = requests.get(resource_data_url).json()
         resource_value_path = permission_info['resource']['value'].strip().split('.')     
-
         resource_val = self.get_value_to_compare(self, resource_response, resource_value_path)
 
+        # Access is possible if the set (subject_val & resouce_val) is not empty
         compare_result = True if set(subject_val) & set(resource_val) else False
 
-        if not compare_result and permission_info['options']['recurrsive'] != {}:
+        # Check if recurrsive check is required
+        if not compare_result and 'recurrsive' in permission_info['options']:
             check_depth = permission_info['options']['recurrsive']
             rec_subject_val = [x for x in subject_val]
             rec_resource_val = [y for y in resource_val]
@@ -62,6 +87,7 @@ class DecisionPoints(object):
                     if rec_subject_data_api == 'BIM':
                         rec_subject_response = rec_subject_response[val]
 
+                    # Append the parents to the subject_val
                     rec_subject_val.extend(self.get_value_to_compare(self, rec_subject_response, rec_subject_value_path))
 
             if check_depth['resource'] != {}:
@@ -73,17 +99,26 @@ class DecisionPoints(object):
 
                     if rec_resource_data_api == 'BIM':
                         rec_resource_response = rec_resource_response[val]
-
+                    
+                    # Append the parents to the resource_val
                     rec_resource_val.extend(self.get_value_to_compare(self, rec_resource_response, rec_resource_value_path))
 
             compare_result = True if set(rec_subject_val) & set(rec_resource_val) else False               
-
-
-        if compare_result and action in permission_info['action']:
+        
+        if compare_result:
             grant_access = True
                     
         return grant_access
 
+
+
+    ###########################################################################
+    #
+    # Support functions
+    #
+    ###########################################################################
+
+    # Get the required value of an attribute
     def get_value_to_compare(self, resource_response, attribute_value_path):        
 
         attribute_val = None
@@ -111,3 +146,47 @@ class DecisionPoints(object):
                 attribute_val = list(attribute_val.values())
 
         return attribute_val
+
+    # Check if time-based access conditions are met
+    def time_check(self, time_options):
+
+        access_status = False
+
+        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+        now = datetime.now()
+
+        day_list = time_options['day'] if 'day' in time_options else None
+
+        if day_list:
+            if weekdays[now.weekday()] not in day_list:
+                return False
+            else:
+                access_status = True
+
+        time_to_check = time_options['time'] if 'time' in time_options else None
+
+        if time_to_check:
+            time_condition = time_options['time_condition']
+            dt_list = time_to_check.split(':')
+            dt = datetime(now.year, now.month, now.day, int(dt_list[0]), int(dt_list[1]), int(dt_list[2]))
+
+            if time_condition == 'equal':
+                if now == dt:
+                    access_status = True
+                else:
+                    access_status = False
+            elif time_condition == 'pre':
+                if now < dt:
+                    access_status = True
+                else:
+                    access_status = False
+            elif time_condition == 'post':
+                if now > dt:
+                    access_status = True
+                else:
+                    access_status = False
+            else:
+                access_status = False
+
+        return access_status

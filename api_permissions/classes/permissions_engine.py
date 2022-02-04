@@ -51,21 +51,10 @@ class PermissionsEngine(object):
     #         "resource_id": "elsys-co2-041bab",
     #         "resource_type": "sensors"
     #     },
-    #     "action": "R",
-    #     "options": {
-    #         "day": ["Sat", "Sun"],
-    #         "time_after": ["16:00"]
-    #     }
+    #     "action": ["R"]
     # }
     def check_abac(self, access_request):
         response_obj = {}
-
-        # subject_type = access_request['subject']['subject_type']
-        # subject_id = access_request['subject']['subject_id']
-        # resource_type = access_request['resource']['resource_type']
-        # resource_id = access_request['resource']['resource_id']
-        # action = access_request['action']
-        # options = access_request['options']
         
         response_obj = self.get_access_permission(access_request)
 
@@ -93,7 +82,7 @@ class PermissionsEngine(object):
     #
     ###########################################################################
 
-    # Load ALL the BIM data from the store (usually data/BIM.json)
+    # Load ALL the Permissions data from the store (Not used currently)
     def load_permissions(self):
 
         # To select *all* the latest sensor objects:

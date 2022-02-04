@@ -43,6 +43,33 @@ A permission object in the `permission_rules.json` file contains the `subject`, 
         }
     },
 
+    "delete_sensor_access" : {
+        "permission_id": "delete_sensor_access",
+        "permission_info": {
+            "subject" : {
+                "subject_type": "people",
+                "subject_id": "person_id",
+                "subject_api": "PEOPLE",
+                "value": "999999"
+            },
+            "resource": {
+                "resource_type": "people",
+                "resource_id": "group_id",
+                "resource_api": "PEOPLE",
+                "value": "groups.group_id"
+            },
+            "action": ["D"],
+            "options": {
+                "time_check": {
+                    "day": ["Saturday", "Sunday", "Friday"],
+                    "time": "20:00:00",
+                    "time_condition": "pre"
+                }
+            },
+            "decision_point": "resource_check"
+        }
+    },
+
     "occupies_read_access" : {
         "permission_id": "occupies_read_access",
         "permission_info": {
@@ -81,6 +108,6 @@ A permission object in the `permission_rules.json` file contains the `subject`, 
 
 A `permission_order` setting should be added to the `settings.json` file to define the precendence of permissions to be checked. For example, it is better to check for admin access for a user, which if available implies all other permissions are available.
 ```
-"permission_order": ["admin_access", "occupies_read_access"]
+"permission_order": ["admin_access", delete_sensor_access, "occupies_read_access"]
 ```
 **Note:** Might not be required.
