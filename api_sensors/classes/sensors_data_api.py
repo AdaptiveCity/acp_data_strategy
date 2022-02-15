@@ -1,3 +1,4 @@
+from ast import arg
 from os import listdir, path
 import json
 import copy # used for JSON deepcopy
@@ -47,10 +48,21 @@ class SensorsDataAPI(object):
 
     # Get the metadata for a given sensor (e.g. 'rad-ath-003d0f'), including the type metadata
     # Note a 'get' of sensor metadata will read the DATABASE and refresh the entry in the SENSORS dictionary
-    def get(self, acp_id):
+    def get(self, acp_id, args):
         # print(f"get {acp_id}",file=sys.stderr, flush=True)
 
         global SENSORS, SENSOR_TYPES
+
+        if 'person_id' in args:
+            person_id = args['person_id']
+            access_response = requests.get(self.settings['API_PERMISSIONS']+'/get_permission/'+person_id+'/'+acp_id+'/'+'sensors/read').json()
+
+            if access_response['permission'] == False:
+                json_response = json.dumps({'access_error': 'User '+person_id+ ' does not have access to sensor '+acp_id})
+                response = make_response(json_response)
+                response.headers['Content-Type'] = 'application/json'
+                return response
+
         try:
             sensor_info = self.db_lookup_sensor(acp_id)
             # print(f'got db_lookup_sensor {sensor_info}', file=sys.stderr)

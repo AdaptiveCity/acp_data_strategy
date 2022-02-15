@@ -72,6 +72,15 @@ class KLAB(object):
                  "f": building_coordinates["f"]
                }
 
+    def building(self, xyzf):
+        return { 
+                "system": "KLAB",
+                 "x": round(xyzf["x"] /  self.scale["x"],3),
+                 "y": round(xyzf["y"] /  self.scale["y"],3),
+                 "zf": xyzf['z'],
+                 "f": xyzf['f']
+               }
+
     # Convert building coordinate to lat/lng
     # Input: building coordinates
     # Returns: { acp_lat, acp_lng, acp_alt }

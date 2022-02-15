@@ -29,7 +29,7 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    return data_api.get(acp_id)
+    return data_api.get(acp_id, request.args)
 
 # /get_history/<acp_id>/[?metadata=true] :
 # Similar to above but returns entire history of sensor metadata for a given sensor.
