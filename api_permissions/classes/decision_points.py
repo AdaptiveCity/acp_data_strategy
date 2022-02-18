@@ -152,7 +152,7 @@ class DecisionPoints(object):
                     rec_resource_response = requests.get(rec_resource_data_url).json()
                     rec_resource_value_path = check_depth['resource']['value'].strip().split('.')
 
-                    if rec_resource_data_api == 'BIM' and resource_response != {}:
+                    if rec_resource_data_api == 'BIM' and rec_resource_response != {}:
                         rec_resource_response = rec_resource_response[val]
                     
                     # Append the parents to the resource_val

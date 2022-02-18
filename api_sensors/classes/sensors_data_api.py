@@ -127,7 +127,7 @@ class SensorsDataAPI(object):
     #   "sensor_type_info" : { }
     # }
     #DEBUG get_floor_number should return ["sensor_types"] not ["sensor_type_info"]
-    def get_floor_number(self, coordinate_system, floor_number):
+    def get_floor_number(self, coordinate_system, floor_number, args):
         print("SENSORS data_api get_floor_number({},{})".format(coordinate_system, floor_number))
         sensor_list_obj = {}
         # coords.f(acp_location) will return floor number
@@ -143,7 +143,17 @@ class SensorsDataAPI(object):
             if "acp_location" in sensor:
                 loc = sensor["acp_location"]
                 if loc["system"] == coordinate_system and coords.f(loc) == int(floor_number):
-                    sensor_list_obj[acp_id] = sensor
+                    access = True
+                    try:
+                        response = requests.get(self.settings["API_PERMISSIONS"]+f'get_permission/{args["person_id"]}/{acp_id}/sensor/read')
+                        if response.json()['permission'] == False:
+                            access = False
+                    except KeyError as e:
+                        print('KeyError: ',e)                    
+                    if access:
+                        sensor_list_obj[acp_id] = sensor
+
+        
 
         self.add_xyzf(coordinate_system, sensor_list_obj)
 
