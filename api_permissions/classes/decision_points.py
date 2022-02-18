@@ -1,8 +1,33 @@
-from flask import request
+
 import requests
 from datetime import date, datetime
 
 class DecisionPoints(object):
+
+    def resource_list_compare(self, settings, access_request, permission_info):
+        grant_access = False
+
+        action = access_request['action']
+
+        # Check if permission is available for the requested action
+        if action not in permission_info['action']:
+            return grant_access
+
+        # Check if the permission is available at the current time
+        if 'time_check' in permission_info['options']:
+            time_access = self.time_check(self, permission_info['options']['time_check'])
+            if not time_access:
+                return grant_access
+
+        resource_id = access_request['resource']['resource_id']
+        if permission_info['resource']['resource_type'] == 'url':
+            resource_id = '/'.join(resource_id.split('__'))
+        resource_val = permission_info['resource']['value']
+
+        if resource_id in resource_val:
+            grant_access = True
+
+        return grant_access
     
     def resource_check(self, settings, access_request, permission_info):
 
@@ -26,7 +51,15 @@ class DecisionPoints(object):
         resource_data_url = settings['API_'+resource_data_api] + 'get/' + subject_id
         response = requests.get(resource_data_url).json()
         resource_value_path = permission_info['resource']['value'].strip().split('.')
-        resource_val = self.get_value_to_compare(self, response, resource_value_path)
+
+        if resource_data_api == 'BIM' and response != {}:
+            response = response[subject_id]
+            
+        try:
+            resource_val = self.get_value_to_compare(self, response, resource_value_path)
+        except KeyError as e:
+            print('KeyError: ',e)
+            resource_val = []
 
         # Access is possible if the subject value is in resource value
         compare_result = True if permission_info['subject']['value'] in resource_val else False        
@@ -52,21 +85,40 @@ class DecisionPoints(object):
             if not grant_access:
                 return grant_access
 
+        # Check if resource has public access
+        if 'public_access' in permission_info['options']:
+            grant_access = self.public_access_check(self, permission_info, access_request, settings)
+            if grant_access:
+                return grant_access
+
         # Get subject values to compare
         subject_id = access_request['subject']['subject_id']
         subject_data_api = permission_info['subject']['subject_api']
         subject_data_url = settings['API_'+subject_data_api] + 'get/' + subject_id+'?path=true'
         subject_response = requests.get(subject_data_url).json()
         subject_value_path = permission_info['subject']['value'].strip().split('.')
-        subject_val = self.get_value_to_compare(self, subject_response, subject_value_path)
+
+        try:
+            subject_val = self.get_value_to_compare(self, subject_response, subject_value_path)
+        except KeyError as e:
+            print('KeyError: ',e)
+            subject_val = []
 
         # Get resource values to compare
         resource_id = access_request['resource']['resource_id']
         resource_data_api = permission_info['resource']['resource_api']
         resource_data_url = settings['API_'+resource_data_api] + 'get/' + resource_id
         resource_response = requests.get(resource_data_url).json()
-        resource_value_path = permission_info['resource']['value'].strip().split('.')     
-        resource_val = self.get_value_to_compare(self, resource_response, resource_value_path)
+        resource_value_path = permission_info['resource']['value'].strip().split('.')
+
+        if resource_data_api == 'BIM' and resource_response != {}:
+            resource_response = resource_response[resource_id]
+
+        try:
+            resource_val = self.get_value_to_compare(self, resource_response, resource_value_path)
+        except KeyError as e:
+            print('KeyError: ',e)
+            resource_val = []
 
         # Access is possible if the set (subject_val & resouce_val) is not empty
         compare_result = True if set(subject_val) & set(resource_val) else False
@@ -88,7 +140,10 @@ class DecisionPoints(object):
                         rec_subject_response = rec_subject_response[val]
 
                     # Append the parents to the subject_val
-                    rec_subject_val.extend(self.get_value_to_compare(self, rec_subject_response, rec_subject_value_path))
+                    try:
+                        rec_subject_val.extend(self.get_value_to_compare(self, rec_subject_response, rec_subject_value_path))
+                    except KeyError as e:
+                        print('KeyError: ',e)
 
             if check_depth['resource'] != {}:
                 for val in resource_val:
@@ -97,11 +152,14 @@ class DecisionPoints(object):
                     rec_resource_response = requests.get(rec_resource_data_url).json()
                     rec_resource_value_path = check_depth['resource']['value'].strip().split('.')
 
-                    if rec_resource_data_api == 'BIM':
+                    if rec_resource_data_api == 'BIM' and resource_response != {}:
                         rec_resource_response = rec_resource_response[val]
                     
                     # Append the parents to the resource_val
-                    rec_resource_val.extend(self.get_value_to_compare(self, rec_resource_response, rec_resource_value_path))
+                    try:
+                        rec_resource_val.extend(self.get_value_to_compare(self, rec_resource_response, rec_resource_value_path))
+                    except KeyError as e:
+                        print('KeyError: ',e)                        
 
             compare_result = True if set(rec_subject_val) & set(rec_resource_val) else False               
         
@@ -119,7 +177,10 @@ class DecisionPoints(object):
     ###########################################################################
 
     # Get the required value of an attribute
-    def get_value_to_compare(self, resource_response, attribute_value_path):        
+    def get_value_to_compare(self, resource_response, attribute_value_path):
+
+        if resource_response == {}:
+            return []      
 
         attribute_val = None
 
@@ -190,3 +251,15 @@ class DecisionPoints(object):
                 access_status = False
 
         return access_status
+
+    # Check if a resource is publically available
+    def public_access_check(self, permission_info, access_request, settings):
+
+        public_access_list = permission_info['options']['public_access']
+
+        resource_id = access_request['resource']['resource_id']
+
+        if resource_id in public_access_list:
+            return True
+        
+        return False
