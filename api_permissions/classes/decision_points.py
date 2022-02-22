@@ -275,21 +275,23 @@ class DecisionPoints(object):
 
         grant_access = False
 
-        insts = subject_response['insts']
+        if 'insts' in subject_response:            
 
-        inst_list = list(insts.keys())
+            insts = subject_response['insts']
 
-        for key in insts:
-            inst_list.extend(insts[key]['parents'])
+            inst_list = list(insts.keys())
 
-        insts_to_compare = list(permission_info['options']['institute_access'].keys())
+            for key in insts:
+                inst_list.extend(insts[key]['parents'])
 
-        compare_result = True if set(inst_list) & set(insts_to_compare) else False
+            insts_to_compare = list(permission_info['options']['institute_access'].keys())
 
-        if compare_result:
-            for inst in set(inst_list) & set(insts_to_compare):
-                if resource_id in permission_info['options']['institute_access'][inst]:
-                    grant_access = True
-                    break
+            compare_result = True if set(inst_list) & set(insts_to_compare) else False
+
+            if compare_result:
+                for inst in set(inst_list) & set(insts_to_compare):
+                    if resource_id in permission_info['options']['institute_access'][inst]:
+                        grant_access = True
+                        break
         
         return grant_access
