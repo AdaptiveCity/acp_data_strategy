@@ -176,6 +176,7 @@ class SensorsDataAPI(object):
     def get_bim(self, coordinate_system, crate_id):
         #iterate through sensors.json and collect all crates
         sensor_list_obj = {}
+        return_obj = {}
 
         for acp_id in SENSORS:
             
@@ -186,7 +187,20 @@ class SensorsDataAPI(object):
 
         self.add_xyzf(coordinate_system, sensor_list_obj)
 
-        return { 'sensors': sensor_list_obj }
+        return_obj["sensors"] = sensor_list_obj
+
+        # Iterate through the sensors and add sensor_type_info for each
+        sensor_type_info = {}
+        for acp_id in sensor_list_obj:
+            sensor = sensor_list_obj[acp_id]
+            if "acp_type_id" in sensor:
+                sensor_type_id = sensor["acp_type_id"]
+                if sensor_type_id in SENSOR_TYPES and sensor_type_id not in sensor_type_info:
+                    sensor_type_info[sensor_type_id] = SENSOR_TYPES[sensor_type_id]
+
+        return_obj["sensor_type_info"] = sensor_type_info
+
+        return return_obj
 
     #DEBUG this function needs parameters or renaming
     #DEBUG moved from space API

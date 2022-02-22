@@ -47,6 +47,12 @@ def get_floor_feature_route(system, floor, feature_id):
     global data_api
     return data_api.get_floor_feature(system, floor, feature_id, request.args)
 
+# /get_crate_feature/<system>/<crate>/<feature_id>/[?metadata=true]
+@app.route('/get_crate_feature/<system>/<crate>/<feature_id>/')
+def get_crate_feature_route(system, crate, feature_id):
+    global data_api
+    return data_api.get_crate_feature(system, crate, feature_id, request.args)
+
 ####################################################################
 #
 # Main

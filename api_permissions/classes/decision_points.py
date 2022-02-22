@@ -87,15 +87,16 @@ class DecisionPoints(object):
 
         # Check if resource has public access
         if 'public_access' in permission_info['options']:
-            grant_access = self.public_access_check(self, permission_info, access_request, settings)
+            grant_access = self.public_access_check(self, permission_info, access_request)
             if grant_access:
-                return grant_access
+                return grant_access        
 
         # Get subject values to compare
         subject_id = access_request['subject']['subject_id']
         subject_data_api = permission_info['subject']['subject_api']
         subject_data_url = settings['API_'+subject_data_api] + 'get/' + subject_id+'?path=true'
-        subject_response = requests.get(subject_data_url).json()
+        subject_response = requests.get(subject_data_url).json()        
+
         subject_value_path = permission_info['subject']['value'].strip().split('.')
 
         try:
@@ -108,11 +109,17 @@ class DecisionPoints(object):
         resource_id = access_request['resource']['resource_id']
         resource_data_api = permission_info['resource']['resource_api']
         resource_data_url = settings['API_'+resource_data_api] + 'get/' + resource_id
-        resource_response = requests.get(resource_data_url).json()
-        resource_value_path = permission_info['resource']['value'].strip().split('.')
+        resource_response = requests.get(resource_data_url).json()        
 
         if resource_data_api == 'BIM' and resource_response != {}:
             resource_response = resource_response[resource_id]
+
+        if 'institute_access' in permission_info['options'] and permission_info['subject']['subject_api'] == 'PEOPLE' and permission_info['resource']['resource_api'] == 'BIM':
+            grant_access = self.institute_access_check(self, permission_info, subject_response, resource_id)
+            if grant_access:
+                return grant_access
+
+        resource_value_path = permission_info['resource']['value'].strip().split('.')
 
         try:
             resource_val = self.get_value_to_compare(self, resource_response, resource_value_path)
@@ -253,7 +260,7 @@ class DecisionPoints(object):
         return access_status
 
     # Check if a resource is publically available
-    def public_access_check(self, permission_info, access_request, settings):
+    def public_access_check(self, permission_info, access_request):
 
         public_access_list = permission_info['options']['public_access']
 
@@ -263,3 +270,26 @@ class DecisionPoints(object):
             return True
         
         return False
+
+    def institute_access_check(self, permission_info, subject_response, resource_id):
+
+        grant_access = False
+
+        insts = subject_response['insts']
+
+        inst_list = list(insts.keys())
+
+        for key in insts:
+            inst_list.extend(insts[key]['parents'])
+
+        insts_to_compare = list(permission_info['options']['institute_access'].keys())
+
+        compare_result = True if set(inst_list) & set(insts_to_compare) else False
+
+        if compare_result:
+            for inst in set(inst_list) & set(insts_to_compare):
+                if resource_id in permission_info['options']['institute_access'][inst]:
+                    grant_access = True
+                    break
+        
+        return grant_access

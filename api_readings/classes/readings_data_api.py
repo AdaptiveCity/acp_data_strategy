@@ -222,6 +222,70 @@ class ReadingsDataAPI(object):
 
         return response
 
+    # /get_crate_feature/<system>/<crate_id>/<feature>/ returns most recent sensor reading for
+    # all sensors with required feature in a given crate_id
+    # E.g. /api/sensors/get_crate_feature/WGB/FN07/temperature
+    # { readings: { dict acp_id -> reading }
+    #   sensors: { dict acp_id -> sensor metadata }
+    #   sensor_types: { dict acp_type_id -> sensor type metadata }
+    # }
+    def get_crate_feature(self, system, crate_id, feature_id, args):
+        #t1 = datetime.now()
+        response_obj = {}
+        try:
+            if DEBUG:
+                args_str = ""
+                for key in args:
+                    args_str += key+"="+args.get(key)+" "
+                print(f"Readings API get_floor_feature {system}/{crate_id}/{feature_id}/{args_str}", file=sys.stderr)
+
+            # Call Sensors API to find sensors on given floor
+            # get_floor_sensors returns:
+            # { "sensors": { },
+            #   "sensor_type_info": {} #DEBUG will change to "sensor_types"
+            # }
+            crate_sensors = self.get_crate_sensors(system, crate_id)
+
+            # Filter the sensor types to only those containing feature (maybe do this in sensors API)
+            sensor_types = {}
+            for acp_type_id in crate_sensors["sensor_type_info"]: #DEBUG ["sensor_types"]
+                if feature_id in crate_sensors["sensor_type_info"][acp_type_id]["features"]:
+                    sensor_types[acp_type_id] = crate_sensors["sensor_type_info"][acp_type_id]
+            # print(f'feature sensor_types: {sensor_types}')
+
+            # Filter the accessible sensors to only include sensor_types with feature
+            sensors = {}
+
+            for acp_id in crate_sensors["sensors"]:
+                if "acp_type_id" in crate_sensors["sensors"][acp_id] and crate_sensors["sensors"][acp_id]["acp_type_id"] in sensor_types:
+                    sensors[acp_id] = crate_sensors["sensors"][acp_id]
+
+            if "metadata" in args and args["metadata"] == "true":
+                response_obj["sensors"] = sensors
+                response_obj["sensor_types"] = sensor_types
+
+            readings = {}
+
+            for acp_id in sensors:
+                sensor_info = sensors[acp_id]
+                type_info = sensor_types[sensor_info["acp_type_id"]]
+                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
+                if feature_reading is not None:
+                    readings[acp_id] = feature_reading
+
+            response_obj["readings"] = readings
+
+        except:
+            print(f'get_floor_feature() sensor {system} {crate_id} {feature_id} exception', file=sys.stderr)
+            print(sys.exc_info(), file=sys.stderr)
+            return '{ "acp_error_msg": "readings_data_api get_crate_feature Exception" }'
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        # print(f'time: {datetime.now()-t1}')
+
+        return response
+
 #################################################################
 #  SUPPORT FUNCTIONS                                            #
 #################################################################
@@ -334,3 +398,25 @@ class ReadingsDataAPI(object):
             print(f'get_floor_sensors() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
         return floor_sensors
+
+    #################################################
+    # Get sensors for a crate from the Sensors API
+    #################################################
+
+    # E.g. get_crate_sensors('WGB','FN07')
+    def get_crate_sensors(self, system, crate_id):
+        #print(f"Readings API get_floor_sensors {system} {floor}")
+        sensors_api_url = self.settings["API_SENSORS"]+f'get_bim/{system}/{crate_id}/?metadata=true'
+        #fetch data from Sensors api
+        try:
+            response = requests.get(sensors_api_url)
+            response.raise_for_status()
+            # access JSON content
+            crate_sensors = response.json()
+        except HTTPError as http_err:
+            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: get_floor_sensors() HTTP error." }
+        except Exception as err:
+            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
+        return crate_sensors
