@@ -27,24 +27,28 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
+    print('GET')
     return data_api.get(acp_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 @app.route('/get_day/<acp_id>/')
 def get_day_route(acp_id):
     global data_api
+    print('GET_DAY')
     return data_api.get_day(acp_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 @app.route('/get_day_crate/<system>/<crate_id>/')
 def get_day_crate(system, crate_id):
     global data_api
+    print('GET_DAY_CRATE')
     return data_api.get_crate_sensors(system, crate_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 @app.route('/get_crate_chart/<system>/<crate_id>/')
-def get_crate_chart(system, crate_id):
+def get_crate_chart_route(system, crate_id):
     global data_api
+    print('GET_CRATE_CHART')
     return data_api.get_crate_chart(system, crate_id, request.args)
 
 # /get_feature/<acp_id>/<feature_id>/[?metadata=true]

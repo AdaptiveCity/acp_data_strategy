@@ -59,9 +59,10 @@ class ReadingsDataAPI(object):
             type_info = sensor_info["acp_type_info"]
 
             today = Utils.getDateToday()
-
+            print(today)
             records = self.get_day_records(acp_id, today, type_info)
 
+            print(records)
             if len(records) > 0:
                 response_obj["reading"] = json.loads(records[-1])
 
@@ -326,7 +327,7 @@ class ReadingsDataAPI(object):
                                            .replace("<DD>",DD)
             )
 
-            #print("get_day_records() readings_file_name {}".format(readings_file_name))
+            print("get_day_records() readings_file_name {}".format(readings_file_name))
         except:
             print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
             return []
@@ -401,28 +402,33 @@ class ReadingsDataAPI(object):
     #                Helper Functions               #
     #################################################
     def get_crate_chart(self, system, crate,args):
-        args={'date':'2022-01-20'}
+        args={'date':'2022-01-20'}#hardcoded
         crate_sensors=self.get_crate_sensors(system, crate, args)
-        sensor_data={'readings':{}}
+
+      #  return crate_sensors
+        sensor_data={'readings':[]}
         try:
             # sensor_list=[]
 # 
             # sensor_data={}
-            day_ts=self.get_days_range([2022,1,20])
-            ts_list=self.split_time(day_ts[0],day_ts[1],300)
+            day_ts=self.get_days_range([2022,1,20])#hardcoded
+            
+            ts_list=self.split_time(day_ts[0],day_ts[1],60*5)#60s x 5min
             iterator=0
             for timestamp in ts_list:
                 sensor_iterator=0
                 sensors_used=[]
                 print(timestamp)
-                sensor_data['readings'][timestamp]={'acp_ts':timestamp}
+                sensor_data['readings'].append({'acp_ts':timestamp})
+                
 
                 payload_tracker={'co2':[], 'temperature':[], 'humidity':[]}
                 ts_tracker={}
                 ts_list=[]
+                last_sensor=''
                 
                 for sensor in crate_sensors:
-                
+
                     payload_list=crate_sensors[sensor]['readings']
                     
                     get_index=self.binary_search_recursive(payload_list,timestamp,0,len(payload_list)-1)
@@ -435,9 +441,12 @@ class ReadingsDataAPI(object):
                     ts_list.append(int(float(acp_ts)))
                     print(sensor)
 
+                   
                     if "co2" in payload:
                         if ((payload['co2']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
                             payload_tracker['co2'].append(payload['co2'])
+                            last_sensor=sensor ##make sure that metadata comes from a co2 sensor
+
                     
                     if "temperature" in payload:
                         if ((payload['temperature']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
@@ -447,21 +456,34 @@ class ReadingsDataAPI(object):
                         if ((payload['humidity']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
                             payload_tracker['humidity'].append(payload['humidity'])
 
-                    data_obj={}
+                   # data_obj={}
                    # data_obj['std']=std
                    # data_obj['payload_cooked']=payload
-                    data_obj['acp_ts']=acp_ts
-                    data_obj['date']=datetime.datetime.fromtimestamp(int(float(acp_ts)))
-                    sensor_data['readings'][timestamp][sensor]=data_obj
-                iterator+=1
-                sensor_data['readings'][timestamp]['date']=datetime.datetime.fromtimestamp(timestamp)
-                sensor_data['readings'][timestamp]['ts_list']=ts_list
-                sensor_data['readings'][timestamp]['ts_mean']=mean(ts_list)
-                sensor_data['readings'][timestamp]['ts_std']=stdev(ts_list)
+                   # data_obj['acp_ts']=acp_ts
+                   # data_obj['date']=datetime.datetime.fromtimestamp(int(float(acp_ts)))
+
+                    #sensor_data['readings'][timestamp][sensor]=data_obj
+                    #sensor_data['readings'].append(data_obj)
+                    
+
+                sensor_info = self.get_sensor_info(last_sensor)
+                sensor_data["sensor_metadata"] = sensor_info
+                sensor_data['readings'][iterator]['acp_id']='elsys-co2-CRATE'
+                sensor_data['readings'][iterator]['acp_type_id']='elsys-co2'
+                sensor_data['readings'][iterator]['date']=datetime.datetime.fromtimestamp(timestamp)
+                sensor_data['readings'][iterator]['ts_list']=ts_list
+                sensor_data['readings'][iterator]['ts_mean']=mean(ts_list)
+                sensor_data['readings'][iterator]['ts_std']=stdev(ts_list)
+                
                 co2=round(mean(payload_tracker['co2']),2)
                 temperature=round(mean(payload_tracker['temperature']),2)
                 humidity=round(mean(payload_tracker['humidity']),2)
-                sensor_data['readings'][timestamp]['payload']={'co2':co2, 'temperature':temperature, 'humidity':humidity}              
+                
+                sensor_data['readings'][iterator]['payload_cooked']={'co2':co2, 'temperature':temperature, 'humidity':humidity}     
+                iterator+=1
+
+              
+         
 
                    # data_obj['std']=std
                    # sensor_data['readings'].append(data_obj)        
@@ -524,6 +546,8 @@ class ReadingsDataAPI(object):
         ts_list.append(iterator)
         iterator+=split  
       return ts_list
+
+      
     #################################################
     # Get sensors for a floor from the Sensors API
     #################################################
@@ -546,8 +570,6 @@ class ReadingsDataAPI(object):
             return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
         return floor_sensors
 
-
-    
     # E.g. get_crate_sensors('WGB','FN07')
     def get_crate_sensors(self, system, crate,args):
         print(f"Readings API get_floor_sensors {system} {crate}")
@@ -634,6 +656,7 @@ class ReadingsDataAPI(object):
                         readings.append(cooked_metadata)
 
                 response_obj["readings"] = readings
+
                 print('\nTOTAL READINGS FOR ',acp_id, ' : ',len(readings))
 
             except FileNotFoundError as e:
