@@ -38,6 +38,7 @@ def get_day_route(acp_id):
     return data_api.get_day(acp_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+#for heatmaps
 @app.route('/get_day_crate/<system>/<crate_id>/')
 def get_day_crate(system, crate_id):
     global data_api
@@ -45,6 +46,15 @@ def get_day_crate(system, crate_id):
     return data_api.get_crate_sensors(system, crate_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+#for heatmaps
+@app.route('/get_day_roc/<system>/<crate_id>/')
+def get_day_crate_roc(system, crate_id):
+    global data_api
+    print('GET_DAY_CRATE_ROC')
+    return data_api.get_crate_roc(system, crate_id, request.args)
+
+# /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+#for charts
 @app.route('/get_crate_chart/<system>/<crate_id>/')
 def get_crate_chart_route(system, crate_id):
     global data_api

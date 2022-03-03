@@ -402,18 +402,30 @@ class ReadingsDataAPI(object):
     #                Helper Functions               #
     #################################################
     def get_crate_chart(self, system, crate,args):
-        args={'date':'2022-01-20'}#hardcoded
+        date=[2022,2,17]
+        month=str(date[1])
+        if len(month)==1:
+            month='0'+month
+        day=str(date[2])
+        if len(day)==1:
+            day='0'+day
+                            
+        args={'date':str(date[0])+'-'+month+'-'+day}#hardcoded
         crate_sensors=self.get_crate_sensors(system, crate, args)
-
+        #if date argument exists then parse it
+        #date='today'
       #  return crate_sensors
         sensor_data={'readings':[]}
         try:
             # sensor_list=[]
 # 
             # sensor_data={}
-            day_ts=self.get_days_range([2022,1,20])#hardcoded
+            day_ts=self.get_days_range(date)#hardcoded
+
+            ts_division=5*60
+            ts_threshold=60*6
             
-            ts_list=self.split_time(day_ts[0],day_ts[1],60*5)#60s x 5min
+            ts_list=self.split_time(day_ts[0],day_ts[1],ts_division)#60s x 5min
             iterator=0
             for timestamp in ts_list:
                 sensor_iterator=0
@@ -443,17 +455,17 @@ class ReadingsDataAPI(object):
 
                    
                     if "co2" in payload:
-                        if ((payload['co2']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                        if ((payload['co2']>0) and (abs(int(float(acp_ts))-timestamp)<ts_threshold)):
                             payload_tracker['co2'].append(payload['co2'])
                             last_sensor=sensor ##make sure that metadata comes from a co2 sensor
 
                     
                     if "temperature" in payload:
-                        if ((payload['temperature']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                        if ((payload['temperature']>0) and (abs(int(float(acp_ts))-timestamp)<ts_threshold)):
                             payload_tracker['temperature'].append(payload['temperature'])
 
                     if "humidity" in payload:
-                        if ((payload['humidity']>0) and (abs(int(float(acp_ts))-timestamp)<60*15)):
+                        if ((payload['humidity']>0) and (abs(int(float(acp_ts))-timestamp)<ts_threshold)):
                             payload_tracker['humidity'].append(payload['humidity'])
 
                    # data_obj={}
@@ -613,7 +625,177 @@ class ReadingsDataAPI(object):
         return sensor_data
         #return crate_sensors
 
+ # E.g. get_crate_sensors('WGB','FN07')
+    def get_crate_roc(self, system, crate,args):
+        print(f"Readings API get_floor_sensors {system} {crate}")
+        print('\nALL args- ',args)
+        #sensors_api_url = self.settings["API_SENSORS"]+f'get_bim/{system}/{crate}'
+        #DEBUG only, I know it's not how it's supposed to be 
+        sensors_api_url = self.settings["API_SENSORS"]+'get_bim/'+str(system)+'/'+str(crate)+'/'#http://adacity-jb.al.cl.cam.ac.uk/api/sensors/'+f'get_bim/{system}/{crate}'
+        print('\nSENSOR URL: ',sensors_api_url,'\n')
+
+        #fetch data from Sensors api
+        try:
+            response = requests.get(sensors_api_url)
+            response.raise_for_status()
+            # access JSON content
+            crate_sensors = response.json()
+            sensor_list=[]
+
+            sensor_data={}
+
+            for sensor in crate_sensors['sensors']:
+               # print('\nSENSOR:', sensor)
+                sensor_list.append(sensor_list)
+                #print('what',self.get_day2(sensor,args))
+                #get day's worth of readings
+                sensor_data[sensor]=json.loads(self.get_day3(sensor,args))
+
+                sensor_data[sensor]["acp_id"]=sensor
+
+        
+            print('\nTOTAL SENSORS IN ',crate,' : ',len(sensor_list))
+        except HTTPError as http_err:
+            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: get_crate_sensors() HTTP error." }
+        except Exception as err:
+            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            return { "acp_error_msg": "readings_data_api: Exception in get_crate_sensors()."}
+       
+            
+       
+        return sensor_data
         # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
+        
+    def get_day3(self, acp_id, args):
+        response_obj = {}
+
+        # Lookup the sensor metadata, this will include the
+        # filepath to the readings, and also may be returned
+        # in the response.
+        sensor_info = self.get_sensor_info(acp_id)
+
+        if "metadata" in args and args["metadata"] == "true":
+            response_obj["sensor_metadata"] = sensor_info
+
+        # Only get readings if sensor_info is not {}
+        if bool(sensor_info):
+            try:
+                if DEBUG:
+                    args_str = ""
+                    for key in args:
+                        args_str += key+"="+args.get(key)+" "
+                    print("get_day() {}/{}".format(acp_id,args_str) )
+
+                if "date" in args:
+                    selected_date = args.get("date")
+                else:
+                    selected_date = Utils.getDateToday()
+
+                records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
+
+                readings = []
+
+                record_len=len(records)
+                index=0
+                #print('records len', record_len)
+
+                while (index<record_len-1):
+                    index+=1
+                   # print(index) 
+                    raw_metadata_prev=json.loads(records[index-1])
+                
+                    raw_metadata=json.loads(records[index])
+
+                    cooked_metadata_prev={}
+                    
+                    cooked_metadata={}
+                    
+                    cooked_metadata["acp_feed_ts"]=raw_metadata["acp_feed_ts"]
+                    cooked_metadata["acp_ts"]=raw_metadata["acp_ts"]
+                    
+
+                    cooked_metadata["acp_ts_prev"]=raw_metadata_prev["acp_ts"]
+                    cooked_metadata["acp_ts_curr"]=raw_metadata["acp_ts"]
+
+                    delta=float(raw_metadata["acp_ts"])-float(raw_metadata_prev["acp_ts"])
+                                                                         
+                    cooked_metadata["acp_ts_delta"]=round(delta,1) 
+                    cooked_metadata["acp_id"]=raw_metadata["acp_id"]
+                    cooked_metadata["acp_type_id"]=raw_metadata["acp_type_id"]
+
+                   ## cooked_metadata["payload_cooked_prev"]=raw_metadata_prev["payload_cooked"]             
+                   ## cooked_metadata["payload_cooked_curr"]=raw_metadata["payload_cooked"]
+
+                    PC_prev=raw_metadata_prev["payload_cooked"]
+                    PC_curr=raw_metadata["payload_cooked"]
+                  
+                    ts_prev=float(raw_metadata_prev["acp_ts"])
+                    ts_curr=float(raw_metadata["acp_ts"])
+
+                    bool_co2=False
+                    bool_temp=False
+                    bool_hum=False
+                    if ("co2" in PC_prev) and ("co2" in PC_curr):
+                        bool_co2=True
+
+                    if ("humidity" in PC_prev) and ("humidity" in PC_curr):
+                        bool_hum=True
+
+                    if ("temperature" in PC_prev) and ("temperature" in PC_curr):
+                        bool_temp=True
+
+                    if(bool_co2 and bool_hum and bool_temp):
+                        # #cooked_metadata=raw_metadata
+                        
+                        # roc_co2=((PC_curr['co2']/PC_prev['co2'])-1)*100
+                        # roc_temp=((PC_curr['temperature']/PC_prev['temperature'])-1)*100
+                        # roc_hum=((PC_curr['humidity']/PC_prev['humidity'])-1)*100
+
+                        roc_co2=((PC_curr['co2']-PC_prev['co2'])/(ts_curr-ts_prev))*100
+                        roc_temp=((PC_curr['temperature']-PC_prev['temperature'])/(ts_curr-ts_prev))*100
+                        roc_hum=((PC_curr['humidity']-PC_prev['humidity'])/(ts_curr-ts_prev))*100
+
+
+
+                        cooked_metadata["payload_cooked"]={'co2':round(roc_co2,2),'temperature':round(roc_temp,2),'humidity':round(roc_hum,2)}
+                        #raw_metadata["payload_cooked"]
+                        readings.append(cooked_metadata)
+                    
+                # for line in records:
+                    # raw_metadata=json.loads(line)
+                    # cooked_metadata={}
+                    # cooked_metadata["acp_feed_ts"]=raw_metadata["acp_feed_ts"]
+                    # cooked_metadata["acp_ts"]=raw_metadata["acp_ts"]
+                    # cooked_metadata["acp_id"]=raw_metadata["acp_id"]
+                    # cooked_metadata["acp_type_id"]=raw_metadata["acp_type_id"]
+                    # cooked_metadata["payload_cooked"]=raw_metadata["payload_cooked"]
+                    # if(len(cooked_metadata["payload_cooked"])>2):
+                        # #cooked_metadata=raw_metadata
+                        # readings.append(cooked_metadata)
+
+                response_obj["readings"] = readings
+
+                print('\nTOTAL READINGS FOR ',acp_id, ' : ',len(readings))
+
+            except FileNotFoundError as e:
+                print(f'get() sensor {acp_id} readings for {selected_date} not found',file=sys.stderr)
+                print(sys.exc_info())
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_READINGS"
+                response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
+        else:
+            response_obj = {}
+            response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
+            response_obj["acp_error_msg"] = "No metadata available for this sensor, so location of readings is unknown"
+
+        #print('RESPONSE', response_obj)
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        #print('\n\ntype: ',type(json_response))
+        return json_response
+
     def get_day2(self, acp_id, args):
         response_obj = {}
 
@@ -642,7 +824,7 @@ class ReadingsDataAPI(object):
                 records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
 
                 readings = []
-                
+
                 for line in records:
                     raw_metadata=json.loads(line)
                     cooked_metadata={}
