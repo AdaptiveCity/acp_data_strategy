@@ -12,6 +12,7 @@ For the API details, see the README.md for each API family, i.e.
 * [Readings API](api_readings/README.md)
 * [Sensors API](api_sensors/README.md)
 * [Space API](api_space/README.md)
+* [Displays API](api_display/README.md)
 
 ## Installation
 
