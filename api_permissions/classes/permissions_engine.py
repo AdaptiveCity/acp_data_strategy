@@ -29,15 +29,14 @@ class PermissionsEngine(object):
 
     PERMISSIONS=None
 
-    def __init__(self, settings, permissions):
+    def __init__(self, settings):
         global PERMISSIONS
         print("Initializing Permissions DataAPI")
         self.settings = settings
 
         # Establish connection to PostgreSQL
         self.db_conn = DBConn(self.settings)
-        # PERMISSIONS = self.load_permissions()
-        PERMISSIONS = permissions
+        PERMISSIONS = self.load_permissions()
 
         self.basePath = self.settings['readings_base_path']
 

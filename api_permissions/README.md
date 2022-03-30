@@ -13,12 +13,12 @@ http://ijl20-iot/api/permission/get_permission/rv355/elsys-co2-041ba9/sensor/wri
 The above call traverses through all permission checks available in the file `permission_rules.json` (will be later stored in db) to check if `rv355` has write access to the `sensor` with id `elsys-co2-041ba9`.
 
 ## The Permission Object
-A permission object in the `permission_rules.json` file contains the `subject`, `resource`, `action`, `options`, and `decision_point`.
+A permission object in the `permissions` table contains the `subject`, `resource`, `action`, `options`, and `decision_point`.
 + `subject`: The object that requests for a permssion.
 + `resource`: The object for which permission is requested.
 + `action`: The type of permission requested.
 + `options`: Any additional attributes that impact the permission. For example, time or date when the permission is being requested. Or if the permission should search recurrsively.
-+ `decision_point`: The function that will be used to provide the permission.
++ `decision_point`: The function that will be used to check for the permission.
 
 ```
 {

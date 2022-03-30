@@ -48,15 +48,6 @@ def get_route(person_id, object_id, object_type, operation_type):
     response.mimetype = "application/json"
     return response
 
-@app.route('/get_admin/<person_id>/')
-def get_admin_route(person_id):
-    global permission_api
-
-    response = make_response(permission_api.get_admin(person_id, request.args), 200)
-    response.mimetype = "application/json"
-    return response
-
-
 
 ####################################################################
 #
@@ -75,15 +66,7 @@ if __name__ == '__main__':
 
     print("Permission API loaded settings.json")
 
-    with open('../secrets/permission_rules.json', 'r') as permission_file:
-        permission_data = permission_file.read()
-
-    # parse file
-    permissions = json.loads(permission_data)
-
-    print("Permission API loaded permission_rules.json")
-
-    permission_api = PermissionsEngine(settings, permissions)
+    permission_api = PermissionsEngine(settings)
 
     print("Starting Permissions API on {}:{}".format(settings["permissions_host"],settings["permissions_port"]))
     app.run( host=settings["permissions_host"],
