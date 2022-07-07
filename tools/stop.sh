@@ -2,7 +2,7 @@
 
 # Kill running acp_space_render processes
 
-for name in api_bim api_sensors api_readings api_space api_people api_permissions
+for name in api_bim api_sensors api_readings api_space api_people api_permissions api_displays
 do
     pid=$(pgrep -f ${name})
     if [ $? -eq 0 ]

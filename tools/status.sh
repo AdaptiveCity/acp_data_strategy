@@ -2,7 +2,7 @@
 
 # A simple test script to see if ACP data api processes are running
 
-names=( api_bim api_sensors api_readings api_space api_people api_permissions)
+names=( api_bim api_sensors api_readings api_space api_people api_permissions api_displays)
 
 #echo ${names[@]}
 exit_code=0
