@@ -14,6 +14,7 @@ For the API details, see the README.md for each API family, i.e.
 * [People API](api_people/README.md)
 * [Space API](api_space/README.md)
 * [Permission API](api_permissions/README.md)
+* [Displays API](api_display/README.md)
 
 ## Installation
 

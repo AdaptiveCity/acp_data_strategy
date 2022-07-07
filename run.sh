@@ -17,3 +17,4 @@ $SCRIPT_DIR/api_space/run.sh
 $SCRIPT_DIR/api_people/run.sh
 
 $SCRIPT_DIR/api_permissions/run.sh
+$SCRIPT_DIR/api_displays/run.sh

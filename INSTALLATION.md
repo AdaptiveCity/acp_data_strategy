@@ -102,6 +102,12 @@ CREATE TABLE insts (
     acp_ts TIMESTAMP NOT NULL,
     acp_ts_end TIMESTAMP,
     inst_info jsonb
+CREATE TABLE displays (
+    record_id SERIAL,
+    display_id varchar(100) NOT NULL,
+    acp_ts TIMESTAMP NOT NULL,
+    acp_ts_end TIMESTAMP,
+    display_info jsonb
 );
 ```
 
