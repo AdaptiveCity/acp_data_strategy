@@ -48,7 +48,7 @@ class DecisionPoints(object):
 
         # Get resource values to compare
         resource_data_api = permission_info['resource']['resource_api']
-        resource_data_url = settings['API_'+resource_data_api] + 'get/' + subject_id
+        resource_data_url = settings['API_'+resource_data_api] + 'get/' + subject_id + '/'
         response = requests.get(resource_data_url).json()
         resource_value_path = permission_info['resource']['value'].strip().split('.')
 
@@ -94,7 +94,7 @@ class DecisionPoints(object):
         # Get subject values to compare
         subject_id = access_request['subject']['subject_id']
         subject_data_api = permission_info['subject']['subject_api']
-        subject_data_url = settings['API_'+subject_data_api] + 'get/' + subject_id+'?path=true'
+        subject_data_url = settings['API_'+subject_data_api] + 'get/' + subject_id+'/?path=true'
         subject_response = requests.get(subject_data_url).json()        
 
         subject_value_path = permission_info['subject']['value'].strip().split('.')
@@ -108,7 +108,7 @@ class DecisionPoints(object):
         # Get resource values to compare
         resource_id = access_request['resource']['resource_id']
         resource_data_api = permission_info['resource']['resource_api']
-        resource_data_url = settings['API_'+resource_data_api] + 'get/' + resource_id
+        resource_data_url = settings['API_'+resource_data_api] + 'get/' + resource_id + '/'
         resource_response = requests.get(resource_data_url).json()        
 
         if resource_data_api == 'BIM' and resource_response != {}:
@@ -139,7 +139,7 @@ class DecisionPoints(object):
             if check_depth['subject'] != {}:
                 for val in subject_val:
                     rec_subject_data_api = check_depth['subject']['subject_api']
-                    rec_subject_data_url = settings['API_'+rec_subject_data_api] + 'get/' + val+'?path=true'
+                    rec_subject_data_url = settings['API_'+rec_subject_data_api] + 'get/' + val+'/?path=true'
                     rec_subject_response = requests.get(rec_subject_data_url).json()
                     rec_subject_value_path = check_depth['subject']['value'].strip().split('.')
 
@@ -155,7 +155,7 @@ class DecisionPoints(object):
             if check_depth['resource'] != {}:
                 for val in resource_val:
                     rec_resource_data_api = check_depth['resource']['resource_api']
-                    rec_resource_data_url = settings['API_'+rec_resource_data_api] + 'get/' + val+'?path=true'
+                    rec_resource_data_url = settings['API_'+rec_resource_data_api] + 'get/' + val+'/?path=true'
                     rec_resource_response = requests.get(rec_resource_data_url).json()
                     rec_resource_value_path = check_depth['resource']['value'].strip().split('.')
 
