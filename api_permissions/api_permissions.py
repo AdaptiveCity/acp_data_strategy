@@ -21,6 +21,12 @@ CORS(app)
 @app.route('/get_permission/<person_id>/<object_id>/<object_type>/<operation_type>')
 def get_route(person_id, object_id, object_type, operation_type):
     global permission_api
+    global permissions_enabled
+
+    if not permissions_enabled:
+        response = make_response({'permission': True}, 200)
+        response.mimetype = "application/json"
+        return response
 
     action = 'NA'
     if operation_type == 'read':
@@ -65,6 +71,14 @@ if __name__ == '__main__':
     settings = json.loads(settings_data)
 
     print("Permission API loaded settings.json")
+
+    try:
+        permissions_enabled = settings["permissions_enabled"]
+    except KeyError:
+        permissions_enabled = False
+
+    if not permissions_enabled:
+        print("Permissions API disabled as settings.json permissions_enabled is False or missing.")
 
     permission_api = PermissionsEngine(settings)
 

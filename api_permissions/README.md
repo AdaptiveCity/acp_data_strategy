@@ -2,7 +2,28 @@
 
 This is the API to check access control rights for anyone trying to access the platform.
 
-## /get_permission/<person_id>/<object_id>/<object_type>/<operation_type>
+## settings.py properties for Permissions API
+E.g.
+```
+  "permissions_host": "localhost",
+  "permissions_port": 5014,
+
+  "permission_order": ["url_access", "crate_read_access", "admin_access", "delete_sensor_access", "occupies_read_access"],
+  "permissions_enabled": false
+```
+
+A `permission_order` setting should be added to the `settings.json` file to define the precendence of permissions to be checked. For example, it is better to check for admin access for a user, which if available implies all other permissions are available.
+```
+"permission_order": ["admin_access", delete_sensor_access, "occupies_read_access"]
+```
+**Note:** Might not be required.
+
+`"permissions_enabled": true` is required for the Permissions to be applied. A value of `false` or omitted will allow access for
+logged-on users without finer-grained permissions via the Permissions Engine.
+
+## API calls
+
+### `/get_permission/<person_id>/<object_id>/<object_type>/<operation_type>`
 
 Checks if a person `person_id` has access to perform an operation `operation_type` on a resource `object_id` of type `object_type`.
 
@@ -104,10 +125,3 @@ A permission object in the `permissions` table contains the `subject`, `resource
 }
 ```
 
-## Additional Setting
-
-A `permission_order` setting should be added to the `settings.json` file to define the precendence of permissions to be checked. For example, it is better to check for admin access for a user, which if available implies all other permissions are available.
-```
-"permission_order": ["admin_access", delete_sensor_access, "occupies_read_access"]
-```
-**Note:** Might not be required.
