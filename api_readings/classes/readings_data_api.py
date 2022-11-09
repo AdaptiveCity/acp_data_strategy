@@ -44,6 +44,7 @@ class ReadingsDataAPI(object):
     # which, depending on the sensor, may contain values for a subset of
     # the features.
     def get(self, acp_id, args):
+        print('invoking get')
         response_obj = {}
         try:
             if DEBUG:
@@ -79,6 +80,7 @@ class ReadingsDataAPI(object):
 
     # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
     def get_day(self, acp_id, args):
+        print('invoking get day')
         response_obj = {}
 
         # Lookup the sensor metadata, this will include the
@@ -104,7 +106,6 @@ class ReadingsDataAPI(object):
                     selected_date = Utils.getDateToday()
 
                 records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
-
                 readings = []
 
                 for line in records:
@@ -143,7 +144,7 @@ class ReadingsDataAPI(object):
             # in the response.
             sensor_info = self.get_sensor_info(acp_id)
 
-            feature_reading = self.get_feature_reading(acp_id, feature_id, sensor_info["acp_type_info"])
+            feature_reading = self.get_feature_reading(acp_id, feature_id, sensor_info["acp_type_info"], args)
 
             if feature_reading is not None:
                 response_obj["reading"] = feature_reading
@@ -205,7 +206,8 @@ class ReadingsDataAPI(object):
             for acp_id in sensors:
                 sensor_info = sensors[acp_id]
                 type_info = sensor_types[sensor_info["acp_type_id"]]
-                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
+                ##pass the date here
+                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info, args)
                 if feature_reading is not None:
                     readings[acp_id] = feature_reading
 
@@ -292,7 +294,7 @@ class ReadingsDataAPI(object):
             for acp_id in sensors:
                 sensor_info = sensors[acp_id]
                 type_info = sensor_types[sensor_info["acp_type_id"]]
-                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info)
+                feature_reading = self.get_feature_reading(acp_id, feature_id, type_info, args)
                 if feature_reading is not None:
                     readings[acp_id] = feature_reading
 
@@ -313,6 +315,7 @@ class ReadingsDataAPI(object):
     # readings_day will be "YYYY-MM-DD"
     # sensor_info is required to work out where the data is stored
     def get_day_records(self, acp_id, readings_day, sensor_type_info):
+        print('invoking get day records')
 
         try:
             YYYY = readings_day[0:4]
@@ -343,7 +346,7 @@ class ReadingsDataAPI(object):
     # loads readings day file for sensor and iterates back through it
     # for the latest reading for that feature.
     # Returns 'reading' JSON object (i.e. message as sent by sensor)
-    def get_feature_reading(self, acp_id, feature_id, type_info):
+    def get_feature_reading(self, acp_id, feature_id, type_info, args):
 
         #print(f'Readings API get_feature_reading {acp_id} {feature_id} \ntype_info:{type_info}',file=sys.stderr)
 
@@ -356,9 +359,16 @@ class ReadingsDataAPI(object):
         except:
             return f'{{ "acp_error_msg": "readings_data_api get_feature no {acp_id}/{feature_id}" }}'
 
-        today = Utils.getDateToday()
 
-        records = self.get_day_records(acp_id, today, type_info)
+
+        #instead of today get date as an argument
+
+        if "date" in args:
+            selected_date = args.get("date")
+        else:
+            selected_date = Utils.getDateToday()
+
+        records = self.get_day_records(acp_id, selected_date, type_info)
 
         #print(f'records length={len(records)}') #DEBUG
 
@@ -402,7 +412,7 @@ class ReadingsDataAPI(object):
     #                Helper Functions               #
     #################################################
     def get_crate_chart(self, system, crate,args):
-        date=[2022,2,17]
+        date=[2022,2,28]
         month=str(date[1])
         if len(month)==1:
             month='0'+month

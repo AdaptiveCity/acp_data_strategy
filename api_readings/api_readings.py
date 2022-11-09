@@ -27,7 +27,7 @@ CORS(app)
 @app.route('/get/<acp_id>/')
 def get_route(acp_id):
     global data_api
-    print('GET')
+    print('GET',acp_id)
     return data_api.get(acp_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
