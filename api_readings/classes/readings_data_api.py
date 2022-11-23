@@ -168,6 +168,7 @@ class ReadingsDataAPI(object):
     #   sensor_types: { dict acp_type_id -> sensor type metadata }
     # }
     def get_floor_feature(self, system, floor, feature_id, args):
+        print('\n\n\nINITIATING CODE FORE get_floor_feature', args,'\n\n\n')
         #t1 = datetime.now()
         response_obj = {}
         try:
@@ -301,9 +302,9 @@ class ReadingsDataAPI(object):
             response_obj["readings"] = readings
 
         except:
-            print(f'get_floor_feature() sensor {system} {floor} {feature_id} exception', file=sys.stderr)
+            print(f'get_crate_feature() sensor {system} {floor} {feature_id} exception', file=sys.stderr)
             print(sys.exc_info(), file=sys.stderr)
-            return '{ "acp_error_msg": "readings_data_api get_floor_feature Exception" }'
+            return '{ "acp_error_msg": "readings_data_api get_crate_feature Exception" }'
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
         response.headers['Content-Type'] = 'application/json'
@@ -391,17 +392,22 @@ class ReadingsDataAPI(object):
     #################################################
 
     def get_sensor_info(self, acp_id):
-        #print("get_sensor_info() {}".format(acp_id))
+        print("get_sensor_info() {}".format(acp_id))
         sensors_api_url = self.settings["API_SENSORS"]+'get/'+acp_id+"/"
+        print('sensors api url',sensors_api_url)
+        
         #fetch data from Sensors api
         try:
+            print('sensor', acp_id, sensors_api_url)
+            print('trying to get response for', acp_id)
             response = requests.get(sensors_api_url)
             response.raise_for_status()
             # access JSON content
             sensor_info = response.json()
-        except HTTPError as http_err:
-            print(f'get_sensor_info() HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: get_sensor_info() HTTP error." }
+       # except HTTPError as http_err:
+       #     print('some HTTP error')
+       #     print(f'get_sensor_info() HTTP GET error occurred: {http_err}')
+       #     return { "acp_error_msg": "readings_data_api: get_sensor_info() HTTP error." }
         except Exception as err:
             print(f'get_sensor_info() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_sensor_info()."}
@@ -412,16 +418,31 @@ class ReadingsDataAPI(object):
     #                Helper Functions               #
     #################################################
     def get_crate_chart(self, system, crate,args):
-        date=[2022,2,28]
+
+        print('getting crate charts', crate)
+        if "date" in args:
+            selected_date = args.get("date")
+        else:
+            selected_date = Utils.getDateToday()
+
+        date=[2022,2,27]
+        diena=selected_date
+        
         month=str(date[1])
         if len(month)==1:
             month='0'+month
         day=str(date[2])
         if len(day)==1:
             day='0'+day
-                            
-        args={'date':str(date[0])+'-'+month+'-'+day}#hardcoded
+
+        print('selected', selected_date, 'hardcoded',str(date[0])+'-'+month+'-'+day)
+        print('OG args', args)
+        #args={'date':diena}#hardcoded
+
+        ##GET ALL SENSORS FROM A CRATE SPECIFIED IN ARGS
         crate_sensors=self.get_crate_sensors(system, crate, args)
+        print('ALL SENSORS IN ', crate, 'ARE', crate_sensors)
+
         #if date argument exists then parse it
         #date='today'
       #  return crate_sensors
@@ -430,33 +451,40 @@ class ReadingsDataAPI(object):
             # sensor_list=[]
 # 
             # sensor_data={}
-            day_ts=self.get_days_range(date)#hardcoded
+            
+            #GET A DAY'S TIMESTAMPS FROM MIDNIGHT START TO MIDNIGHT END
+            day_ts=self.get_days_range(selected_date)#hardcoded
 
             ts_division=5*60
             ts_threshold=60*6
             
             ts_list=self.split_time(day_ts[0],day_ts[1],ts_division)#60s x 5min
             iterator=0
+
+            #ITERATE THROUGH TIMSTAMPS TO COMPUTE READINGS FOR EVERY SINGLE ONE
             for timestamp in ts_list:
                 sensor_iterator=0
                 sensors_used=[]
-                print(timestamp)
+               # print(timestamp)
                 sensor_data['readings'].append({'acp_ts':timestamp})
                 
-
                 payload_tracker={'co2':[], 'temperature':[], 'humidity':[]}
                 ts_tracker={}
                 ts_list=[]
-                last_sensor=''
-                
-                for sensor in crate_sensors:
+                last_sensor=''#IDK WHAT THIS DOES
 
+                #FOR A GIVEN TIMETAMP ROLL ACROSS ALL SENSORS AND GET READINGS AVERAGES
+                for sensor in crate_sensors:
+    
                     payload_list=crate_sensors[sensor]['readings']
                     
                     get_index=self.binary_search_recursive(payload_list,timestamp,0,len(payload_list)-1)
-                    print(len(payload_list)-1, get_index)
+                    
+                    #print(len(payload_list)-1, get_index)
+
                     if (get_index==-1):
                         continue
+                        
                     payload=payload_list[get_index]['payload_cooked']
                     acp_ts=payload_list[get_index]['acp_ts']
                     ts_tracker[sensor]=acp_ts
@@ -468,7 +496,6 @@ class ReadingsDataAPI(object):
                         if ((payload['co2']>0) and (abs(int(float(acp_ts))-timestamp)<ts_threshold)):
                             payload_tracker['co2'].append(payload['co2'])
                             last_sensor=sensor ##make sure that metadata comes from a co2 sensor
-
                     
                     if "temperature" in payload:
                         if ((payload['temperature']>0) and (abs(int(float(acp_ts))-timestamp)<ts_threshold)):
@@ -488,7 +515,7 @@ class ReadingsDataAPI(object):
                     #sensor_data['readings'].append(data_obj)
                     
 
-                sensor_info = self.get_sensor_info(last_sensor)
+                sensor_info = self.get_sensor_info(sensor)#last_sensor
                 sensor_data["sensor_metadata"] = sensor_info
                 sensor_data['readings'][iterator]['acp_id']='elsys-co2-CRATE'
                 sensor_data['readings'][iterator]['acp_type_id']='elsys-co2'
@@ -496,13 +523,30 @@ class ReadingsDataAPI(object):
                 sensor_data['readings'][iterator]['ts_list']=ts_list
                 sensor_data['readings'][iterator]['ts_mean']=mean(ts_list)
                 sensor_data['readings'][iterator]['ts_std']=stdev(ts_list)
+
+                print('co2',payload_tracker['co2'])
+                if(len(payload_tracker['co2'])==0):
+                    co2=None
+                else:
+                    co2=round(mean(payload_tracker['co2']),2)
                 
-                co2=round(mean(payload_tracker['co2']),2)
-                temperature=round(mean(payload_tracker['temperature']),2)
-                humidity=round(mean(payload_tracker['humidity']),2)
+                #temperature=round(mean(payload_tracker['temperature']),2)
+
+                if(len(payload_tracker['temperature'])==0):
+                    temperature=None
+                else:
+                    temperature=round(mean(payload_tracker['temperature']),2)
+
+                if(len(payload_tracker['humidity'])==0):
+                    humidity=None
+                else:
+                    humidity=round(mean(payload_tracker['humidity']),2)
+                    
+                #humidity=round(mean(payload_tracker['humidity']),2)
                 
                 sensor_data['readings'][iterator]['payload_cooked']={'co2':co2, 'temperature':temperature, 'humidity':humidity}     
                 iterator+=1
+                print(iterator)
 
               
          
@@ -512,11 +556,11 @@ class ReadingsDataAPI(object):
                    # print('\nSENSOR:', sensor)
                    #sensor_list.append(sensor_list)
         except HTTPError as http_err:
-            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
-            return { "acp_error_msg": "readings_data_api: get_floor_sensors() HTTP error." }
+            print(f'get_crate_chart() HTTP GET error occurred: {http_err}')
+            return { "acp_error_msg": "readings_data_api: get_crate_chart() HTTP error." }
         except Exception as err:
-            print(f'get_floor_sensors() Other GET error occurred: {err}')
-            return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
+            print(f'get_crate_chart() Other GET error occurred: {err}', err)
+            return { "acp_error_msg": "readings_data_api: Exception in get_crate_chart()."}
         return sensor_data#'done'#floor_sensors
         
                
@@ -538,10 +582,12 @@ class ReadingsDataAPI(object):
 
     ##get days worth of unix timestamps for 00:00 and 23:59
     def get_days_range(self,date): #YYYY,MM,DD
+      print('getting day range', date)
       if date=='today':
         presentDate = datetime.datetime.now()
       else:
-        presentDate= datetime.datetime(date[0],date[1],date[2])
+        datetime_object = datetime.datetime.strptime(date, '%Y-%m-%d')
+        presentDate= datetime_object#datetime.datetime(date[0],date[1],date[2])
     
       presentDate = presentDate.replace(minute=0, hour=0, second=0)
       unix_timestamp = int(datetime.datetime.timestamp(presentDate))
@@ -551,6 +597,7 @@ class ReadingsDataAPI(object):
         presentDate = datetime.datetime.now()
       else:
         presentDate = presentDate.replace(minute=59, hour=23, second=59)
+        
       unix_timestamp = int(datetime.datetime.timestamp(presentDate))
       ts_end=unix_timestamp
       print('range',[ts_start, ts_end])
@@ -576,8 +623,9 @@ class ReadingsDataAPI(object):
 
     # E.g. get_floor_sensors('WGB',1)
     def get_floor_sensors(self, system, floor):
-        #print(f"Readings API get_floor_sensors {system} {floor}")
+        print(f"Readings API get_floor_sensors {system} {floor}")
         sensors_api_url = self.settings["API_SENSORS"]+f'get_floor_number/{system}/{floor}/?metadata=true'
+        print(sensors_api_url)
         #fetch data from Sensors api
         try:
             response = requests.get(sensors_api_url)
@@ -592,9 +640,11 @@ class ReadingsDataAPI(object):
             return { "acp_error_msg": "readings_data_api: Exception in get_floor_sensors()."}
         return floor_sensors
 
+
     # E.g. get_crate_sensors('WGB','FN07')
     def get_crate_sensors(self, system, crate,args):
-        print(f"Readings API get_floor_sensors {system} {crate}")
+    
+        print(f"Readings API get_crate_sensors {system} {crate}")
         print('\nALL args- ',args)
         #sensors_api_url = self.settings["API_SENSORS"]+f'get_bim/{system}/{crate}'
         #DEBUG only, I know it's not how it's supposed to be 
@@ -616,18 +666,18 @@ class ReadingsDataAPI(object):
                 sensor_list.append(sensor_list)
                 #print('what',self.get_day2(sensor,args))
                 #get day's worth of readings
+                print('failing point in get_crate_sensors - getday2', sensor)
                 sensor_data[sensor]=json.loads(self.get_day2(sensor,args))
-
 
                 sensor_data[sensor]["acp_id"]=sensor
 
         
             print('\nTOTAL SENSORS IN ',crate,' : ',len(sensor_list))
         except HTTPError as http_err:
-            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            print(f'get_crate_sensors() HTTP GET error occurred: {http_err}')
             return { "acp_error_msg": "readings_data_api: get_crate_sensors() HTTP error." }
         except Exception as err:
-            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            print(f'get_crate_sensors() Other GET error occurred: {err}', err)
             return { "acp_error_msg": "readings_data_api: Exception in get_crate_sensors()."}
        
             
@@ -637,7 +687,7 @@ class ReadingsDataAPI(object):
 
  # E.g. get_crate_sensors('WGB','FN07')
     def get_crate_roc(self, system, crate,args):
-        print(f"Readings API get_floor_sensors {system} {crate}")
+        print(f"Readings API get_crate_roc {system} {crate}")
         print('\nALL args- ',args)
         #sensors_api_url = self.settings["API_SENSORS"]+f'get_bim/{system}/{crate}'
         #DEBUG only, I know it's not how it's supposed to be 
@@ -666,17 +716,18 @@ class ReadingsDataAPI(object):
         
             print('\nTOTAL SENSORS IN ',crate,' : ',len(sensor_list))
         except HTTPError as http_err:
-            print(f'get_floor_sensors() HTTP GET error occurred: {http_err}')
+            print(f'get_crate_roc() HTTP GET error occurred: {http_err}')
             return { "acp_error_msg": "readings_data_api: get_crate_sensors() HTTP error." }
         except Exception as err:
-            print(f'get_floor_sensors() Other GET error occurred: {err}')
+            print(f'get_crate_roc() Other GET error occurred: {err}')
             return { "acp_error_msg": "readings_data_api: Exception in get_crate_sensors()."}
        
             
        
         return sensor_data
         # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
-        
+
+    ##use only for ROC visualisation
     def get_day3(self, acp_id, args):
         response_obj = {}
 
@@ -685,8 +736,9 @@ class ReadingsDataAPI(object):
         # in the response.
         sensor_info = self.get_sensor_info(acp_id)
 
-        if "metadata" in args and args["metadata"] == "true":
-            response_obj["sensor_metadata"] = sensor_info
+        #ALWAYS GET METADATA
+        #if "metadata" in args and args["metadata"] == "true":
+        response_obj["sensor_metadata"] = sensor_info
 
         # Only get readings if sensor_info is not {}
         if bool(sensor_info):
@@ -812,8 +864,9 @@ class ReadingsDataAPI(object):
         # Lookup the sensor metadata, this will include the
         # filepath to the readings, and also may be returned
         # in the response.
+        print('FAILING POINT -get_day2 get_sensor_info', acp_id)
         sensor_info = self.get_sensor_info(acp_id)
-
+        print('sensor info ack', acp_id)
         if "metadata" in args and args["metadata"] == "true":
             response_obj["sensor_metadata"] = sensor_info
 
