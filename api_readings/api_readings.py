@@ -37,6 +37,13 @@ def get_day_route(acp_id):
     print('GET_DAY')
     return data_api.get_day(acp_id, request.args)
 
+#/get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+@app.route('/get_day_clarence/<acp_id>/')
+def get_day_clarence(acp_id):
+    global data_api
+    print('CLARENCE_GET_DAY')
+    return data_api.get_day_clarence(acp_id, request.args)
+
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 #for heatmaps
 @app.route('/get_day_crate/<system>/<crate_id>/')

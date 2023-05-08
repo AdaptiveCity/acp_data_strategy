@@ -1,0 +1,109 @@
+{
+    "acp_commit": {
+        "acp_person_id": "jb2328",
+        "acp_person_name": "Justas Brazauskas",
+        "comment": "mock_clarence"
+      },
+      "acp_id": "clarence_pi_01",
+      "acp_location": {
+        "f": 1,
+        "system": "WGB",
+        "x": 75,
+        "y": 380,
+        "zf": 3
+      },
+      "acp_ts": "1673970086.883",
+      "acp_type_id": "clarence-pi",
+      "crate_id": "GW20-FF",
+
+    "acp_type_info":{
+
+
+       "acp_commit":{
+        "acp_person_id": "jb2328",
+        "acp_person_name": "Justas Brazauskas",
+        "comment": "mock_clarence"
+       },
+       "acp_ts":"1631649695",
+       "acp_type_id": "clarence-pi",
+       "day_file":"/media/acp/mqtt_acp/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt",
+       "description":"Clarence - a Pi-based privacy preserving people counter.",
+       "features":{
+          "people":{
+             "jsonpath":"$.payload_cooked.people",
+             "name":"people",
+             "range":[
+                0,
+                120
+             ],
+             "short_name":"people",
+             "units":"people"
+          },
+          "confidence_mean":{
+             "jsonpath":"$.payload_cooked.confidence_mean",
+             "name":"confidence_mean (Percent)",
+             "range":[
+                0,
+                1
+             ],
+             "short_name":"mean",
+             "units":"percent"
+          },
+          "confidence_median":{
+            "jsonpath":"$.payload_cooked.confidence_median",
+            "name":"confidence_median (Percent)",
+            "range":[
+               0,
+               1
+            ],
+            "short_name":"median",
+            "units":"percent"
+         },
+         "confidence_std":{
+            "jsonpath":"$.payload_cooked.confidence_std",
+            "name":"Standard deviation",
+            "range":[
+               0,
+               1
+            ],
+            "short_name":"std",
+            "units":""
+         }
+       },
+       "name":"Clarence 01 fake",
+       "notes":"",
+       "short_name":"Clarence 01"
+    },
+
+
+    "ttn_settings":{
+       "application_server_address":"eu1.cloud.thethings.network",
+       "created_at":"2021-09-28T09:09:15.784731759Z",
+       "frequency_plan_id":"EU_863_870_TTN",
+       "ids":{
+          "application_ids":{
+             "application_id":"cambridge-net-3"
+          },
+          "dev_addr":"260B2A4D",
+          "dev_eui":"A81758FFFE055A76",
+          "device_id":"elsys-co2-055a76",
+          "join_eui":"0000000000000000"
+       },
+       "join_server_address":"eu1.cloud.thethings.network",
+       "lorawan_phy_version":"PHY_V1_0_3_REV_A",
+       "lorawan_version":"MAC_V1_0_3",
+       "mac_settings":{
+          "supports_32_bit_f_cnt":true
+       },
+       "name":"elsys-co2-055a76",
+       "network_server_address":"eu1.cloud.thethings.network",
+       "root_keys":{
+          "app_key":{
+             "key":"22C905D1A45D1EAED8D950B915ECC8D8"
+          }
+       },
+       "supports_join":true,
+       "ttn_version":3,
+       "updated_at":"2021-09-28T14:26:58.259810352Z"
+    }
+ }
