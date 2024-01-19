@@ -225,6 +225,71 @@ class ReadingsDataAPI(object):
 
         return response
 
+
+      # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
+    def get_day_cerberus(self, acp_id, args):
+        print('invoking get day CERBERUS')
+        response_obj = {}
+
+        # Lookup the sensor metadata, this will include the
+        # filepath to the readings, and also may be returned
+        # in the response.
+
+        with open('./mock_clarence/cerberus_middle_metadata.json') as f:
+           sensor_info = json.load(f)
+
+           
+        #sensor_info = self.get_sensor_info(acp_id)
+        print(sensor_info)
+        print("\n", "done printing","\n")
+        if "metadata" in args and args["metadata"] == "true":
+            response_obj["sensor_metadata"] = sensor_info
+
+        print("entering bool")
+        # Only get readings if sensor_info is not {}
+        if bool(sensor_info):
+            print("bool")
+            try:
+                if DEBUG:
+                    args_str = ""
+                    for key in args:
+                        args_str += key+"="+args.get(key)+" "
+                    print("get_day_clarence() {}/{}".format(acp_id,args_str) )
+
+                if "date" in args:
+                    selected_date = args.get("date")
+                else:
+                    selected_date = Utils.getDateToday()
+
+                print("getting day records -- clarence","\n")
+                records = self.get_day_records(acp_id, selected_date, sensor_info["acp_type_info"])
+
+                print("getting day records -- clarence")
+                print(sensor_info["acp_type_info"])
+                readings = []
+
+                for line in records:
+                    readings.append(json.loads(line))
+                print("TOTAL READINGS LEN", len(readings), "\n")
+                response_obj["readings"] = readings
+
+            except FileNotFoundError as e:
+                print(f'get() sensor {acp_id} readings for {selected_date} not found',file=sys.stderr)
+                print(sys.exc_info())
+                response_obj = {}
+                response_obj["acp_error_id"] = "NO_READINGS"
+                response_obj["acp_error_msg"] = "readings_data_api get_day() Exception "+str(e.__class__)
+        else:
+            response_obj = {}
+            response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
+            response_obj["acp_error_msg"] = "No metadata available for this sensor, so location of readings is unknown"
+
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+
       # /get_day/<acp_id>/[?date=YY-MM-DD][&metadata=true]
     def get_day_clarence(self, acp_id, args):
         print('invoking get day clarence')
