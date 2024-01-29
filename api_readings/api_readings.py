@@ -44,12 +44,19 @@ def get_day_clarence(acp_id):
     print('CLARENCE_GET_DAY')
     return data_api.get_day_clarence(acp_id, request.args)
 
-#/get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+#/get_day_cerberus/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 @app.route('/get_day_cerberus/<acp_id>/')
 def get_day_cerberus(acp_id):
     global data_api
     print('CERBERUS_GET_DAY')
     return data_api.get_day_cerberus(acp_id, request.args)
+
+#/get_week_cerberus/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
+@app.route('/get_week_cerberus/<acp_id>/')
+def get_week_cerberus(acp_id):
+    global data_api
+    print('CERBERUS_GET_WEEK')
+    return data_api.get_week_cerberus(acp_id, request.args)
 
 # /get_day/<acp_id>/[?date=YYYY-MM-DD][&metadata=true]
 #for heatmaps

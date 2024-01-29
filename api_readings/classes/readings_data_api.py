@@ -4,9 +4,9 @@ from os import listdir, path
 import json
 from collections import defaultdict
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
-import datetime
+# import datetime
 from flask import request, make_response
 from pathlib import Path
 from jsonpath_ng import jsonpath, parse
@@ -283,6 +283,69 @@ class ReadingsDataAPI(object):
             response_obj = {}
             response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
             response_obj["acp_error_msg"] = "No metadata available for this sensor, so location of readings is unknown"
+
+        json_response = json.dumps(response_obj)
+        response = make_response(json_response)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+
+        
+    def get_week_cerberus(self, acp_id, args):
+        print('invoking get week CERBERUS')
+        response_obj = {}
+
+        # Load sensor metadata
+        with open('./mock_clarence/cerberus_middle_metadata.json') as f:
+            sensor_info = json.load(f)
+
+        print(sensor_info)
+        if "metadata" in args and args["metadata"] == "true":
+            response_obj["sensor_metadata"] = sensor_info
+
+        if bool(sensor_info):
+            try:
+                if "date" in args:
+                    selected_date = datetime.strptime(args.get("date"), "%Y-%m-%d")
+                else:
+                    selected_date = datetime.today()
+
+                # Calculate the start of the week (Monday)
+                start_of_week = selected_date - timedelta(days=selected_date.weekday())
+
+                # Determine if selected date is in the current week
+                today = datetime.today()
+                end_of_week = start_of_week + timedelta(days=6) # Sunday
+                end_date = min(today, end_of_week) if today >= start_of_week else end_of_week
+
+                weekly_readings = []
+                # Iterate over each day of the week up to the end date
+                for i in range((end_date - start_of_week).days + 1):
+                    current_day = start_of_week + timedelta(days=i)
+                    current_day_str = current_day.strftime("%Y-%m-%d")
+                    daily_records = self.get_day_records(acp_id, current_day_str, sensor_info["acp_type_info"])
+
+                    # Find the record with the maximum 'crowdcount' for each day
+                    max_record = None
+                    for line in daily_records:
+                        record = json.loads(line)
+                        if max_record is None or record['payload_cooked']['crowdcount'] > max_record['payload_cooked']['crowdcount']:
+                            max_record = record
+
+                    if max_record:
+                        weekly_readings.append(max_record)
+
+                print("TOTAL WEEKLY READINGS LEN", len(weekly_readings), "\n")
+                response_obj["readings"] = weekly_readings
+
+            except FileNotFoundError as e:
+                print(f'get() sensor {acp_id} readings for week starting {start_of_week.strftime("%Y-%m-%d")} not found', file=sys.stderr)
+                print(sys.exc_info())
+                response_obj["acp_error_id"] = "NO_READINGS"
+                response_obj["acp_error_msg"] = "readings_data_api get_week() Exception " + str(e.__class__)
+        else:
+            response_obj["acp_error_id"] = "NO_METADATA_FOR_SENSOR"
+            response_obj["acp_error_msg"] = "No metadata available for this sensor"
 
         json_response = json.dumps(response_obj)
         response = make_response(json_response)
