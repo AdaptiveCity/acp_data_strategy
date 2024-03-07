@@ -711,7 +711,7 @@ class ReadingsDataAPI(object):
                 sensor_data["sensor_metadata"] = sensor_info
                 sensor_data['readings'][iterator]['acp_id']='elsys-co2-CRATE'
                 sensor_data['readings'][iterator]['acp_type_id']='elsys-co2'
-                sensor_data['readings'][iterator]['date']=datetime.datetime.fromtimestamp(timestamp)
+                sensor_data['readings'][iterator]['date']=datetime.fromtimestamp(timestamp)
                 sensor_data['readings'][iterator]['ts_list']=ts_list
                 sensor_data['readings'][iterator]['ts_mean']=mean(ts_list)
                 sensor_data['readings'][iterator]['ts_std']=stdev(ts_list)
@@ -778,19 +778,19 @@ class ReadingsDataAPI(object):
       if date=='today':
         presentDate = datetime.datetime.now()
       else:
-        datetime_object = datetime.datetime.strptime(date, '%Y-%m-%d')
+        datetime_object = datetime.strptime(date, '%Y-%m-%d')
         presentDate= datetime_object#datetime.datetime(date[0],date[1],date[2])
     
       presentDate = presentDate.replace(minute=0, hour=0, second=0)
-      unix_timestamp = int(datetime.datetime.timestamp(presentDate))
+      unix_timestamp = int(datetime.timestamp(presentDate))
       ts_start=unix_timestamp
     
       if date=='today':
-        presentDate = datetime.datetime.now()
+        presentDate = datetime.now()
       else:
         presentDate = presentDate.replace(minute=59, hour=23, second=59)
         
-      unix_timestamp = int(datetime.datetime.timestamp(presentDate))
+      unix_timestamp = int(datetime.timestamp(presentDate))
       ts_end=unix_timestamp
       print('range',[ts_start, ts_end])
       return [ts_start, ts_end]
