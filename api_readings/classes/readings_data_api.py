@@ -507,32 +507,75 @@ class ReadingsDataAPI(object):
     # Get a day's-worth of sensor readings for required sensor as list of STRINGS (one per reading)
     # readings_day will be "YYYY-MM-DD"
     # sensor_info is required to work out where the data is stored
+    # def get_day_records(self, acp_id, readings_day, sensor_type_info):
+    #     print('invoking get day records')
+
+    #     try:
+    #         YYYY = readings_day[0:4]
+    #         MM   = readings_day[5:7]
+    #         DD   = readings_day[8:10]
+
+    #         day_file = sensor_type_info["day_file"]
+
+    #         readings_file_name = ( day_file.replace("<acp_id>",acp_id)
+    #                                        .replace("<YYYY>",YYYY)
+    #                                        .replace("<MM>",MM)
+    #                                        .replace("<DD>",DD)
+    #         )
+
+    #         print("get_day_records() readings_file_name {}".format(readings_file_name))
+    #     except:
+    #         print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
+    #         return []
+    #     try:
+    #         readings = open(readings_file_name, "r").readlines()
+    #     except FileNotFoundError:
+    #         readings = []
+
+    #     return readings
     def get_day_records(self, acp_id, readings_day, sensor_type_info):
         print('invoking get day records')
 
+        def try_open_file(file_path):
+            try:
+                return open(file_path, "r").readlines()
+            except FileNotFoundError:
+                return None
+
         try:
             YYYY = readings_day[0:4]
-            MM   = readings_day[5:7]
-            DD   = readings_day[8:10]
+            MM = readings_day[5:7]
+            DD = readings_day[8:10]
 
             day_file = sensor_type_info["day_file"]
 
-            readings_file_name = ( day_file.replace("<acp_id>",acp_id)
-                                           .replace("<YYYY>",YYYY)
-                                           .replace("<MM>",MM)
-                                           .replace("<DD>",DD)
-            )
+            readings_file_name = (day_file.replace("<acp_id>", acp_id)
+                                        .replace("<YYYY>", YYYY)
+                                        .replace("<MM>", MM)
+                                        .replace("<DD>", DD))
 
             print("get_day_records() readings_file_name {}".format(readings_file_name))
-        except:
-            print("get_day_records() no data for {} on {}".format(acp_id,readings_day))
+
+            readings = try_open_file(readings_file_name)
+            if readings is None:
+                # Retry with new_day_file template if the first attempt fails
+                new_day_file = "/media/acp/mqtt_csn/sensors/<acp_id>/<YYYY>/<MM>/<acp_id>_<YYYY>-<MM>-<DD>.txt"
+                new_readings_file_name = (new_day_file.replace("<acp_id>", acp_id)
+                                                    .replace("<YYYY>", YYYY)
+                                                    .replace("<MM>", MM)
+                                                    .replace("<DD>", DD))
+
+                print("retrying with new file path: {}".format(new_readings_file_name))
+                readings = try_open_file(new_readings_file_name)
+                if readings is None:
+                    readings = []
+
+        except Exception as e:
+            print("get_day_records() exception: {} for {} on {}".format(str(e), acp_id, readings_day))
             return []
-        try:
-            readings = open(readings_file_name, "r").readlines()
-        except FileNotFoundError:
-            readings = []
 
         return readings
+
 
     # get_feature_reading(acp_id, feature_id, type_info)
     # Uses type_info to find jsonpath to feature in reading, and
