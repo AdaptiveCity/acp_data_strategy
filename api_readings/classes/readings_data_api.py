@@ -268,8 +268,16 @@ class ReadingsDataAPI(object):
                 print(sensor_info["acp_type_info"])
                 readings = []
 
+                # for line in records:
+                #     readings.append(json.loads(line))
+                    
                 for line in records:
-                    readings.append(json.loads(line))
+                    try:
+                        readings.append(json.loads(line))
+                    except json.JSONDecodeError as e:
+                        print(f"Skipping invalid JSON line: {e}", file=sys.stderr)
+                    
+                    
                 print("TOTAL READINGS LEN", len(readings), "\n")
                 response_obj["readings"] = readings
 
@@ -320,6 +328,7 @@ class ReadingsDataAPI(object):
 
                 weekly_readings = []
                 # Iterate over each day of the week up to the end date
+            
                 for i in range((end_date - start_of_week).days + 1):
                     current_day = start_of_week + timedelta(days=i)
                     current_day_str = current_day.strftime("%Y-%m-%d")
@@ -328,13 +337,17 @@ class ReadingsDataAPI(object):
                     # Find the record with the maximum 'crowdcount' for each day
                     max_record = None
                     for line in daily_records:
-                        record = json.loads(line)
-                        if max_record is None or record['payload_cooked']['crowdcount'] > max_record['payload_cooked']['crowdcount']:
-                            max_record = record
+                        try:
+                            record = json.loads(line)
+                            if max_record is None or record['payload_cooked']['crowdcount'] > max_record['payload_cooked']['crowdcount']:
+                                max_record = record
+                        except json.JSONDecodeError as e:
+                            print(f"Skipping invalid JSON line in daily records for {current_day_str}: {e}", file=sys.stderr)
 
                     if max_record:
                         weekly_readings.append(max_record)
 
+                
                 print("TOTAL WEEKLY READINGS LEN", len(weekly_readings), "\n")
                 response_obj["readings"] = weekly_readings
 
